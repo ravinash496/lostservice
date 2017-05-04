@@ -4,9 +4,9 @@
 from lxml import etree
 
 from lostservice.converter import Converter
-from lostservice.model.civic import CivicAddress
-from lostservice.model.geodetic2d import Circle
-from lostservice.model.geodetic2d import Point
+from lostservice.model.location import CivicAddress
+from lostservice.model.location import Circle
+from lostservice.model.location import Point
 from lostservice.model.location import Location
 from lostservice.model.requests import FindServiceRequest
 
