@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+.. currentmodule:: lostservice.model.requests
+.. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
+
+Models for different types of requests.
+"""
+
+
 class Request(object):
     """
     A base class for all request objects.
@@ -26,6 +34,11 @@ class FindServiceRequest(Request):
 
     @property
     def location(self):
+        """
+        The location.
+        
+        :rtype: :py:class:`Location` 
+        """
         return self._location
 
     @location.setter
@@ -34,6 +47,11 @@ class FindServiceRequest(Request):
 
     @property
     def service(self):
+        """
+        The service type.
+        
+        :rtype: ``str`` 
+        """
         return self._service
 
     @service.setter

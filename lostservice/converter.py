@@ -8,6 +8,7 @@
 Base class for all converters and common exceptions.
 """
 
+
 class ParseException(Exception):
     """
     Raised when a parsing attempt fails.

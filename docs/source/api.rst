@@ -47,6 +47,16 @@ lostservice.converting
     :show-inheritance:
     :synopsis: package for converting implementations.
 
+--------------------------
+lostservice.converting.xml
+--------------------------
+.. automodule:: lostservice.converting.xml
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: xml message conversion.
+
 -------------------
 lostservice.handler
 -------------------
@@ -66,6 +76,36 @@ lostservice.handling
     :inherited-members:
     :show-inheritance:
     :synopsis: package for handling implementations.
+
+--------------------------------
+lostservice.handling.findservice
+--------------------------------
+.. automodule:: lostservice.handling.findservice
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: findService implementation.
+
+---------------------------------------
+lostservice.handling.getserviceboundary
+---------------------------------------
+.. automodule:: lostservice.handling.getserviceboundary
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: getServiceBoundary implementation.
+
+---------------------------------
+lostservice.handling.listservices
+---------------------------------
+.. automodule:: lostservice.handling.listservices
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: listServices and listServicesByLocation implementations.
 
 -----------------
 lostservice.model

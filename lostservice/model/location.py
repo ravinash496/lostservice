@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+.. currentmodule:: lostservice.model.location
+.. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
+
+Models for different types of locations.
+"""
+
 from enum import Enum
 
 
@@ -708,7 +715,3 @@ class Circle(Geodetic2D):
     @uom.setter
     def uom(self, value):
         self._uom = value
-
-
-
-

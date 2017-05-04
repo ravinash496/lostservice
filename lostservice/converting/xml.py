@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+.. currentmodule:: lostservice.converting.xml
+.. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
+
+Xml conversion classes.
+"""
+
 from lxml import etree
 
 from lostservice.converter import Converter

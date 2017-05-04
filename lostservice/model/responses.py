@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+.. currentmodule:: lostservice.model.responses
+.. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
+
+Models for different types of responses.
+"""
+
 
 class Response(object):
     """

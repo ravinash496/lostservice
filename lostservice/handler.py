@@ -7,6 +7,7 @@
 Base class for all handlers and common exceptions.
 """
 
+
 class Handler(object):
     """
     Base class for all types of handlers
