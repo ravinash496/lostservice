@@ -9,9 +9,9 @@ Welcome to lostservice's documentation!
 .. toctree::
    :glob:
    :maxdepth: 2
-   :caption: Articles:
 
-   articles/*
+   development
+   api
 
 Indices and tables
 ==================
