@@ -90,7 +90,7 @@ class XmlConverter(Converter):
 
 class CivicXmlConverter(XmlConverter):
     """
-    Implementation class for parsing civic addresses from XML.
+    Implementation class for converting civic addresses from/to XML.
     """
     def __init__(self):
         """
@@ -162,7 +162,7 @@ class CivicXmlConverter(XmlConverter):
 
 class PointXmlConverter(XmlConverter):
     """
-    Implementation class for parsing points from XML.
+    Implementation class for converting points from/to XML.
     """
     def __init__(self):
         """
@@ -206,7 +206,7 @@ class PointXmlConverter(XmlConverter):
 
 class CircleXmlConverter(XmlConverter):
     """
-    Implementation class for parsing circles from XML.
+    Implementation class for converting circles from/to XML.
     """
     def __init__(self):
         """
@@ -254,10 +254,9 @@ class CircleXmlConverter(XmlConverter):
         raise NotImplementedError('TODO: Implement formatting of circles.')
 
 
-
 class LocationXmlConverter(XmlConverter):
     """
-    Implementation class for parsing LoST location elements.
+    Implementation class for converting LoST location elements.
     """
     def __init__(self):
         """
@@ -315,9 +314,10 @@ class LocationXmlConverter(XmlConverter):
         """
         raise NotImplementedError('TODO: Implement formatting of locations.')
 
+
 class FindServiceXmlConverter(XmlConverter):
     """
-    Implementation class for parsing findService requests.
+    Implementation class for converting findService requests and responses.
     """
 
     def __init__(self):
@@ -351,6 +351,119 @@ class FindServiceXmlConverter(XmlConverter):
         request.service = root.find('{urn:ietf:params:xml:ns:lost1}service').text
 
         return request
+
+    def format(self, data):
+        """
+        Formats a findService LoST response.
+
+        :param data: The response to be formatted.
+        :type data: :py:class:`FindServiceResponse`
+        :return: The formatted output.
+        :rtype: :py:class:`_ElementTree`
+        """
+        raise NotImplementedError('TODO: Implement formatting of FindServiceResponses.')
+
+
+class ListServicesXmlConverter(XmlConverter):
+    """
+    Implementation class for converting listServices requests and responses.
+    """
+
+    def __init__(self):
+        """
+        Constructs a new ListServicesXmlConverter instance.
+        """
+        super(ListServicesXmlConverter, self).__init__()
+
+    def parse(self, data):
+        """
+        Parse a listServices LoST request.
+
+        :param data: The listServices request XML.
+        :type data: ``str`` or :py:class:`_ElementTree`
+        :return: A ListServicesRequest instance.
+        :rtype: :py:class:`ListServicesRequest`
+        """
+        raise NotImplementedError("Can't parse listServices requests just yet, come back later.")
+
+    def format(self, data):
+        """
+        Formats a listServices LoST response.
+
+        :param data: The response to be formatted.
+        :type data: :py:class:`ListServicesResponse`
+        :return: The formatted output.
+        :rtype: :py:class:`_ElementTree`
+        """
+        raise NotImplementedError('TODO: Implement formatting of ListServicesResponses.')
+
+
+class ListServicesByLocationXmlConverter(XmlConverter):
+    """
+    Implementation class for converting listServicesByLocation requests and responses.
+    """
+
+    def __init__(self):
+        """
+        Constructs a new ListServicesByLocationXmlConverter instance.
+        """
+        super(ListServicesByLocationXmlConverter, self).__init__()
+
+    def parse(self, data):
+        """
+        Parse a listServicesByLocation LoST request.
+
+        :param data: The listServicesByLocation request XML.
+        :type data: ``str`` or :py:class:`_ElementTree`
+        :return: A ListServicesByLocationRequest instance.
+        :rtype: :py:class:`ListServicesByLocationRequest`
+        """
+        raise NotImplementedError("Can't parse listServicesByLocation requests just yet, come back later.")
+
+    def format(self, data):
+        """
+        Formats a listServicesByLocation LoST response.
+
+        :param data: The response to be formatted.
+        :type data: :py:class:`ListServicesByLocationResponse`
+        :return: The formatted output.
+        :rtype: :py:class:`_ElementTree`
+        """
+        raise NotImplementedError('TODO: Implement formatting of ListServicesByLocationResponses.')
+
+
+class GetServiceBoundaryXmlConverter(XmlConverter):
+    """
+    Implementation class for converting getServiceBoundary requests and responses.
+    """
+
+    def __init__(self):
+        """
+        Constructs a new GetServiceBoundaryXmlConverter instance.
+        """
+        super(GetServiceBoundaryXmlConverter, self).__init__()
+
+    def parse(self, data):
+        """
+        Parse a getServiceBoundary LoST request.
+
+        :param data: The getServiceBoundary request XML.
+        :type data: ``str`` or :py:class:`_ElementTree`
+        :return: A GetServiceBoundaryRequest instance.
+        :rtype: :py:class:`GetServiceBoundaryRequest`
+        """
+        raise NotImplementedError("Can't parse getServiceBoundary requests just yet, come back later.")
+
+    def format(self, data):
+        """
+        Formats a getServiceBoundary LoST response.
+
+        :param data: The response to be formatted.
+        :type data: :py:class:`GetServiceBoundaryResponse`
+        :return: The formatted output.
+        :rtype: :py:class:`_ElementTree`
+        """
+        raise NotImplementedError('TODO: Implement formatting of GetServiceBoundaryResponses.')
 
 
 
