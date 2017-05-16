@@ -25,3 +25,6 @@ class PointTest(unittest.TestCase):
         self.assertEquals(result.latitude, 45.4524048105657)
         self.assertEquals(result.longitude, -68.5452615106889)
 
+
+if __name__ == '__main__':
+    unittest.main()

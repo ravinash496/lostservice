@@ -29,3 +29,7 @@ class CivicTest(unittest.TestCase):
         self.assertEquals(result.sts, 'Rd')
         self.assertEquals(result.hno, '5833')
         self.assertEquals(result.pc, '00135')
+
+
+if __name__ == '__main__':
+    unittest.main()

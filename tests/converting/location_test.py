@@ -50,3 +50,7 @@ class LocationTest(unittest.TestCase):
         self.assertEquals(result.geodetic2d.longitude, -68.4977255651657)
         self.assertEquals(result.geodetic2d.uom, 'urn:ogc:def:uom:EPSG::9001')
         self.assertEquals(result.geodetic2d.radius, '6105.41237061098')
+
+
+if __name__ == '__main__':
+    unittest.main()

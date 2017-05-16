@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{aa759e31-d908-4471-a123-8ce9a6ca8f9c}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>tests\config\config_test.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>MSBuild|lostservice|$(MSBuildProjectFullPath)</InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include=".gitignore" />
+    <Content Include="docs\make.bat" />
+    <Content Include="docs\source\api.rst" />
+    <Content Include="docs\source\development.rst" />
+    <Content Include="docs\source\development\env-setup.rst" />
+    <Content Include="docs\source\index.rst" />
+    <Content Include="lostservice\lostservice.ini" />
+    <Content Include="README.md" />
+    <Content Include="requirements.txt" />
+    <Content Include="tests\config\test.ini" />
+    <Content Include="tests\converting\basic_civic_address.xml" />
+    <Content Include="tests\converting\circle.xml" />
+    <Content Include="tests\converting\findService_circle.xml" />
+    <Content Include="tests\converting\findService_civic.xml" />
+    <Content Include="tests\converting\findService_point.xml" />
+    <Content Include="tests\converting\location_circle.xml" />
+    <Content Include="tests\converting\location_civic.xml" />
+    <Content Include="tests\converting\point.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="docs\source\conf.py" />
+    <Compile Include="lostservice\app.py" />
+    <Compile Include="lostservice\configuration.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="lostservice\converter.py" />
+    <Compile Include="lostservice\converting\xml.py" />
+    <Compile Include="lostservice\converting\__init__.py" />
+    <Compile Include="lostservice\handler.py" />
+    <Compile Include="lostservice\handling\findservice.py" />
+    <Compile Include="lostservice\handling\getserviceboundary.py" />
+    <Compile Include="lostservice\handling\listservices.py" />
+    <Compile Include="lostservice\handling\__init__.py" />
+    <Compile Include="lostservice\model\location.py" />
+    <Compile Include="lostservice\model\requests.py" />
+    <Compile Include="lostservice\model\responses.py" />
+    <Compile Include="lostservice\model\__init__.py" />
+    <Compile Include="lostservice\__init__.py" />
+    <Compile Include="tests\config\config_test.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\config\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\converting\circle_test.py" />
+    <Compile Include="tests\converting\civic_test.py" />
+    <Compile Include="tests\converting\findService_test.py" />
+    <Compile Include="tests\converting\location_test.py" />
+    <Compile Include="tests\converting\point_test.py" />
+    <Compile Include="tests\converting\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="tests\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="docs" />
+    <Folder Include="docs\source" />
+    <Folder Include="docs\source\development" />
+    <Folder Include="lostservice" />
+    <Folder Include="lostservice\converting" />
+    <Folder Include="lostservice\handling" />
+    <Folder Include="lostservice\model" />
+    <Folder Include="tests" />
+    <Folder Include="tests\converting\" />
+    <Folder Include="tests\config\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="lost-env\">
+      <Id>lostservice</Id>
+      <Description>lost-env (Python 3.6 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <Version>3.6</Version>
+      <Architecture>X64</Architecture>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+    </Interpreter>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>
