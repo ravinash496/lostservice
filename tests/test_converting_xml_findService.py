@@ -15,7 +15,7 @@ class FindServiceTest(unittest.TestCase):
         
         :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), 'findService_civic.xml')
+        xml_path = os.path.join(os.path.dirname(__file__), './converting/findService_civic.xml')
         doc = etree.parse(xml_path)
         root = doc.getroot()
 

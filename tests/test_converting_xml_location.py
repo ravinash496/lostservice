@@ -16,7 +16,7 @@ class LocationTest(unittest.TestCase):
         
         :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), 'location_civic.xml')
+        xml_path = os.path.join(os.path.dirname(__file__), './converting/location_civic.xml')
         doc = etree.parse(xml_path)
         root = doc.getroot()
         target = LocationXmlConverter()
@@ -38,7 +38,7 @@ class LocationTest(unittest.TestCase):
         
         :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), 'location_circle.xml')
+        xml_path = os.path.join(os.path.dirname(__file__), './converting/location_circle.xml')
         doc = etree.parse(xml_path)
         root = doc.getroot()
         target = LocationXmlConverter()

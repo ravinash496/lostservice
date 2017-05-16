@@ -8,16 +8,15 @@
 Configuration related classes and functions.
 """
 
+import os
 import configparser
 
-# This is the ID that identifies the default configuration.
-DEFAULT = "default"
 
 # This is the default configuration.
 _default = None
 
 
-def set(configuration):
+def set_config(configuration):
     """
     Set the default configuration object.
 
@@ -28,7 +27,7 @@ def set(configuration):
     _default = configuration
 
 
-def get():
+def get_config():
     """
     Get the configuration object.
 
@@ -55,28 +54,56 @@ class Configuration(object):
 
     """
     
-    def __init__(self, file):
+    def __init__(self, custom_config, default_config=None):
         """
         Constructor
 
-        :param file: The full path to the configuration (.ini) file.
-        :type str: ``str``
+        :param custom_config: The full path to the public/user/custom configuration (.ini) file.
+        :type custom_config: ``str``
+        :param default_config: The full path to the default configuration file.
+        :type default_config: ``str``
         """
         super(Configuration, self).__init__()
-        self._file = file
-        self._config_parser = configparser.ConfigParser()
-        self._config_parser.read(file)
+
+        self._custom_config = custom_config
+        self._default_config = default_config
+
+        if self._default_config is None:
+            # If the default config is not passed, we assume it's name and location
+            # to be <base config file name>.default.ini
+            self._default_config = os.path.splitext(self._custom_config)[0] + '.default.ini'
+
+        if not os.path.isfile(self._custom_config) \
+                or not os.path.isfile(self._custom_config):
+            raise ConfigurationException(
+                'One of custom ({0}) or default({1})'
+                'configuration files missing.'.format(self._custom_config, self._default_config))
+
+        self._custom_config_parser = configparser.ConfigParser()
+        self._custom_config_parser.read(self._custom_config)
+        self._default_config_parser = configparser.ConfigParser()
+        self._default_config_parser.read(self._default_config)
 
     @property
-    def file(self):
+    def custom_config_file(self):
         """
-        The configuration file path.
+        The custom configuration file path.
         
         :return: From where was the configuration read? (This is typically \
             a file path.
         :rtype: ``str``
         """
-        return self._file
+        return self._custom_config
+
+    @property
+    def default_config_file(self):
+        """
+        The default configuration file path.
+        
+        :return: The path to the default configuration file.
+        :rtype: ``str``
+        """
+        return self._default_config
 
     def get(self, section, option, as_object=False, required=True):
         """
@@ -98,25 +125,27 @@ class Configuration(object):
         :raise ConfigurationException: if the requested option is required but
             cannot be found
         """
-        # For starters, let's just try to get the value.
+        value = None
+
         try:
-            value = self._config_parser.get(section, option)
-        except configparser.NoOptionError as noerr:
-            # A NoOptionError means the option doesn't exist.
-            if not required:
-                return None
-            else:
-                raise ConfigurationException(
-                    'Missing configuration option: "{0}|{1}"'.format(section,
-                                                                     option))
-        except configparser.NoSectionError as ex:
-            if not required:
-                return None
-            else:
-                raise ConfigurationException(
-                    ('Could not read configuration option: "{0}|{1}" ' + \
-                     'because the "{0}" section is missing.').format(section, 
-                                                                     option))
+            opts_union = self.get_options(section)
+            found = option in opts_union
+        except ConfigurationException as ex:
+            found = False
+
+        if required and not found:
+            raise ConfigurationException(
+                'Option {0} not found not found..'.format(option))
+        elif not required and not found:
+            return None
+
+        # If we're here, we know the value is there somewhere, so now try to find it.
+        try:
+            value = self._custom_config_parser.get(section, option)
+        except(configparser.NoSectionError, configparser.NoOptionError) as ex:
+            # Okay, wasn't in the custom, must be in the default.
+            value = self._default_config_parser.get(section, option)
+
         # If the caller has asked to get the value as a Python object, evaluate
         # it now.
         if as_object:
@@ -133,7 +162,23 @@ class Configuration(object):
         :return: a list of defined options
         :rtype: ``list`` of ``str``
         """
-        return self._config_parser.options(section)
+        try:
+            cust_opts = self._custom_config_parser.options(section)
+        except configparser.NoSectionError as noerr:
+            # This is okay, we just need to look in the defaults.
+            cust_opts = []
+
+        try:
+            default_opts = self._default_config_parser.options(section)
+        except configparser.NoSectionError as noerr:
+            # This could still be okay, depends on above.
+            default_opts = []
+
+        if not cust_opts and not default_opts:
+            raise ConfigurationException(
+                'Config section {0} not found.'.format(section))
+
+        return list(set(cust_opts + default_opts))
 
     def get_sections(self):
         """
@@ -142,7 +187,7 @@ class Configuration(object):
         :return: the defined section names
         :rtype: ``list``
         """
-        return self._config_parser.sections()
+        return list(set(self._custom_config_parser.sections() + self._default_config_parser.sections()))
 
 
 

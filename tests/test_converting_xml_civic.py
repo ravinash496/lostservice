@@ -15,7 +15,7 @@ class CivicTest(unittest.TestCase):
         Basic test for civic address parsing.
         :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), 'basic_civic_address.xml')
+        xml_path = os.path.join(os.path.dirname(__file__), './converting/basic_civic_address.xml')
         doc = etree.parse(xml_path)
         root = doc.getroot()
 

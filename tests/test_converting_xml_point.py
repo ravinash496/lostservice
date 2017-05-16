@@ -15,7 +15,7 @@ class PointTest(unittest.TestCase):
         Basic test for point parsing.
         :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), 'point.xml')
+        xml_path = os.path.join(os.path.dirname(__file__), './converting/point.xml')
         doc = etree.parse(xml_path)
         root = doc.getroot()
 

@@ -15,7 +15,7 @@ class CircleTest(unittest.TestCase):
         Basic test for circle parsing.
         :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), 'circle.xml')
+        xml_path = os.path.join(os.path.dirname(__file__), './converting/circle.xml')
         doc = etree.parse(xml_path)
         root = doc.getroot()
         target = CircleXmlConverter()
