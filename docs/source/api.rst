@@ -27,6 +27,16 @@ lostservice.app
     :show-inheritance:
     :synopsis: lostservice entry point.
 
+-------------------------
+lostservice.configuration
+-------------------------
+.. automodule:: lostservice.configuration
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: configuration api
+
 ---------------------
 lostservice.converter
 ---------------------

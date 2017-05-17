@@ -12,6 +12,7 @@ Welcome to lostservice's documentation!
 
    development
    api
+   running
 
 Indices and tables
 ==================
