@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/SpatialRouter.LoSTService.iml" filepath="$PROJECT_DIR$/.idea/SpatialRouter.LoSTService.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/lostservice.iml" filepath="$PROJECT_DIR$/.idea/lostservice.iml" />
     </modules>
   </component>
 </project>

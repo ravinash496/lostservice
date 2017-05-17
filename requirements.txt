@@ -18,3 +18,8 @@ six==1.10.0
 snowballstemmer==1.2.1
 Sphinx==1.5.5
 SQLAlchemy==1.1.9
+lxml==3.7.3
+pip==9.0.1
+setuptools==35.0.0
+Shapely==1.5.17
+wheel==0.29.0
