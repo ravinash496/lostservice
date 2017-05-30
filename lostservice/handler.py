@@ -18,12 +18,14 @@ class Handler(object):
         """
         super(Handler, self).__init__()
 
-    def handle_request(self, request):
+    def handle_request(self, request, context):
         """
         Entry point for request handling.
         
         :param request: The request
         :type request: A subclass of :py:class:`Request`
+        :param context: The context.
+        :type context: :py:class:`lostservice.context.LostContext`
         :return: The response.
         :rtype: A subclass of :py:class:`Response`
         """

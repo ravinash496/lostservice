@@ -26,7 +26,9 @@ class FindServiceRequest(Request):
     """
     def __init__(self, location=None, service=None):
         """
-        :param content: 
+        Constructor
+
+
         """
         super(FindServiceRequest, self).__init__()
         self._location = location
@@ -63,8 +65,28 @@ class ListServicesRequest(Request):
     """
     listServices request class.
     """
-    def __init__(self):
+    def __init__(self, service=None):
+        """
+        Constructor
+
+        :param service: An options base service urn.
+        :type service: ``str``
+        """
         super(ListServicesRequest, self).__init__()
+        self._service = service
+
+    @property
+    def service(self):
+        """
+        The (optional) service type.
+
+        :rtype: ``str``
+        """
+        return self._service
+    
+    @service.setter
+    def service(self, value):
+        self._service = value
 
 
 class ListServicesByLocationRequest(Request):

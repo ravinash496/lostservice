@@ -7,30 +7,8 @@
 Handler(s) for listServices* requests
 """
 
+
 from lostservice.handler import Handler
-
-
-class ListServicesHandler(Handler):
-    """
-    Base listServices request handler.
-    """
-
-    def __init__(self):
-        """
-        Constructor
-        """
-        super(ListServicesHandler, self).__init__()
-
-    def handle_request(self, request):
-        """
-        Entry point for request handling.
-
-        :param request: The request
-        :type request: A subclass of :py:class:`ListServicesRequest`
-        :return: The response.
-        :rtype: A subclass of :py:class:`ListServicesResponse`
-        """
-        raise NotImplementedError("Can't handle listServices requests just yet, come back later.")
 
 
 class ListServicesByLocationHandler(Handler):
@@ -44,13 +22,26 @@ class ListServicesByLocationHandler(Handler):
         """
         super(ListServicesByLocationHandler, self).__init__()
 
-    def handle_request(self, request):
+    def handle_request(self, request, context):
         """
         Entry point for request handling.
 
         :param request: The request
         :type request: A subclass of :py:class:`ListServicesByLocationRequest`
+        :param context: The context.
+        :type context: :py:class:`lostservice.context.LostContext`
         :return: The response.
         :rtype: A subclass of :py:class:`ListServicesByLocationResponse`
         """
-        raise NotImplementedError("Can't handle listServicesByLocation requests just yet, come back later.")
+
+
+
+
+
+
+
+
+
+
+
+

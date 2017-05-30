@@ -34,9 +34,42 @@ class FindServiceResponse(Response):
 class ListServicesResponse(Response):
     """
     listServices response class.
+
+    :param services: A list of services.
+    :type services: A list of ``str``
+    :param path: The mapping resolution path.
+    :type path: A list of ``str``
     """
-    def __init__(self):
+    def __init__(self, services=None, path=None):
         super(ListServicesResponse, self).__init__()
+        self._services = services
+        self._path = path
+    
+    @property
+    def services(self):
+        """
+        The list of supported services.
+
+        :rtype: A list of ``str``
+        """
+        return self._services
+    
+    @services.setter
+    def services(self, value):
+        self._services = value
+    
+    @property
+    def path(self):
+        """
+        The mapping resolution path.
+
+        :rtype: A list of ``str``
+        """
+        return self._path
+    
+    @path.setter
+    def path(self, value):
+        self._path = value
 
 
 class ListServicesByLocationResponse(Response):

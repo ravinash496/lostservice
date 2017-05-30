@@ -76,7 +76,7 @@ class Configuration(object):
         if not os.path.isfile(self._custom_config) \
                 or not os.path.isfile(self._custom_config):
             raise ConfigurationException(
-                'One of custom ({0}) or default({1})'
+                'One of custom ({0}) or default({1}) '
                 'configuration files missing.'.format(self._custom_config, self._default_config))
 
         self._custom_config_parser = configparser.ConfigParser()
@@ -188,6 +188,27 @@ class Configuration(object):
         :rtype: ``list``
         """
         return list(set(self._custom_config_parser.sections() + self._default_config_parser.sections()))
+    
+    def set_option(self, section, option, value):
+        """
+        Sets an option on a given section with the given value.  
+        This value will not be persisted but will remain in effect as long
+        as the application is running.  If the given section does not exist,
+        it will be created.
+
+
+        :param section: The section in which to put the option.
+        :type section: ``str``
+        :param option: The name of the option.
+        :type option: ``str``
+        :param value: The value to set for the option.
+        :type value: ``str``
+        """
+        if section not in self.get_sections():
+            self._custom_config_parser.add_section(section)
+        
+        self._custom_config_parser.set(section, option, value)
+
 
 
 
