@@ -47,8 +47,8 @@ class ListServicesHandler(Handler):
             filtered = filter(lambda s: root_service in s, service_list)
             service_list = filtered
 
-        response = responses.ListServicesResponse(
-            service_list, context.configuration.get('Service', 'source_uri', as_object=False, required=False))
+        path = context.configuration.get('Service', 'source_uri', as_object=False, required=False)
+        response = responses.ListServicesResponse(service_list, [path])
 
         return response
 
