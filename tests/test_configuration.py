@@ -21,7 +21,7 @@ class ConfigurationTest(unittest.TestCase):
 
     def test_init(self):
         self.assertEqual(self._custom_ini_file, self._config.custom_config_file)
-        self.assertEquals(self._default_ini_file, self._config.default_config_file)
+        self.assertEqual(self._default_ini_file, self._config.default_config_file)
 
     def test_global(self):
         globalconfig.set_config(self._config)
@@ -29,7 +29,7 @@ class ConfigurationTest(unittest.TestCase):
         self.assertTrue(theglobalconfig is self._config)
 
     def test_get_sections(self):
-        expected = ['SectionOne', 'Section Two', 'Section2', 'Section3', 'Section4']
+        expected = ['Database', 'SectionOne', 'Section Two', 'Section2', 'Section3', 'Section4']
         actual = self._config.get_sections()
         expected.sort()
         actual.sort()
@@ -75,6 +75,16 @@ class ConfigurationTest(unittest.TestCase):
         actual = self._config.get('Section Two', 'some_values', as_object=True)
         self.assertDictEqual(expected, actual)
 
+    def test_set_new_section(self):
+        self._config.set_option('section', 'option', 'value')
+        self.assertTrue('section' in self._config.get_sections())
+        self.assertTrue('option' in self._config.get_options('section'))
+        self.assertEqual('value', self._config.get('section', 'option'))
+
+    def test_set_existing_section(self):
+        self._config.set_option('SectionOne', 'optionx', 'valuex')
+        self.assertTrue('optionx' in self._config.get_options('SectionOne'))
+        self.assertEqual('valuex', self._config.get('SectionOne', 'optionx'))
 
         
 if __name__ == '__main__':

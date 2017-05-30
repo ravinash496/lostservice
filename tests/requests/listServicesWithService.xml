@@ -1,0 +1,3 @@
+<listServices xmlns="urn:ietf:params:xml:ns:lost1">
+    <service>urn:nena:service:sos</service>
+</listServices>

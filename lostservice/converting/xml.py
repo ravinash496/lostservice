@@ -9,13 +9,14 @@ Xml conversion classes.
 """
 
 from lxml import etree
-
+import lxml
 from lostservice.converter import Converter
 from lostservice.model.location import CivicAddress
 from lostservice.model.location import Circle
 from lostservice.model.location import Point
 from lostservice.model.location import Location
 from lostservice.model.requests import FindServiceRequest
+from lostservice.model.requests import ListServicesRequest
 
 LOST_PREFIX = 'lost'
 LOST_URN = 'urn:ietf:params:xml:ns:lost1'
@@ -335,12 +336,7 @@ class FindServiceXmlConverter(XmlConverter):
         :return: A FindServiceRequest instance.
         :rtype: :py:class:`FindServiceRequest`
         """
-        root = None
-        try:
-            doc = etree.fromstring(data)
-            root = doc.getroot()
-        except:
-            root = data
+        root = self.get_root(data)
 
         request = FindServiceRequest()
 
@@ -384,7 +380,14 @@ class ListServicesXmlConverter(XmlConverter):
         :return: A ListServicesRequest instance.
         :rtype: :py:class:`ListServicesRequest`
         """
-        raise NotImplementedError("Can't parse listServices requests just yet, come back later.")
+        root = self.get_root(data)
+        request = ListServicesRequest()
+        try:
+            request.service = root.find('{urn:ietf:params:xml:ns:lost1}service').text
+        except:
+            request.service = None
+
+        return request
 
     def format(self, data):
         """
@@ -395,7 +398,19 @@ class ListServicesXmlConverter(XmlConverter):
         :return: The formatted output.
         :rtype: :py:class:`_ElementTree`
         """
-        raise NotImplementedError('TODO: Implement formatting of ListServicesResponses.')
+        # create the root element of the xml response.
+        xml_response = lxml.etree.Element('listServicesResponse', nsmap={None: LOST_URN})
+        # add the services element, filling in with the list of services in the reponse.
+        services_element = lxml.etree.SubElement(xml_response, 'serviceList')
+        services_element.text = ' '.join(data.services)
+        # add the path element 
+        path_element = lxml.etree.SubElement(xml_response, 'path')
+        # not generate a 'via' element for each source.
+        if data.path is not None:
+            for a_path in data.path:
+                via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
+        
+        return xml_response
 
 
 class ListServicesByLocationXmlConverter(XmlConverter):

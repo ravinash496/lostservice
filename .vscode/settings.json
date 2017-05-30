@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "${workspaceRoot}/lost-env/bin/python",
+    "python.unitTest.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.unitTest.unittestEnabled": true
+}

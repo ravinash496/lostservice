@@ -8,34 +8,43 @@
 The main entry point for ECRF/LVF services.
 """
 
+import os
 import argparse
-import configparser
 import logging
-from joblib import Parallel, delayed
-from lostservice.converter import ParseException, FormatException
-
+from lxml import etree
+import lostservice.context as context
+import lostservice.queryrunner as queryrunner
 
 class LostApplication(object):
     """
     The core LoST Application class.
     
     """
-    def __init__(self, config):
+    def __init__(self, ctx=None):
         """
         Constructor
         
-        :param config: The configuration information for the app.
-        :type config: ``ConfigParser``
+        :param context: Context information.
+        :type context: :py:class:`lostservice.context.LostContext`
         """
         super(LostApplication, self).__init__()
-        self._config = config
 
+        # The context can either be passed in or built from
+        # the environment.
+        if ctx is not None:
+            self._context = ctx
+        else:
+            # The context can take params to the constructor, but we're going to
+            # assume it can pull from the environment for now.
+            self._context = context.LostContext()
+
+        # Set up the base logging, more will come from config later.
         self._logger = logging.getLogger('lostservice.app.LostApplication')
         self._logger.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        filehandler = logging.FileHandler(self._config.get('Logging', 'LogFile'))
+        filehandler = logging.FileHandler(self._context.configuration.get('Logging', 'logfile'))
         filehandler.setLevel(logging.DEBUG)
         filehandler.setFormatter(formatter)
 
@@ -46,13 +55,64 @@ class LostApplication(object):
         self._logger.addHandler(filehandler)
         self._logger.addHandler(consolehandler)
 
-        self._converters = self._config.get('Converters', 'ConverterClasses').split(',')
-        self._handlers = self._config.get('Handlers', 'HandlerClasses').split(',')
+    def _get_class(self, classname):
+        """
+        Creates an instance of the class with the given name.
+        Credit to 
+        https://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
+        
+        :param classname: The fully qualified name of the class. 
+        :return: A instance of that class.
+        """
+        parts = classname.split('.')
+        root_module = '.'.join(parts[:-1])
+        m = __import__(root_module)
+        for comp in parts[1:]:
+            m = getattr(m, comp)
+        return m
+
+    def _build_queryrunner(self, query_name):
+        """
+        Builds a query runner object for the given query.
+        
+        :param query_name: The name of the query to be executed.
+        :return: :py:class:`lostservice.app.QueryRunner`
+        """
+        base_name = query_name[0].upper() + query_name[1:]
+
+        # All of the classes for converters and handlers are in known packages
+        # and follow a naming convention of the form [lost request name]XmlConverter
+        # and [lost request name]Handler respectively.  Given the name of the query,
+        # we can create instances of those classes dynamically.
+        converter_name = 'lostservice.converting.xml.{0}XmlConverter'.format(base_name)
+        handler_name = 'lostservice.handling.core.{0}Handler'.format(base_name)
+
+        # Get a reference to the converter class and create an instance.
+        ConverterClass = self._get_class(converter_name)
+        converter = ConverterClass()
+
+        # Get a reference to the handler class and create an instance.
+        HandlerClass = self._get_class(handler_name)
+        handler = HandlerClass()
+
+        runner = queryrunner.QueryRunner(self._context, converter, handler)
+
+        return runner
+
+    def _execute_internal(self, queryrunner, data):
+        """
+        Executes a query by calling the query runner.
+        
+        :param queryrunner: A queryrunner set up for the given query. 
+        :param data: The query as and element tree.
+        :return: The query response as an element tree.
+        """
+        return queryrunner.run(data)
 
     def execute_query(self, data):
         """
         Executes a given LoST query.
-        
+
         :param data: The LoST query request XML.
         :type data: ``str``
         :return: The LoST query response XML.
@@ -61,13 +121,20 @@ class LostApplication(object):
         self._logger.info('Starting LoST query execution . . .')
         self._logger.debug(data)
 
-        response = None
+        # Here's what's gonna happen . . .
+        # 1. Parse the request and pull out the root element.
+        parsed_request = etree.fromstring(data)
+        qname = etree.QName(parsed_request)
+        query_name = qname.localname
 
-        # convs = Parallel(n_jobs=4)(delayed(_get_class)(name) for name in self._converters)
-        # print(convs)
+        # 2. call _build_queryrunner to get the runner.
+        runner = self._build_queryrunner(query_name)
 
-        model = Parallel(n_jobs=4)(delayed(_try_parse_request)(name, data) for name in self._converters)
-        print(model)
+        # 3. call _execute_internal to process the request.
+        parsed_response = self._execute_internal(runner, parsed_request)
+
+        # 4. serialize the xml back out into a string and return it.
+        response = etree.tostring(parsed_response)
 
         self._logger.debug(response)
         self._logger.info('Finished LoST query execution . . .')
@@ -75,116 +142,24 @@ class LostApplication(object):
         return response
 
 
-def _try_parse_request(convertername, data):
-    """
-    Wrapper for trying request parsing.
-    
-    :param convertername: The name of the converter class to try.
-    :type convertername: ``str``
-    :param data: The data to parse.
-    :type data: ``str``
-    :return: The parsed request.
-    :rtype: A subclass of :py:class:`lostapplication.model.requests.Request`
-    """
-    retval = None
-    try:
-        # self._logger.debug('Attempting parse with {convertername}', convertername)
-
-        converterclass = _get_class(convertername)
-        converter = converterclass()
-        if converter is not None:
-            retval = converter.parse(data)
-    except ParseException:
-        # self._logger.error('Parse failed')
-        pass
-
-    return retval
-
-
-def _try_format_response(convertername, data):
-    """
-    Wrapper for trying to format a response.
-
-    :param convertername: The name of the converter class to try.
-    :type convertername: ``str``
-    :param data: The data to format.
-    :type data: A subclass of :py:class:`lostapplication.model.responses.Response`
-    :return: The formatted response.
-    :rtype: ``str``
-    """
-    retval = None
-    try:
-        # self._logger.debug('Attempting format with {convertername}', convertername)
-
-        converterclass = _get_class(convertername)
-        converter = converterclass()
-        if converter is not None:
-            retval = converter.parse(data)
-    except FormatException:
-        # self._logger.error('Format failed')
-        pass
-
-    return retval
-
-
-def _get_class(name):
-    """
-    Creates in instance of the named class.
-
-    :param name: The name of the class to create. 
-    :type name: ``str``
-    :return: An new instance of the named class.
-    """
-    # http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
-    parts = name.split('.')
-    themodule = ".".join(parts[:-1])
-    m = __import__(themodule)
-    for comp in parts[1:]:
-        m = getattr(m, comp)
-    return m
-
-
-def configure(config_file):
-    """
-    Load up configuration information.
-    
-    :return: A dictionary of configuration options.
-    :rtype: ``ConfigParser``
-    """
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    return config
-
-
-def run(config, request):
-    """
-    Run the app to process a request.
-    
-    :param config: The configuration information for the application.
-    :type config: ``ConfigParser``
-    :param request: The request to process.
-    :type request: ``str``
-    :return: None
-    :rtype: None
-    """
-    # Create the service object that will actually do the work of the application. (This could be done in a web app,
-    # or from a command line app, etc.)
-    lost_app = LostApplication(config)
-    response = lost_app.execute_query(request)
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', help='the path to the configuration file.')
+    # parser.add_argument('config', help='the path to the configuration file.')
     parser.add_argument('request', help='the path to a file containing a LoST request')
     args = parser.parse_args()
 
-    _request_data = None
-    with open(args.request, 'r') as request_file:
-        _request_data = request_file.read()
+    custom_ini_file = os.path.join(os.path.dirname(__file__), './lostservice.ini')
+    os.environ[context._CONFIGFILE] = custom_ini_file
 
-    _config = configure(args.config)
-    run(_config, _request_data)
+    request = None
+    with open(args.request, 'r') as request_file:
+        request = request_file.read()
+
+    lost_app = LostApplication()
+    response = lost_app.execute_query(request)
+    print(response)
+    os.environ.pop(context._CONFIGFILE)
+
 
 
