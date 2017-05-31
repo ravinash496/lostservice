@@ -53,8 +53,75 @@ class ListServicesHandler(Handler):
         return response
 
 
+class FindServiceHandler(Handler):
+    """
+    Base findService request handler.
+    """
+
+    def __init__(self):
+        """
+        Constructor
+        """
+        super(FindServiceHandler, self).__init__()
+
+    def handle_request(self, request):
+        """
+        Entry point for request handling.
+
+        :param request: The request
+        :type request: A subclass of :py:class:`FindServiceRequest`
+        :return: The response.
+        :rtype: A subclass of :py:class:`FindServiceResponse`
+        """
+        raise NotImplementedError("Can't handle findService requests just yet, come back later.")
 
 
+class GetServiceBoundaryHandler(Handler):
+    """
+    Base getServiceBoundary request handler.
+    """
+
+    def __init__(self):
+        """
+        Constructor
+        """
+        super(GetServiceBoundaryHandler, self).__init__()
+
+    def handle_request(self, request):
+        """
+        Entry point for request handling.
+
+        :param request: The request
+        :type request: A subclass of :py:class:`GetServiceBoundaryRequest`
+        :return: The response.
+        :rtype: A subclass of :py:class:`GetServiceBoundaryResponse`
+        """
+        raise NotImplementedError("Can't handle getServiceBoundary requests just yet, come back later.")
+
+
+class ListServicesByLocationHandler(Handler):
+    """
+    Base listServicesByLocation request handler.
+    """
+
+    def __init__(self):
+        """
+        Constructor
+        """
+        super(ListServicesByLocationHandler, self).__init__()
+
+    def handle_request(self, request, context):
+        """
+        Entry point for request handling.
+
+        :param request: The request
+        :type request: A subclass of :py:class:`ListServicesByLocationRequest`
+        :param context: The context.
+        :type context: :py:class:`lostservice.context.LostContext`
+        :return: The response.
+        :rtype: A subclass of :py:class:`ListServicesByLocationResponse`
+        """
+        raise NotImplementedError("Can't handle getServicesByLocation requests just yet, come back later.")
 
 
 
