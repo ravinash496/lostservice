@@ -21,7 +21,14 @@ class FindServiceHandler(Handler):
         """
         super(FindServiceHandler, self).__init__()
 
-    def handle_request(self, request):
+    def handle_request(self, request, context):
+        """
+        
+        :param request: 
+        :param context: The context.
+        :type context: :py:class:`lostservice.context.LostContext`
+        :return: 
+        """
         """
         Entry point for request handling.
 
@@ -30,4 +37,4 @@ class FindServiceHandler(Handler):
         :return: The response.
         :rtype: A subclass of :py:class:`FindServiceResponse`
         """
-        raise NotImplementedError("Can't handle findService requests just yet, come back later.")
+        # raise NotImplementedError("Can't handle findService requests just yet, come back later.")
