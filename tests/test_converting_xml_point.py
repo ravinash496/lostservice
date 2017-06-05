@@ -13,11 +13,14 @@ class PointTest(unittest.TestCase):
     def test_basic_point(self):
         """
         Basic test for point parsing.
-        :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), './converting/point.xml')
-        doc = etree.parse(xml_path)
-        root = doc.getroot()
+
+        xml = """
+            <gml:Point xmlns:gml="http://www.opengis.net/gml" xmlns="urn:ietf:params:xml:ns:lost1" srsName="urn:ogc:def:crs:EPSG::4326">
+                <gml:pos>45.4524048105657 -68.5452615106889</gml:pos>
+            </gml:Point>
+            """
+        root = etree.fromstring(xml)
 
         target = PointXmlConverter()
         result = target.parse(root)
