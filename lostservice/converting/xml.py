@@ -363,7 +363,7 @@ class FindServiceXmlConverter(XmlConverter):
         # Add mapping sub element
         mapping = lxml.etree.SubElement(xml_response, 'mapping', attrib={'expires': 'NO-CACHE', 'lastUpdated': '', 'source':'', 'sourceId':''})
 
-        # add the displayname, serviceurn, routeuri, servicenum
+        # add the displayname, serviceurn, routeuri, servicenum to mapping
         services_element = lxml.etree.SubElement(mapping, 'displayName')
         services_element.text = data.displayname
 

@@ -109,7 +109,7 @@ class FindServiceHandler(Handler):
             routeuri = row['routeuri']
             servicenum = row['servicenum']
 
-
+        results.close()
         path = context.configuration.get('Service', 'source_uri', as_object=False, required=False)
 
         response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path])
