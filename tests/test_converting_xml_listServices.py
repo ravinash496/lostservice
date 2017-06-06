@@ -45,8 +45,7 @@ class TestListServicesConverting(unittest.TestCase):
         path = result.xpath('path', namespaces={'lost': LOST_URN})
         self.assertIsNotNone(path)
         self.assertEqual(len(path[0]), 2)
-        
-    
+
     def test_format_response_nopath(self):
         response = ListServicesResponse()
         response.services = ['service1', 'service2', 'service3']
@@ -56,7 +55,6 @@ class TestListServicesConverting(unittest.TestCase):
         services = result.xpath('./serviceList/text()', namespaces={'lost': LOST_URN})
         self.assertIsNotNone(services)
         self.assertEqual(services, ['service1 service2 service3'])
-
 
 
 if __name__ == '__main__':

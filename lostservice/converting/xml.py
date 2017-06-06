@@ -276,7 +276,8 @@ class LocationXmlConverter(XmlConverter):
         """
         retval = None
         parser = None
-        if 'Point' == data.tag:
+        qname = etree.QName(data)
+        if 'Point' == qname.localname:
             parser = PointXmlConverter()
         elif 'Circle':
             parser = CircleXmlConverter()
@@ -297,10 +298,10 @@ class LocationXmlConverter(XmlConverter):
         location.profile = data.attrib['profile']
 
         if 'geodetic-2d' == location.profile:
-            location.geodetic2d = self._parse_geodetic(data[0])
+            location.location = self._parse_geodetic(data[0])
         else:
             civic_parser = CivicXmlConverter()
-            location.civic_address = civic_parser.parse(data[0])
+            location.location = civic_parser.parse(data[0])
 
         return location
 

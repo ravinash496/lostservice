@@ -37,6 +37,16 @@ lostservice.configuration
     :show-inheritance:
     :synopsis: configuration api
 
+-------------------------
+lostservice.context
+-------------------------
+.. automodule:: lostservice.context
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: context api for services
+
 ---------------------
 lostservice.converter
 ---------------------
@@ -67,6 +77,36 @@ lostservice.converting.xml
     :show-inheritance:
     :synopsis: xml message conversion.
 
+--------------------------
+lostservice.db
+--------------------------
+.. automodule:: lostservice.db
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: db access classes and functions.
+
+--------------------------
+lostservice.db.utilities
+--------------------------
+.. automodule:: lostservice.db.utilities
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: db utility functions.
+
+--------------------------
+lostservice.db.spatial
+--------------------------
+.. automodule:: lostservice.db.spatial
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: spatial query functions.
+
 -------------------
 lostservice.handler
 -------------------
@@ -88,34 +128,15 @@ lostservice.handling
     :synopsis: package for handling implementations.
 
 --------------------------------
-lostservice.handling.findservice
+lostservice.handling.core
 --------------------------------
-.. automodule:: lostservice.handling.findservice
+.. automodule:: lostservice.handling.core
     :members:
     :undoc-members:
     :inherited-members:
     :show-inheritance:
-    :synopsis: findService implementation.
+    :synopsis: Entry point classes for the various operations.
 
----------------------------------------
-lostservice.handling.getserviceboundary
----------------------------------------
-.. automodule:: lostservice.handling.getserviceboundary
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance:
-    :synopsis: getServiceBoundary implementation.
-
----------------------------------
-lostservice.handling.listservices
----------------------------------
-.. automodule:: lostservice.handling.listservices
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance:
-    :synopsis: listServices and listServicesByLocation implementations.
 
 -----------------
 lostservice.model
@@ -156,3 +177,13 @@ lostservice.model.responses
     :inherited-members:
     :show-inheritance:
     :synopsis: lostservice response model objects.
+
+---------------------------
+lostservice.queryrunner
+---------------------------
+.. automodule:: lostservice.queryrunner
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+    :synopsis: coordinates calls to the various objects that will service queries.

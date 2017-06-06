@@ -15,9 +15,21 @@ class CivicTest(unittest.TestCase):
         Basic test for civic address parsing.
         :return: 
         """
-        xml_path = os.path.join(os.path.dirname(__file__), './converting/basic_civic_address.xml')
-        doc = etree.parse(xml_path)
-        root = doc.getroot()
+
+        xml = """
+            <civ:civicAddress xmlns:civ="urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr">
+                <civ:country>US</civ:country>
+                <civ:A1>ME</civ:A1>
+                <civ:A2>Piscataquis</civ:A2>
+                <civ:A3>T3 R11 Wels</civ:A3>
+                <civ:RD>Golden</civ:RD>
+                <civ:STS>Rd</civ:STS>
+                <civ:HNO>5833</civ:HNO>
+                <civ:PC>00135</civ:PC>
+            </civ:civicAddress>
+            """
+
+        root = etree.fromstring(xml)
 
         target = CivicXmlConverter()
         result = target.parse(root)

@@ -40,7 +40,7 @@ def _get_serviceurn(tablename, engine):
     urn = None
     try:
         result = None
-        tbl_metadata = MetaData(bind=engine, schema='public')
+        tbl_metadata = MetaData(bind=engine)
         esb_table = Table(tablename, tbl_metadata, autoload=True)
 
         q = select([esb_table.c.serviceurn]).distinct()
@@ -67,8 +67,7 @@ def get_urn_table_mappings(engine):
 
     :param engine: An instance of the database engine.
     :type engine:  :py:class:`sqlalchemy.engine.Engine`
-    :return: A dictionary containing the service URNs as keys and associated
-    table names as values
+    :return: A dictionary containing the service URNs as keys and associated table names as values
     :rtype: ``dict``
     """
     mappings = {}
