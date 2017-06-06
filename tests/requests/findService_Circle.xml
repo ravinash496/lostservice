@@ -5,5 +5,5 @@
          <gs:radius uom="urn:ogc:def:uom:EPSG::9001">6105.41237061098</gs:radius>
       </gs:Circle>
    </location>
-   <service>urn:service:sos</service>
+   <service>urn:nena:service:sos</service>
 </findService>
