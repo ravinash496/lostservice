@@ -51,6 +51,7 @@ def _execute_query(engine, query):
             for row in result:
                 row_copy = dict(zip(row.keys(), row))
                 retval.append(row_copy)
+            result.close()
 
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -259,7 +260,7 @@ def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_tab
     """
 
     # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
+    trimmed_srid = int(srid.split('::')[1])
 
     # Get a version of the circle we can use.
     wkb_circle = _transform_circle(x, y, trimmed_srid, radius, uom)

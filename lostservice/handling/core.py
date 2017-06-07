@@ -8,10 +8,14 @@ Core handler implementation classes.
 """
 
 from sqlalchemy import create_engine
+
+
 from lostservice.db.utilities import get_urn_table_mappings
 from lostservice.handler import Handler
 import lostservice.model.responses as responses
 import lostservice.db.spatial as spatial
+from lostservice.model.location import Circle
+from lostservice.model.location import Point
 
 
 class ListServicesHandler(Handler):
@@ -48,10 +52,12 @@ class ListServicesHandler(Handler):
             filtered = filter(lambda s: root_service in s, service_list)
             service_list = filtered
 
+
         path = context.configuration.get('Service', 'source_uri', as_object=False, required=False)
         response = responses.ListServicesResponse(service_list, [path])
 
         return response
+
 
 
 class FindServiceHandler(Handler):
@@ -67,14 +73,15 @@ class FindServiceHandler(Handler):
 
     def handle_request(self, request, context):
         """
-        Entry point for request handling.
+             Entry point for request handling.
 
-        :param request: The request
-        :type request: A subclass of :py:class:`FindServiceRequest`
-        :return: The response.
-        :rtype: A subclass of :py:class:`FindServiceResponse`
-        """
-        # Create an instane of the SQLAlchemy engine from which connections will be created.
+             :param request: The request
+             :type request: A subclass of :py:class:`FindServiceRequest`
+             :param context: The context.
+             :type context: :py:class:`lostservice.context.LostContext`
+             :return: The response.
+             :rtype: A subclass of :py:class:`FindServiceResponse`
+             """
         engine = create_engine(context.get_db_connection_string())
 
         # Get the table mappings, this should come from cache eventually.
@@ -83,17 +90,32 @@ class FindServiceHandler(Handler):
         # From the mappings, look up the table name from the incoming service urn.
         esb_table = mappings[request.service]
 
-        result = spatial.get_containing_boundary_for_point(
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            esb_table, engine)
+        if type(request.location.location) is Circle:
+            results = spatial.get_intersecting_boundaries_for_circle(request.location.location.longitude,
+                                                                     request.location.location.latitude,
+                                                                     request.location.location.spatial_ref,
+                                                                     float(request.location.location.radius),
+                                                                     request.location.location.uom, esb_table, engine)
+        elif type(request.location.location) is Point:
+            results = spatial.get_containing_boundary_for_point(
+                request.location.location.longitude,
+                request.location.location.latitude,
+                request.location.location.spatial_ref,
+                esb_table, engine)
 
-        response = responses.FindServiceResponse()
 
-        # TODO - Fill out the FindServiceResponse object with information from the
-        # TODO - result above.
+        for row in results:
+            displayname = row['displayname']
+            serviceurn = row['serviceurn']
+            routeuri = row['routeuri']
+            servicenum = row['servicenum']
 
+        path = context.configuration.get('Service', 'source_uri', as_object=False, required=False)
+
+        # The location used in the request (Optional). Get this from the request location's id.
+        locationUsed = request.location.id
+
+        response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path], [locationUsed])
         return response
 
 
@@ -143,6 +165,7 @@ class ListServicesByLocationHandler(Handler):
         :rtype: A subclass of :py:class:`ListServicesByLocationResponse`
         """
         raise NotImplementedError("Can't handle getServicesByLocation requests just yet, come back later.")
+
 
 
 

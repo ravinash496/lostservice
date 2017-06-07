@@ -358,7 +358,46 @@ class FindServiceXmlConverter(XmlConverter):
         :return: The formatted output.
         :rtype: :py:class:`_ElementTree`
         """
-        raise NotImplementedError('TODO: Implement formatting of FindServiceResponses.')
+
+        # create the root element of the xml response.
+        xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN})
+        # Add mapping sub element
+        mapping = lxml.etree.SubElement(xml_response, 'mapping', attrib={'expires': 'NO-CACHE', 'lastUpdated': '', 'source':'', 'sourceId':''})
+
+        # add the displayname, serviceurn, routeuri, servicenum to mapping
+        services_element = lxml.etree.SubElement(mapping, 'displayName')
+        services_element.text = data.displayname
+
+        services_element = lxml.etree.SubElement(mapping, 'service')
+        services_element.text = data.serviceurn
+
+        services_element = lxml.etree.SubElement(mapping, 'uri')
+        services_element.text = data.routeuri
+
+        services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
+        services_element.text = data.servicenum
+
+        # TODO serviceBoundaryReference- does order matter?
+        # services_element = lxml.etree.SubElement(mapping, 'serviceBoundaryReference')
+        # services_element.text = data.servicenum
+
+
+        # add the path element
+        path_element = lxml.etree.SubElement(xml_response, 'path')
+
+        # not generate a 'via' element for each source.
+        if data.path is not None:
+            for a_path in data.path:
+                via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
+
+
+        services_element = lxml.etree.SubElement(xml_response, 'locationUsed')
+        services_element.text = ' '.join(data.locationused)
+
+
+        return xml_response
+
+        # raise NotImplementedError('TODO: Implement formatting of FindServiceResponses.')
 
 
 class ListServicesXmlConverter(XmlConverter):

@@ -30,7 +30,7 @@ class FindServiceTest(unittest.TestCase):
                         <civ:PC>00135</civ:PC>
                     </civ:civicAddress>
                 </location>
-                <service>urn:service:sos</service>
+                <service>urn:nena:service:sos</service>
             </findService>
             """
 

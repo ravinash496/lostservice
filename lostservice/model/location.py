@@ -40,8 +40,9 @@ class Location(object):
     @property
     def id(self):
         """
-        The location id.
-        
+        The location used in the request (Optional).
+        Get this from the request location's id.
+        This is helpful for the client so it knows which location it passed in acutally created the result.
         :rtype: ``str``
         """
         return self._id
