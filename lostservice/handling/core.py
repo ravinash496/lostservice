@@ -112,7 +112,10 @@ class FindServiceHandler(Handler):
 
         path = context.configuration.get('Service', 'source_uri', as_object=False, required=False)
 
-        response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path])
+        # The location used in the request (Optional). Get this from the request location's id.
+        locationUsed = request.location.id
+
+        response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path], [locationUsed])
         return response
 
 

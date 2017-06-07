@@ -104,7 +104,9 @@ class FindServiceResponse(Response):
     @property
     def locationused(self):
         """
-        The locationUsed value.
+        The location used in the request (Optional).
+        Get this from the request location's id.
+        This is helpful for the client so it knows which location it passed in acutally created the result.
 
         :rtype: A GUID
         """

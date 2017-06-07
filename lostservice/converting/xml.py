@@ -390,9 +390,9 @@ class FindServiceXmlConverter(XmlConverter):
             for a_path in data.path:
                 via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
 
-        # TODO locationUsed
-        # services_element = lxml.etree.SubElement(xml_response, 'locationUsed')
-        # services_element.text = ' '.join(data.servicenum)
+
+        services_element = lxml.etree.SubElement(xml_response, 'locationUsed')
+        services_element.text = ' '.join(data.locationused)
 
 
         return xml_response
