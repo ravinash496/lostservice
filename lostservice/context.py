@@ -10,6 +10,7 @@ Provides functions and classes for contextual data required for processing.
 
 import lostservice.configuration as configuration
 import os
+from enum import Enum
 
 
 _DBHOSTNAME = 'DBHOSTNAME'
@@ -20,6 +21,9 @@ _DBPASSWORD = 'DBPASSWORD'
 _CONFIGFILE = 'CONFIGFILE'
 _LOGFILE = 'LOGFILE'
 _SOURCE_URI = 'SOURCE_URI'
+_LAST_UPDATE_FIELD = 'LAST_UPDATE_FIELD'
+_SERVICE_EXPIRES_POLICY = 'SERVICE_EXPIRES_POLICY'
+_SERVICE_EXPIRES_TIMESPAN = 'SERVIC_EXPIRES_TIMESPAN'
 
 
 class ContextException(Exception):
@@ -124,6 +128,19 @@ class LostContext(object):
         if source_uri is not None:
             self.configuration.set_option('Service', 'source_uri', source_uri)
 
+        last_update_field = os.getenv(_LAST_UPDATE_FIELD)
+        if last_update_field is not None:
+            self.configuration.set_option('Service', 'last_update_field', last_update_field)
+
+        service_expires_policy = os.getenv(_SERVICE_EXPIRES_POLICY)
+        if service_expires_policy is not None:
+            self.configuration.set_option('Service', 'service_expires_policy', service_expires_policy)
+
+        service_expires_timespan = os.getenv(_SERVICE_EXPIRES_TIMESPAN)
+        if service_expires_timespan is not None:
+            self.configuration.set_option('Service', 'service_expires_timespan', service_expires_timespan)
+
+
     def _rebuild_db_connection_string(self):
         """
         Recreates the database connection string from configuration.
@@ -152,5 +169,8 @@ class LostContext(object):
         return self._db_connection_string
 
 
-
+class ServiceExpiresPolicyEnum(Enum):
+    NoCache = 1
+    NoExpiration = 2
+    TimeSpan = 3
 

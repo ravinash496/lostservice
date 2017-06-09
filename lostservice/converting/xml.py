@@ -362,7 +362,9 @@ class FindServiceXmlConverter(XmlConverter):
         # create the root element of the xml response.
         xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN})
         # Add mapping sub element
-        mapping = lxml.etree.SubElement(xml_response, 'mapping', attrib={'expires': 'NO-CACHE', 'lastUpdated': '', 'source':'', 'sourceId':''})
+        mapping = lxml.etree.SubElement(xml_response, 'mapping',
+                                        attrib={'expires': str(data.expires.isoformat()), 'lastUpdated': str(data.lastupdate),
+                                                'source': data.source, 'sourceId': data.sourceid})
 
         # add the displayname, serviceurn, routeuri, servicenum to mapping
         services_element = lxml.etree.SubElement(mapping, 'displayName')
