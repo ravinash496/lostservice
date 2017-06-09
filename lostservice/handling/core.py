@@ -8,7 +8,8 @@ Core handler implementation classes.
 """
 
 from sqlalchemy import create_engine
-
+import datetime
+import pytz
 
 from lostservice.db.utilities import get_urn_table_mappings
 from lostservice.handler import Handler
@@ -16,7 +17,7 @@ import lostservice.model.responses as responses
 import lostservice.db.spatial as spatial
 from lostservice.model.location import Circle
 from lostservice.model.location import Point
-
+from lostservice.context import ServiceExpiresPolicyEnum
 
 class ListServicesHandler(Handler):
     """
@@ -109,13 +110,33 @@ class FindServiceHandler(Handler):
             serviceurn = row['serviceurn']
             routeuri = row['routeuri']
             servicenum = row['servicenum']
+            mapping_sourceid = row['gcunqid']
+
+            mapping_lastupdate = None
+            lastupdatefield = context.configuration.get('Service', 'last_update_field', as_object=False, required=False)
+            if lastupdatefield is not None:
+                mapping_lastupdate = row[lastupdatefield]
 
         path = context.configuration.get('Service', 'source_uri', as_object=False, required=False)
+        mapping_source = context.configuration.get('Service', 'source_uri', as_object=False, required=False)
+        mapping_service_expires_policy = context.configuration.get('Service', 'service_expires_policy', as_object=False, required=False)
+        mapping_service_expires_timespan = context.configuration.get('Service', 'service_expires_timespan', as_object=False, required=False)
+
+        # Based on setting Set Expires to: currentTime + TimeSpan setting or "NO-CACHE" or "NO-EXPIRATION"
+        if mapping_service_expires_policy == ServiceExpiresPolicyEnum.TimeSpan.name:
+            # Expected to be in UTC format plus timespan (minutes) interval setting 2010-05-18T16:47:55.9620000-06:00
+            mapping_expires = datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(minutes=int(mapping_service_expires_timespan))
+        elif mapping_service_expires_policy == ServiceExpiresPolicyEnum.NoCache.name:
+            mapping_expires = 'NO-CACHE'
+        elif mapping_service_expires_policy == ServiceExpiresPolicyEnum.NoExpiration.name:
+            mapping_expires = 'NO-EXPIRATION'
+
 
         # The location used in the request (Optional). Get this from the request location's id.
         locationUsed = request.location.id
 
-        response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path], [locationUsed])
+        response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path], [locationUsed],
+                                                 mapping_lastupdate, mapping_source, mapping_sourceid, mapping_expires)
         return response
 
 
