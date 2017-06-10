@@ -24,7 +24,8 @@ class FindServiceResponse(Response):
     """
     findService response class.
     """
-    def __init__(self, displayname=None, serviceurn=None, routeuri=None, servicenum=None, path=None, locationused=None):
+    def __init__(self, displayname=None, serviceurn=None, routeuri=None, servicenum=None, path=None, locationused=None, lastupdate=None, source=None, sourceid=None, expires=None):
+
         """
  
         """
@@ -35,6 +36,10 @@ class FindServiceResponse(Response):
         self._servicenum = servicenum
         self._path = path
         self._locationused = locationused
+        self._lastupdate = lastupdate
+        self._source = source
+        self._sourceid = sourceid
+        self._expires = expires
 
     @property
     def displayname(self):
@@ -115,6 +120,60 @@ class FindServiceResponse(Response):
     @locationused.setter
     def locationused(self, value):
         self._locationused = value
+
+    @property
+    def lastupdate(self):
+        """
+        The value of the lastupdate field.
+        attribute describes when a specific instance of mapping was last changed.
+        
+        :rtype: string
+        """
+        return self._lastupdate
+
+    @lastupdate.setter
+    def lastupdate(self, value):
+        self._lastupdate = value
+
+    @property
+    def source(self):
+        """
+        The value of the source field.
+        The ’source’ attribute contains a LoST application unique string
+        identifying the authoritative generator of the mapping
+        :rtype: string
+        """
+        return self._source
+
+    @source.setter
+    def source(self, value):
+        self._source = value
+
+    @property
+    def sourceid(self):
+        """
+        The value of the sourceid field.
+        The ’sourceid’ attribute contains the value of the gcunqid field or is generated GUID
+        identifying the authoritative generator of the mapping
+        :rtype: string
+        """
+        return self._sourceid
+
+    @sourceid.setter
+    def sourceid(self, value):
+        self._sourceid = value
+
+    @property
+    def expires(self):
+        """
+        The expiration value, a string that is either 'NO-CACHE', 'NO-EXPIRATION', or a datetime string
+        :rtype: string
+        """
+        return self._expires
+
+    @expires.setter
+    def expires(self, value):
+        self._expires = value
 
 
 class ListServicesResponse(Response):
