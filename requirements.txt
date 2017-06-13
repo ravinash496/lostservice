@@ -29,4 +29,5 @@ snowballstemmer==1.2.1
 Sphinx==1.5.5
 sphinx-rtd-theme==0.2.4
 SQLAlchemy==1.1.9
+Werkzeug==0.12.2
 wrapt==1.10.10

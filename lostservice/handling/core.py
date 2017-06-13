@@ -39,7 +39,7 @@ class ListServicesHandler(Handler):
         :param context: The context.
         :type context: :py:class:`lostservice.context.LostContext`
         :return: The response.
-        :rtype: A subclass of :py:class:`ListServicesResponse`
+        :rtype: :py:class:`ListServicesResponse`
         """
         engine = create_engine(context.get_db_connection_string())
 
@@ -74,15 +74,15 @@ class FindServiceHandler(Handler):
 
     def handle_request(self, request, context):
         """
-             Entry point for request handling.
+         Entry point for request handling.
 
-             :param request: The request
-             :type request: A subclass of :py:class:`FindServiceRequest`
-             :param context: The context.
-             :type context: :py:class:`lostservice.context.LostContext`
-             :return: The response.
-             :rtype: A subclass of :py:class:`FindServiceResponse`
-             """
+         :param request: The request
+         :type request: A subclass of :py:class:`FindServiceRequest`
+         :param context: The context.
+         :type context: :py:class:`lostservice.context.LostContext`
+         :return: The response.
+         :rtype: :py:class:`FindServiceResponse`
+         """
         engine = create_engine(context.get_db_connection_string())
 
         # Get the table mappings, this should come from cache eventually.
@@ -153,14 +153,16 @@ class GetServiceBoundaryHandler(Handler):
         """
         super(GetServiceBoundaryHandler, self).__init__()
 
-    def handle_request(self, request):
+    def handle_request(self, request, context):
         """
         Entry point for request handling.
 
         :param request: The request
         :type request: A subclass of :py:class:`GetServiceBoundaryRequest`
+        :param context: The context.
+        :type context: :py:class:`lostservice.context.LostContext`
         :return: The response.
-        :rtype: A subclass of :py:class:`GetServiceBoundaryResponse`
+        :rtype: :py:class:`GetServiceBoundaryResponse`
         """
         raise NotImplementedError("Can't handle getServiceBoundary requests just yet, come back later.")
 
@@ -185,7 +187,7 @@ class ListServicesByLocationHandler(Handler):
         :param context: The context.
         :type context: :py:class:`lostservice.context.LostContext`
         :return: The response.
-        :rtype: A subclass of :py:class:`ListServicesByLocationResponse`
+        :rtype: :py:class:`ListServicesByLocationResponse`
         """
         raise NotImplementedError("Can't handle getServicesByLocation requests just yet, come back later.")
 
