@@ -24,7 +24,7 @@ class FindServiceResponse(Response):
     """
     findService response class.
     """
-    def __init__(self, displayname=None, serviceurn=None, routeuri=None, servicenum=None, path=None, locationused=None, lastupdate=None, source=None, sourceid=None, expires=None):
+    def __init__(self, displayname=None, serviceurn=None, routeuri=None, servicenum=None, path=None, locationused=None, lastupdate=None, source=None, sourceid=None, expires=None, value_or_reference=None):
 
         """
  
@@ -40,6 +40,7 @@ class FindServiceResponse(Response):
         self._source = source
         self._sourceid = sourceid
         self._expires = expires
+        self._value_or_reference = value_or_reference
 
     @property
     def displayname(self):
@@ -174,6 +175,18 @@ class FindServiceResponse(Response):
     @expires.setter
     def expires(self, value):
         self._expires = value
+
+    @property
+    def value_or_reference(self):
+        """
+        It is ultimately up to the server to decide which type to return - Value or Reference.
+        :rtype: string
+        """
+        return self._value_or_reference
+
+    @value_or_reference.setter
+    def value_or_reference(self, value):
+        self._value_or_reference = value
 
 
 class ListServicesResponse(Response):

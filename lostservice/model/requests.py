@@ -24,7 +24,7 @@ class FindServiceRequest(Request):
     """
     findService request class.
     """
-    def __init__(self, location=None, service=None):
+    def __init__(self, location=None, service=None, serviceBoundary=None):
         """
         Constructor
 
@@ -33,6 +33,7 @@ class FindServiceRequest(Request):
         super(FindServiceRequest, self).__init__()
         self._location = location
         self._service = service
+        self._serviceBoundary = serviceBoundary
 
     @property
     def location(self):
@@ -59,6 +60,20 @@ class FindServiceRequest(Request):
     @service.setter
     def service(self, value):
         self._service = value
+
+    @property
+    def serviceBoundary(self):
+        """
+        The service bodundary type
+
+        :rtype: ``str``
+        """
+        return self._serviceBoundary
+
+    @serviceBoundary.setter
+    def serviceBoundary(self, value):
+        self._serviceBoundary = value
+
 
 
 class ListServicesRequest(Request):
