@@ -134,9 +134,11 @@ class FindServiceHandler(Handler):
 
         # The location used in the request (Optional). Get this from the request location's id.
         locationUsed = request.location.id
+        value_or_reference = request.serviceBoundary
 
         response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path], [locationUsed],
-                                                 mapping_lastupdate, mapping_source, mapping_sourceid, mapping_expires)
+                                                 mapping_lastupdate, mapping_source, mapping_sourceid, mapping_expires,
+                                                 value_or_reference)
         return response
 
 
