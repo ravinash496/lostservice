@@ -7,7 +7,7 @@
 General database utility functions
 """
 
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import MetaData, Table
 from sqlalchemy.sql import select, or_
 from sqlalchemy.exc import SQLAlchemyError
 
