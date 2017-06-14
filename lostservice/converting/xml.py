@@ -361,23 +361,27 @@ class FindServiceXmlConverter(XmlConverter):
 
         # create the root element of the xml response.
         xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN})
-        # Add mapping sub element
-        mapping = lxml.etree.SubElement(xml_response, 'mapping',
-                                        attrib={'expires': str(data.expires.isoformat()), 'lastUpdated': str(data.lastupdate),
-                                                'source': data.source, 'sourceId': data.sourceid})
 
-        # add the displayname, serviceurn, routeuri, servicenum to mapping
-        services_element = lxml.etree.SubElement(mapping, 'displayName')
-        services_element.text = data.displayname
+        for item in data:
 
-        services_element = lxml.etree.SubElement(mapping, 'service')
-        services_element.text = data.serviceurn
+            # Add mapping sub element
+            mapping = lxml.etree.SubElement(xml_response, 'mapping',
+                                            attrib={'expires': str(item['mapping_expires']), 'lastUpdated': str(item['mapping_lastupdate']),
+                                                    'source': item['mapping_source'], 'sourceId': item['mapping_sourceid']})
 
-        services_element = lxml.etree.SubElement(mapping, 'uri')
-        services_element.text = data.routeuri
+            # add the displayname, serviceurn, routeuri, servicenum to mapping
+            services_element = lxml.etree.SubElement(mapping, 'displayName')
+            services_element.text = item['displayname']
 
-        services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
-        services_element.text = data.servicenum
+            services_element = lxml.etree.SubElement(mapping, 'service')
+            services_element.text = item['serviceurn']
+
+            services_element = lxml.etree.SubElement(mapping, 'uri')
+            services_element.text = item['routeuri']
+
+            services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
+            services_element.text = item['servicenum']
+
 
         # TODO serviceBoundaryReference- does order matter?
         # services_element = lxml.etree.SubElement(mapping, 'serviceBoundaryReference')
@@ -388,13 +392,13 @@ class FindServiceXmlConverter(XmlConverter):
         path_element = lxml.etree.SubElement(xml_response, 'path')
 
         # not generate a 'via' element for each source.
-        if data.path is not None:
-            for a_path in data.path:
+        if data[0]['path'] is not None:
+            for a_path in data[0]['path']:
                 via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
 
 
         services_element = lxml.etree.SubElement(xml_response, 'locationUsed')
-        services_element.text = ' '.join(data.locationused)
+        services_element.text = ' '.join(data[0]['locationUsed'])
 
 
         return xml_response

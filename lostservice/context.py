@@ -21,9 +21,7 @@ _DBPASSWORD = 'DBPASSWORD'
 _CONFIGFILE = 'CONFIGFILE'
 _LOGFILE = 'LOGFILE'
 _SOURCE_URI = 'SOURCE_URI'
-_LAST_UPDATE_FIELD = 'LAST_UPDATE_FIELD'
-_SERVICE_EXPIRES_POLICY = 'SERVICE_EXPIRES_POLICY'
-_SERVICE_EXPIRES_TIMESPAN = 'SERVIC_EXPIRES_TIMESPAN'
+
 
 
 class ContextException(Exception):
@@ -128,18 +126,6 @@ class LostContext(object):
         if source_uri is not None:
             self.configuration.set_option('Service', 'source_uri', source_uri)
 
-        last_update_field = os.getenv(_LAST_UPDATE_FIELD)
-        if last_update_field is not None:
-            self.configuration.set_option('Service', 'last_update_field', last_update_field)
-
-        service_expires_policy = os.getenv(_SERVICE_EXPIRES_POLICY)
-        if service_expires_policy is not None:
-            self.configuration.set_option('Service', 'service_expires_policy', service_expires_policy)
-
-        service_expires_timespan = os.getenv(_SERVICE_EXPIRES_TIMESPAN)
-        if service_expires_timespan is not None:
-            self.configuration.set_option('Service', 'service_expires_timespan', service_expires_timespan)
-
 
     def _rebuild_db_connection_string(self):
         """
@@ -174,3 +160,20 @@ class ServiceExpiresPolicyEnum(Enum):
     NoExpiration = 2
     TimeSpan = 3
 
+class PolygonSearchModePolicyEnum(Enum):
+    SearchUsingPolygon = 1
+    SearchUsingCentroid = 2
+
+
+class PolygonMultipleMatchPolicyEnum(Enum):
+    ReturnAll = 1
+    ReturnAllLimit5 = 2
+    ReturnAreaMajority = 3
+    ReturnFirst = 4
+    ReturnError = 5
+
+class PointMultipleMatchPolicyEnum(Enum):
+    ReturnAll = 1
+    ReturnAllLimit5 = 2
+    ReturnFirst = 3
+    ReturnError = 4

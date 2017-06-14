@@ -133,18 +133,17 @@ class Configuration(object):
         except ConfigurationException as ex:
             found = False
 
-        if required and not found:
-            raise ConfigurationException(
-                'Option {0} not found not found..'.format(option))
-        elif not required and not found:
-            return None
-
-        # If we're here, we know the value is there somewhere, so now try to find it.
         try:
+            if required and not found:
+                print('Option {0} not found not found..'.format(option))
+            elif not required and not found:
+                return None
+
+            # If we're here, we know the value is there somewhere, so now try to find it.
             value = self._custom_config_parser.get(section, option)
-        except(configparser.NoSectionError, configparser.NoOptionError) as ex:
-            # Okay, wasn't in the custom, must be in the default.
+        except(configparser.NoSectionError, configparser.NoOptionError):
             value = self._default_config_parser.get(section, option)
+            # Okay, wasn't in the custom, must be in the default.
 
         # If the caller has asked to get the value as a Python object, evaluate
         # it now.
