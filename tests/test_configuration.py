@@ -1,7 +1,8 @@
 import unittest
 import os
-import lostservice.configuration as globalconfig
+import lostservice.configuration as config
 from lostservice.configuration import Configuration, ConfigurationException
+
 
 class ConfigurationTest(unittest.TestCase):
 
@@ -22,11 +23,6 @@ class ConfigurationTest(unittest.TestCase):
     def test_init(self):
         self.assertEqual(self._custom_ini_file, self._config.custom_config_file)
         self.assertEqual(self._default_ini_file, self._config.default_config_file)
-
-    def test_global(self):
-        globalconfig.set_config(self._config)
-        theglobalconfig = globalconfig.get_config()
-        self.assertTrue(theglobalconfig is self._config)
 
     def test_get_sections(self):
         expected = ['Database', 'SectionOne', 'Section Two', 'Section2', 'Section3', 'Section4']
@@ -85,6 +81,47 @@ class ConfigurationTest(unittest.TestCase):
         self._config.set_option('SectionOne', 'optionx', 'valuex')
         self.assertTrue('optionx' in self._config.get_options('SectionOne'))
         self.assertEqual('valuex', self._config.get('SectionOne', 'optionx'))
+
+    def test_load_from_passed_file(self):
+        custom_ini_file = os.path.join(os.path.dirname(__file__), './config/test.ini')
+        target = Configuration(custom_config=custom_ini_file)
+        expected = 'postgresql://squidward:sandy@spongebob:1111/patrick'
+        actual = target.get_db_connection_string()
+        self.assertEqual(expected, actual)
+
+    def test_load_from_env_file(self):
+        custom_ini_file = os.path.join(os.path.dirname(__file__), './config/test.ini')
+        os.environ[config._CONFIGFILE] = custom_ini_file
+        target = Configuration()
+        expected = 'postgresql://squidward:sandy@spongebob:1111/patrick'
+        actual = target.get_db_connection_string()
+        self.assertEqual(expected, actual)
+        os.environ.pop(config._CONFIGFILE)
+
+    def test_load_from_env_values(self):
+        custom_ini_file = os.path.join(os.path.dirname(__file__), './config/test.ini')
+        os.environ[config._CONFIGFILE] = custom_ini_file
+        os.environ[config._DBHOSTNAME] = 'DBHOSTNAME'
+        os.environ[config._DBPORT] = 'DBPORT'
+        os.environ[config._DBNAME] = 'DBNAME'
+        os.environ[config._DBUSER] = 'DBUSER'
+        os.environ[config._DBPASSWORD] = 'DBPASSWORD'
+
+        target = Configuration()
+        expected = 'postgresql://DBUSER:DBPASSWORD@DBHOSTNAME:DBPORT/DBNAME'
+        actual = target.get_db_connection_string()
+        self.assertEqual(expected, actual)
+
+        os.environ.pop(config._CONFIGFILE)
+        os.environ.pop(config._DBHOSTNAME)
+        os.environ.pop(config._DBPORT)
+        os.environ.pop(config._DBNAME)
+        os.environ.pop(config._DBUSER)
+        os.environ.pop(config._DBPASSWORD)
+
+    def test_load_fail(self):
+        with self.assertRaises(ConfigurationException):
+            target = Configuration()
 
         
 if __name__ == '__main__':

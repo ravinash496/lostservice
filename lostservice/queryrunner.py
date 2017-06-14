@@ -17,30 +17,30 @@ class QueryRunner(object):
     handling.
     """
 
-    def __init__(self, context, converter, handler):
+    def __init__(self, converter, handler):
         """
         Constructor
 
-        :param context: A reference to the lost context.
-        :type context: :py:class:`lostservice.context.LostContext` 
         :param converter: A reference to an appropriate Converter instance.
         :type converter: A subclass of :py:class:`lostservice.converter.Converter`
         :param handler: A reference to an appropriate Hander instance.
         :type handler: A subclass of :py:class:`lostservice.handler.Handler`
         """
-        self._context = context
         self._converter = converter
         self._handler = handler
 
-    def run(self, data):
+    def run(self, data, context):
         """
         Runs the request through all the converters and handler.
 
         :param data: The request.
+        :type data:
+        :param context: The request context.
+        :type context: ``dict``
         :return: The response xml.
         """
         request = self._converter.parse(data)
-        response = self._handler.handle_request(request, self._context)
+        response = self._handler.handle_request(request, context)
         output = self._converter.format(response)
 
         return output

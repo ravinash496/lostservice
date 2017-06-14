@@ -311,3 +311,4 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     ring = LinearRing(points)
     wkb_ring = from_shape(ring, trimmed_srid)
     return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring)
+

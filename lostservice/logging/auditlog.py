@@ -4,7 +4,7 @@
 .. currentmodule:: lostservice.logging.auditlog
 .. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
 
-Transaction auditing.
+Auditing framework.
 """
 
 import logging
@@ -82,15 +82,4 @@ class AuditLog(object):
         self._listeners.append(listener)
 
 
-_auditlog = AuditLog()
-
-
-def getauditor():
-    """
-    Get the common audit logger.
-
-    :return:The audit logger.
-    :rtype: :py:class:`lostservice.logging.auditlog.AuditLog`
-    """
-    return _auditlog
 
