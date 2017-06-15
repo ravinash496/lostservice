@@ -378,22 +378,21 @@ class FindServiceXmlConverter(XmlConverter):
             services_element = lxml.etree.SubElement(mapping, 'service')
             services_element.text = item['serviceurn']
 
-            if data[0]['value_or_reference'] == "Reference" or  data[0]['value_or_reference'] is None:
+            if data[0]['value_or_reference'] == "Reference" or data[0]['value_or_reference'] is None:
                 attr_element = collections.OrderedDict()
                 attr_element['source'] = data[0]['mapping_source']
                 attr_element['key'] = data[0]['mapping_sourceid']
                 lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
+            else:
+                # TODO element tag throws invalid tag for gml even namespace registered
+                services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile=item['profile'])
+                services_element.text = item['non_lost_data']
 
             services_element = lxml.etree.SubElement(mapping, 'uri')
             services_element.text = item['routeuri']
 
             services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
             services_element.text = item['servicenum']
-
-            # TODO element tag throws invalid tag for gml even namespace registered
-            if item['value_or_reference'] == 'value':
-                services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile= item['profile'])
-                services_element.text = item['non_lost_data']
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')
@@ -409,8 +408,6 @@ class FindServiceXmlConverter(XmlConverter):
 
 
         return xml_response
-
-        # raise NotImplementedError('TODO: Implement formatting of FindServiceResponses.')
 
 
 class ListServicesXmlConverter(XmlConverter):

@@ -113,12 +113,16 @@ class FindServiceHandler(Handler):
             if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority.name:
                 return_area = True
 
+            return_shape = False
+            if request.serviceBoundary == 'Value':
+                return_shape = True
+
             results = self._db_wrapper.get_intersecting_boundaries_for_circle(
                 request.location.location.longitude,
                 request.location.location.latitude,
                 request.location.location.spatial_ref,
                 float(request.location.location.radius),
-                request.location.location.uom, esb_table, return_area)
+                request.location.location.uom, esb_table, return_area, return_shape)
 
 
         elif type(request.location.location) is Point:

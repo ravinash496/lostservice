@@ -115,6 +115,8 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
+        # s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(geom))
+
         # Construct the "intersection" query and execute
         if return_intersection_area == True:
             # include a calculation for the intersecting the area
@@ -122,6 +124,46 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
                        the_table.c.wkb_geometry.ST_Intersects(geom))
         else:
             s = select([the_table], the_table.c.wkb_geometry.ST_Intersects(geom))
+
+        results = _execute_query(engine, s)
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct intersection query.', ex)
+    except SpatialQueryException:
+        raise
+
+    return results
+
+
+def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, return_intersection_area):
+    """
+    Queries the given table for any boundaries that intersect the given geometry and returns the shape.
+
+    :param engine: SQLAlchemy database engine
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :param table_name: The name of the service boundary table.
+    :type table_name: `str`
+    :param geom: The geometry to use in the search as a GeoAlchemy WKBElement.
+    :type geom: :py:class:geoalchemy2.types.WKBElement
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+    retval = None
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table(table_name, tbl_metadata, autoload=True)
+
+        # s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(geom))
+
+        # Construct the "intersection" query and execute
+        if return_intersection_area == True:
+            # include a calculation for the intersecting the area
+
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(geom)).label(
+                'AREA_RET')],
+                       the_table.c.wkb_geometry.ST_Intersects(geom))
+        else:
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Intersects(geom))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
@@ -245,7 +287,7 @@ def get_containing_boundary_for_circle(x, y, srid, radius, uom, boundary_table, 
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
 
 
-def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_table, engine, return_intersection_area=False ):
+def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False ):
     """    
     Executes an intersection query for a circle.
 
@@ -263,10 +305,11 @@ def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_tab
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
     :type engine: :py:class:`sqlalchemy.engine.Engine`
-    :return: A list of dictionaries containing the contents of returned rows.
     :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons
     :type return_intersection_area bool
-    :return: 
+     :param return_shape: Flag which triggers the return of the shape in GML.
+    :type return_shape bool
+    :return: A list of dictionaries containing the contents of returned rows.
     """
 
     # Pull out just the number from the SRID
@@ -276,7 +319,11 @@ def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_tab
     wkb_circle = _transform_circle(x, y, trimmed_srid, radius, uom)
 
     # Now execute the query.
-    return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
+    if return_shape == True:
+        # Call Overload to return the GML representation of the shape for ByReference
+        return _get_intersecting_boundaries_for_geom_reference(engine, boundary_table, wkb_circle, return_intersection_area)
+    else:
+        return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
 
 
 def get_containing_boundary_for_polygon(points, srid, boundary_table, engine):
