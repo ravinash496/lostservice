@@ -4,7 +4,7 @@
 import unittest
 from unittest.mock import patch
 from unittest.mock import MagicMock
-import lostservice.logging.auditlog as auditlog
+import lostservice.logger.auditlog as auditlog
 
 
 class AuditLogTest(unittest.TestCase):

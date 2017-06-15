@@ -129,12 +129,14 @@ class FindServiceHandler(Handler):
                 esb_table)
 
 
+        service_boundary_profile = request.location.profile
 
         results = apply_policy_settings(self._config, results, request)
         # Create a list to contain mutiple response mappings
         response_mapping_list = []
 
         for row in results:
+
             response_mapping = {}   #TODO How to deal with None?
 
             response_mapping['displayname'] = row['displayname']
@@ -142,6 +144,11 @@ class FindServiceHandler(Handler):
             response_mapping['routeuri'] = row['routeuri']
             response_mapping['servicenum'] = row['servicenum']
             response_mapping['mapping_sourceid'] = row['gcunqid']
+
+            response_mapping['profile'] = service_boundary_profile
+
+            if 'ST_AsGML_1' in row:
+                response_mapping['non_lost_data'] = row['ST_AsGML_1']
 
             # Is this config setting necessary? All UDM tables have this and it is well known.
             response_mapping['mapping_lastupdate'] = None
@@ -185,7 +192,6 @@ class FindServiceHandler(Handler):
         # End of For
 
         return response_mapping_list
-
 
 
 class GetServiceBoundaryHandler(Handler):

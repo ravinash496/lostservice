@@ -362,7 +362,7 @@ class FindServiceXmlConverter(XmlConverter):
         """
 
         # create the root element of the xml response.
-        xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN})
+        xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN, GML_PREFIX: GML_URN})
 
         for item in data:
 
@@ -390,7 +390,10 @@ class FindServiceXmlConverter(XmlConverter):
             services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
             services_element.text = item['servicenum']
 
-
+            # TODO element tag throws invalid tag for gml even namespace registered
+            if item['value_or_reference'] == 'value':
+                services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile= item['profile'])
+                services_element.text = item['non_lost_data']
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')

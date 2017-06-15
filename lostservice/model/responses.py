@@ -31,6 +31,8 @@ class FindServiceResponse(Response):
         """
         super(FindServiceResponse, self).__init__()
 
+
+
     @property
     def response_mapping_list(self):
         """

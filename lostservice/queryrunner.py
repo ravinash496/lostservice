@@ -13,7 +13,7 @@ queries.
 class QueryRunner(object):
     """
     A class for executing a single LoST Query, handles routing to 
-    given converter and handler as well as logging and overall error
+    given converter and handler as well as logger and overall error
     handling.
     """
 

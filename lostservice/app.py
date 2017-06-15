@@ -14,7 +14,7 @@ import logging
 from lxml import etree
 from injector import Module, provider, Injector, singleton
 import lostservice.configuration as config
-import lostservice.logging.auditlog as auditlog
+import lostservice.logger.auditlog as auditlog
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-.. currentmodule:: lostservice.logging.auditlog
+.. currentmodule:: lostservice.logger.auditlog
 .. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
 
 Auditing framework.
@@ -46,7 +46,7 @@ class AuditListener(object):
 
 class AuditLog(object):
     """
-    Class for handling audit logging.
+    Class for handling audit logger.
 
     """
     def __init__(self):
@@ -55,7 +55,7 @@ class AuditLog(object):
         """
         super(AuditLog, self).__init__()
         self._listeners = []
-        self._logger = logging.getLogger('lostservice.logging.auditlog.AuditLog')
+        self._logger = logging.getLogger('lostservice.logger.auditlog.AuditLog')
 
     def record_event(self, event):
         """
