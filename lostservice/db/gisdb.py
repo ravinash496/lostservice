@@ -84,7 +84,7 @@ class GisDbInterface(object):
         """
         return spatialdb.get_containing_boundary_for_circle(x,y, srid, radius, uom, boundary_table, self._engine)
 
-    def get_intersecting_boundaries_for_circle(self, x, y, srid, radius, uom, boundary_table):
+    def get_intersecting_boundaries_for_circle(self, x, y, srid, radius, uom, boundary_table, return_area = False, return_shape = False):
         """
         Executes an intersection query for a circle.
 
@@ -100,9 +100,11 @@ class GisDbInterface(object):
         :type uom: `str`
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
+        :param return_area: Flag which triggers an area calculation on the Intersecting polygons
+        :type boundary_table: `bool`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_table, self._engine)
+        return spatialdb.get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_table, self._engine, return_area, return_shape)
 
     def get_containing_boundary_for_polygon(self, points, srid, boundary_table):
         """

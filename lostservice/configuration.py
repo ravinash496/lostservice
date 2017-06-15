@@ -20,9 +20,7 @@ _DBPASSWORD = 'DBPASSWORD'
 _CONFIGFILE = 'CONFIGFILE'
 _LOGFILE = 'LOGFILE'
 _SOURCE_URI = 'SOURCE_URI'
-_LAST_UPDATE_FIELD = 'LAST_UPDATE_FIELD'
-_SERVICE_EXPIRES_POLICY = 'SERVICE_EXPIRES_POLICY'
-_SERVICE_EXPIRES_TIMESPAN = 'SERVIC_EXPIRES_TIMESPAN'
+
 
 
 class ConfigurationException(Exception):
@@ -39,6 +37,23 @@ class ServiceExpiresPolicyEnum(Enum):
     NoCache = 1
     NoExpiration = 2
     TimeSpan = 3
+
+class PolygonSearchModePolicyEnum(Enum):
+    SearchUsingPolygon = 1
+    SearchUsingCentroid = 2
+
+class PolygonMultipleMatchPolicyEnum(Enum):
+    ReturnAll = 1
+    ReturnAllLimit5 = 2
+    ReturnAreaMajority = 3
+    ReturnFirst = 4
+    ReturnError = 5
+
+class PointMultipleMatchPolicyEnum(Enum):
+    ReturnAll = 1
+    ReturnAllLimit5 = 2
+    ReturnFirst = 3
+    ReturnError = 4
 
 
 class Configuration(object):
@@ -142,18 +157,17 @@ class Configuration(object):
         except ConfigurationException as ex:
             found = False
 
-        if required and not found:
-            raise ConfigurationException(
-                'Option {0} not found not found..'.format(option))
-        elif not required and not found:
-            return None
-
-        # If we're here, we know the value is there somewhere, so now try to find it.
         try:
+            if required and not found:
+                print('Option {0} not found not found..'.format(option))
+            elif not required and not found:
+                return None
+
+            # If we're here, we know the value is there somewhere, so now try to find it.
             value = self._custom_config_parser.get(section, option)
-        except(configparser.NoSectionError, configparser.NoOptionError) as ex:
-            # Okay, wasn't in the custom, must be in the default.
+        except(configparser.NoSectionError, configparser.NoOptionError):
             value = self._default_config_parser.get(section, option)
+            # Okay, wasn't in the custom, must be in the default.
 
         # If the caller has asked to get the value as a Python object, evaluate
         # it now.
