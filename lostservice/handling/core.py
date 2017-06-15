@@ -112,6 +112,7 @@ class FindServiceHandler(Handler):
                 request.location.location.latitude,
                 request.location.location.spatial_ref,
                 esb_table)
+            service_boundary_profile = request.location.profile
 
         for row in results:
             displayname = row['displayname']
@@ -119,6 +120,7 @@ class FindServiceHandler(Handler):
             routeuri = row['routeuri']
             servicenum = row['servicenum']
             mapping_sourceid = row['gcunqid']
+            non_lost_data = row['ST_AsGML_1']
 
             # Is this config setting necessary? All UDM tables have this and it is well known.
             mapping_lastupdate = None
@@ -146,7 +148,7 @@ class FindServiceHandler(Handler):
 
         response = responses.FindServiceResponse(displayname, serviceurn, routeuri, servicenum, [path], [locationUsed],
                                                  mapping_lastupdate, mapping_source, mapping_sourceid, mapping_expires,
-                                                 value_or_reference)
+                                                 value_or_reference, non_lost_data, service_boundary_profile)
         return response
 
 
