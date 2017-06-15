@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-.. currentmodule:: lostservice.logging.auditlog
+.. currentmodule:: lostservice.logger.auditlog
 .. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
 
 Transaction auditing.

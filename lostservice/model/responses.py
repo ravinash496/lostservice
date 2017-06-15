@@ -24,7 +24,7 @@ class FindServiceResponse(Response):
     """
     findService response class.
     """
-    def __init__(self, displayname=None, serviceurn=None, routeuri=None, servicenum=None, path=None, locationused=None, lastupdate=None, source=None, sourceid=None, expires=None, value_or_reference=None):
+    def __init__(self, displayname=None, serviceurn=None, routeuri=None, servicenum=None, path=None, locationused=None, lastupdate=None, source=None, sourceid=None, expires=None, value_or_reference=None, non_lost_data=None, profile=None):
 
         """
  
@@ -41,6 +41,8 @@ class FindServiceResponse(Response):
         self._sourceid = sourceid
         self._expires = expires
         self._value_or_reference = value_or_reference
+        self._profile = profile
+        self._non_lost_data = non_lost_data
 
     @property
     def displayname(self):
@@ -187,6 +189,30 @@ class FindServiceResponse(Response):
     @value_or_reference.setter
     def value_or_reference(self, value):
         self._value_or_reference = value
+
+    @property
+    def non_lost_data(self):
+        """
+
+        :rtype: string
+        """
+        return self._non_lost_data
+
+    @non_lost_data.setter
+    def non_lost_data(self, value):
+        self._non_lost_data = value
+
+    @property
+    def profile(self):
+        """
+
+        :rtype: string
+        """
+        return self._profile
+
+    @profile.setter
+    def profile(self, value):
+        self._profile = value
 
 
 class ListServicesResponse(Response):
