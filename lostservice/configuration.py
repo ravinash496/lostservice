@@ -10,32 +10,19 @@ Configuration related classes and functions.
 
 import os
 import configparser
+from enum import Enum
 
-
-# This is the default configuration.
-_default = None
-
-
-def set_config(configuration):
-    """
-    Set the default configuration object.
-
-    :param configuration: the configuration object
-    :type configuration: :py:class:`Configuration`
-    """
-    global _default
-    _default = configuration
-
-
-def get_config():
-    """
-    Get the configuration object.
-
-    :return: the configuration object
-    :rtype: :py:class:`Configuration`
-    """
-    global _default
-    return _default
+_DBHOSTNAME = 'DBHOSTNAME'
+_DBPORT = 'DBPORT'
+_DBNAME = 'DBNAME'
+_DBUSER = 'DBUSER'
+_DBPASSWORD = 'DBPASSWORD'
+_CONFIGFILE = 'CONFIGFILE'
+_LOGFILE = 'LOGFILE'
+_SOURCE_URI = 'SOURCE_URI'
+_LAST_UPDATE_FIELD = 'LAST_UPDATE_FIELD'
+_SERVICE_EXPIRES_POLICY = 'SERVICE_EXPIRES_POLICY'
+_SERVICE_EXPIRES_TIMESPAN = 'SERVIC_EXPIRES_TIMESPAN'
 
 
 class ConfigurationException(Exception):
@@ -48,13 +35,36 @@ class ConfigurationException(Exception):
         super(ConfigurationException, self).__init__(message)
 
 
+class ServiceExpiresPolicyEnum(Enum):
+    NoCache = 1
+    NoExpiration = 2
+    TimeSpan = 3
+
+class PolygonSearchModePolicyEnum(Enum):
+    SearchUsingPolygon = 1
+    SearchUsingCentroid = 2
+
+class PolygonMultipleMatchPolicyEnum(Enum):
+    ReturnAll = 1
+    ReturnAllLimit5 = 2
+    ReturnAreaMajority = 3
+    ReturnFirst = 4
+    ReturnError = 5
+
+class PointMultipleMatchPolicyEnum(Enum):
+    ReturnAll = 1
+    ReturnAllLimit5 = 2
+    ReturnFirst = 3
+    ReturnError = 4
+
+
 class Configuration(object):
     """
     A wrapper for reading from and writing to a configuration file.
 
     """
     
-    def __init__(self, custom_config, default_config=None):
+    def __init__(self, custom_config=None, default_config=None):
         """
         Constructor
 
@@ -68,13 +78,23 @@ class Configuration(object):
         self._custom_config = custom_config
         self._default_config = default_config
 
+        # If nothing was passed in, we're going to look in the environment.
+        if self._custom_config is None:
+            self._custom_config = os.getenv(_CONFIGFILE)
+
+        # Still nothing?  Bail.
+        if self._custom_config is None:
+            raise ConfigurationException('No configuration file was specified')
+
+        # Confident we have custom, let's figure out the default.
         if self._default_config is None:
             # If the default config is not passed, we assume it's name and location
             # to be <base config file name>.default.ini
             self._default_config = os.path.splitext(self._custom_config)[0] + '.default.ini'
 
+        # Now, we have both files, let's check to see if they exist.
         if not os.path.isfile(self._custom_config) \
-                or not os.path.isfile(self._custom_config):
+                or not os.path.isfile(self._default_config):
             raise ConfigurationException(
                 'One of custom ({0}) or default({1}) '
                 'configuration files missing.'.format(self._custom_config, self._default_config))
@@ -83,6 +103,12 @@ class Configuration(object):
         self._custom_config_parser.read(self._custom_config)
         self._default_config_parser = configparser.ConfigParser()
         self._default_config_parser.read(self._default_config)
+
+        # Now pull anything we need from the environment to update config.
+        self._update_config_from_env()
+
+        # Finally, cache the connection string for later.
+        self._db_connection_string = self._rebuild_db_connection_string()
 
     @property
     def custom_config_file(self):
@@ -207,6 +233,65 @@ class Configuration(object):
             self._custom_config_parser.add_section(section)
         
         self._custom_config_parser.set(section, option, value)
+
+    def _update_config_from_env(self):
+        """
+        Does any work to pull configuration overrides from the environment.
+
+        """
+        # See if there is database information to be pulled from the
+        # environment as well.
+        env_dbhostname = os.getenv(_DBHOSTNAME)
+        if env_dbhostname is not None:
+            self.set_option('Database', 'host', env_dbhostname)
+
+        env_dbport = os.getenv(_DBPORT)
+        if env_dbport is not None:
+            self.set_option('Database', 'port', env_dbport)
+
+        env_dbname = os.getenv(_DBNAME)
+        if env_dbname is not None:
+            self.set_option('Database', 'dbname', env_dbname)
+
+        env_username = os.getenv(_DBUSER)
+        if env_username is not None:
+            self.set_option('Database', 'username', env_username)
+
+        env_password = os.getenv(_DBPASSWORD)
+        if env_password is not None:
+            self.set_option('Database', 'password', env_password)
+
+        source_uri = os.getenv(_SOURCE_URI)
+        if source_uri is not None:
+            self.set_option('Service', 'source_uri', source_uri)
+
+    def _rebuild_db_connection_string(self):
+        """
+        Recreates the database connection string from configuration.
+
+        :return: ``str``
+        """
+        host = self.get('Database', 'host')
+        port = self.get('Database', 'port')
+        dbname = self.get('Database', 'dbname')
+        user = self.get('Database', 'username')
+        password = self.get('Database', 'password')
+
+        # postgresql://scott:tiger@localhost/mydatabase'
+        conn_string_template = 'postgresql://{0}:{1}@{2}:{3}/{4}'
+        self._db_connection_string = conn_string_template.format(user, password, host, port, dbname)
+
+    def get_db_connection_string(self):
+        """
+        Gets a valid database connection string from configuration.
+
+        :rtype: ``str``
+        """
+        if self._db_connection_string is None:
+            self._rebuild_db_connection_string()
+
+        return self._db_connection_string
+
 
 
 

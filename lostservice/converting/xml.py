@@ -10,6 +10,7 @@ Xml conversion classes.
 
 from lxml import etree
 import lxml
+import collections
 from lostservice.converter import Converter
 from lostservice.model.location import CivicAddress
 from lostservice.model.location import Circle
@@ -344,6 +345,7 @@ class FindServiceXmlConverter(XmlConverter):
         location_parser = LocationXmlConverter()
 
         location = root.find('{urn:ietf:params:xml:ns:lost1}location')
+        request.serviceBoundary = root.attrib.get('serviceBoundary')
         request.location = location_parser.parse(location)
         request.service = root.find('{urn:ietf:params:xml:ns:lost1}service').text
 
@@ -376,16 +378,18 @@ class FindServiceXmlConverter(XmlConverter):
             services_element = lxml.etree.SubElement(mapping, 'service')
             services_element.text = item['serviceurn']
 
+            if data[0]['value_or_reference'] == "Reference" or  data[0]['value_or_reference'] is None:
+                attr_element = collections.OrderedDict()
+                attr_element['source'] = data[0]['mapping_source']
+                attr_element['key'] = data[0]['mapping_sourceid']
+                lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
+
             services_element = lxml.etree.SubElement(mapping, 'uri')
             services_element.text = item['routeuri']
 
             services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
             services_element.text = item['servicenum']
 
-
-        # TODO serviceBoundaryReference- does order matter?
-        # services_element = lxml.etree.SubElement(mapping, 'serviceBoundaryReference')
-        # services_element.text = data.servicenum
 
 
         # add the path element

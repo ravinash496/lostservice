@@ -12,8 +12,50 @@ import os
 import argparse
 import logging
 from lxml import etree
-import lostservice.context as context
+from injector import Module, provider, Injector, singleton
+import lostservice.configuration as config
+import lostservice.logging.auditlog as auditlog
+import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
+
+
+class LostBindingModule(Module):
+    """
+    Binding specifications for the IOC container.
+
+    """
+    @singleton
+    @provider
+    def provide_config(self) -> config.Configuration:
+        """
+        Provider function for config.
+
+        :return: The config object.
+        :rtype: :py:class:`lostservice.configuration.Configuration`
+        """
+        return config.Configuration()
+
+    @singleton
+    @provider
+    def provide_auditor(self) -> auditlog.AuditLog:
+        """
+        Provider function for auditing.
+
+        :return: The auditlog object.
+        :rtype: :py:class:`lostservice.logging.auditlog.AuditLog`
+        """
+        return auditlog.AuditLog()
+
+    @provider
+    def provide_db_wrapper(self, config: config.Configuration) -> gisdb.GisDbInterface:
+        """
+        Provider function for the database interface.
+
+        :return: An instance of the db interface object.
+        :rtype: :py:class:`lostservice.db.gisdb.GisDbInterface`
+        """
+        return gisdb.GisDbInterface(config)
+
 
 class LostApplication(object):
     """
@@ -29,14 +71,8 @@ class LostApplication(object):
         """
         super(LostApplication, self).__init__()
 
-        # The context can either be passed in or built from
-        # the environment.
-        if ctx is not None:
-            self._context = ctx
-        else:
-            # The context can take params to the constructor, but we're going to
-            # assume it can pull from the environment for now.
-            self._context = context.LostContext()
+        # Initialize the DI container.
+        self._di_container = Injector([LostBindingModule()])
 
         # Set up the base logging, more will come from config later.
         self._logger = logging.getLogger('lostservice.app.LostApplication')
@@ -44,7 +80,9 @@ class LostApplication(object):
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        filehandler = logging.FileHandler(self._context.configuration.get('Logging', 'logfile'))
+        conf = self._di_container.get(config.Configuration)
+
+        filehandler = logging.FileHandler(conf.get('Logging', 'logfile'))
         filehandler.setLevel(logging.DEBUG)
         filehandler.setFormatter(formatter)
 
@@ -54,6 +92,12 @@ class LostApplication(object):
 
         self._logger.addHandler(filehandler)
         self._logger.addHandler(consolehandler)
+
+        self._converter_template = conf.get('ClassLookupTemplates', 'converter_template')
+        self._handler_template = conf.get('ClassLookupTemplates', 'handler_template')
+
+        # TODO: Set up auditors
+        auditor = self._di_container.get(auditlog.AuditLog)
 
     def _get_class(self, classname):
         """
@@ -84,37 +128,42 @@ class LostApplication(object):
         # and follow a naming convention of the form [lost request name]XmlConverter
         # and [lost request name]Handler respectively.  Given the name of the query,
         # we can create instances of those classes dynamically.
-        converter_name = 'lostservice.converting.xml.{0}XmlConverter'.format(base_name)
-        handler_name = 'lostservice.handling.core.{0}Handler'.format(base_name)
+
+        converter_name = self._converter_template.format(base_name)
+        handler_name = self._handler_template.format(base_name)
 
         # Get a reference to the converter class and create an instance.
         ConverterClass = self._get_class(converter_name)
-        converter = ConverterClass()
+        converter = self._di_container.get(ConverterClass)
 
         # Get a reference to the handler class and create an instance.
         HandlerClass = self._get_class(handler_name)
-        handler = HandlerClass()
+        handler = self._di_container.get(HandlerClass)
 
-        runner = queryrunner.QueryRunner(self._context, converter, handler)
+        runner = queryrunner.QueryRunner(converter, handler)
 
         return runner
 
-    def _execute_internal(self, queryrunner, data):
+    def _execute_internal(self, queryrunner, data, context):
         """
         Executes a query by calling the query runner.
         
         :param queryrunner: A queryrunner set up for the given query. 
         :param data: The query as and element tree.
+        :param context: The request context.
+        :type context: ``dict``
         :return: The query response as an element tree.
         """
-        return queryrunner.run(data)
+        return queryrunner.run(data, context)
 
-    def execute_query(self, data):
+    def execute_query(self, data, context):
         """
         Executes a given LoST query.
 
         :param data: The LoST query request XML.
         :type data: ``str``
+        :param context: The request context.
+        :type context: ``dict``
         :return: The LoST query response XML.
         :rtype: ``str``
         """
@@ -131,7 +180,7 @@ class LostApplication(object):
         runner = self._build_queryrunner(query_name)
 
         # 3. call _execute_internal to process the request.
-        parsed_response = self._execute_internal(runner, parsed_request)
+        parsed_response = self._execute_internal(runner, parsed_request, context)
 
         # 4. serialize the xml back out into a string and return it.
         response = etree.tostring(parsed_response)
@@ -149,17 +198,14 @@ if __name__ == "__main__":
     parser.add_argument('request', help='the path to a file containing a LoST request')
     args = parser.parse_args()
 
-    custom_ini_file = os.path.join(os.path.dirname(__file__), './lostservice.ini')
-    os.environ[context._CONFIGFILE] = custom_ini_file
-
     request = None
     with open(args.request, 'r') as request_file:
         request = request_file.read()
 
     lost_app = LostApplication()
-    response = lost_app.execute_query(request)
+    context = {}
+    response = lost_app.execute_query(request, context)
     print(response)
-    os.environ.pop(context._CONFIGFILE)
 
 
 

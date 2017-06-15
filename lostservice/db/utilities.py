@@ -7,13 +7,13 @@
 General database utility functions
 """
 
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import MetaData, Table
 from sqlalchemy.sql import select, or_
 from sqlalchemy.exc import SQLAlchemyError
 from lostservice.model.location import Point
-from lostservice.context import PointMultipleMatchPolicyEnum
-from lostservice.context import PolygonSearchModePolicyEnum
-from lostservice.context import PolygonMultipleMatchPolicyEnum
+from lostservice.configuration import PointMultipleMatchPolicyEnum
+from lostservice.configuration import PolygonSearchModePolicyEnum
+from lostservice.configuration import PolygonMultipleMatchPolicyEnum
 
 class MappingDiscoveryException(Exception):
     """
@@ -116,14 +116,14 @@ def apply_policy_settings(context, results, request):
             return results
         else:
 
-            polygon_search_mode_policy = context.configuration.get('Policy', 'polygon_search_mode_policy',
+            polygon_search_mode_policy = context.get('Policy', 'polygon_search_mode_policy',
                                                                     as_object=False, required=False)
 
             # we have multiple results, then we need to apply policy to formulate the response
             if (type(request.location.location) is Point) or (polygon_search_mode_policy == PolygonSearchModePolicyEnum.SearchUsingCentroid.name):
                 # This covers queries using points, or polygons centroids
                 # TODO Deal with CIVIC
-                point_multiple_match_policy = context.configuration.get('Policy', 'point_multiple_match_policy', as_object=False, required=False)
+                point_multiple_match_policy = context.get('Policy', 'point_multiple_match_policy', as_object=False, required=False)
 
                 if point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnAll.name:
                     return results
@@ -140,7 +140,7 @@ def apply_policy_settings(context, results, request):
 
             else:
                 # This covers queries using polygons
-                polygon_multiple_match_policy = context.configuration.get('Policy', 'polygon_multiple_match_policy',
+                polygon_multiple_match_policy = context.get('Policy', 'polygon_multiple_match_policy',
                                                                         as_object=False, required=False)
                 if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAll.name:
                     return results
