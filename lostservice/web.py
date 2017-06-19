@@ -1,8 +1,9 @@
-import os
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
 from werkzeug.wrappers import Request, Response
 from lostservice.app import LostApplication
-import lostservice.configuration as config
-import lostservice.logging.auditlog as auditlog
 
 
 class LostService(object):
