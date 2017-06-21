@@ -116,8 +116,22 @@ class GetServiceBoundaryRequest(Request):
     """
     getServiceBoundary request class.
     """
-    def __init(self):
+    def __init(self,key=None):
         super(GetServiceBoundaryRequest, self).__init__()
+        self._key=key
+
+    @property
+    def key(self):
+        """
+        The key type.
+
+        :rtype: ``int``
+        """
+        return self._key
+
+    @key.setter
+    def key(self, value):
+        self._key = value
 
 
 

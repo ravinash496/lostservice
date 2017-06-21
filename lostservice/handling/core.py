@@ -225,7 +225,8 @@ class GetServiceBoundaryHandler(Handler):
         :return: The response.
         :rtype: :py:class:`GetServiceBoundaryResponse`
         """
-        raise NotImplementedError("Can't handle getServiceBoundary requests just yet, come back later.")
+        results = self._db_wrapper.get_boundaries_for_previous_id(request.key)
+        return (results)
 
 
 class ListServicesByLocationHandler(Handler):
