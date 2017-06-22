@@ -1,4 +1,4 @@
-<findService xmlns="urn:ietf:params:xml:ns:lost1" validateLocation="false" serviceBoundary="Reference">
+<findService xmlns="urn:ietf:params:xml:ns:lost1" validateLocation="false">
    <location id="a9f93608-1092-42c6-9423-c0167e11398d" profile="geodetic-2d">
       <gml:Point xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
          <gml:pos>45.4524048105657 -68.5452615106889</gml:pos>
