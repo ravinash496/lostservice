@@ -373,3 +373,31 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
 
 
+def get_boundaries_for_previous_id(pid, engine):
+    """
+    Executes an query to get the boundary.
+
+    :param pid: previously returned id.
+    :type pid: `text`
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table("esbpsap", tbl_metadata, autoload=True)
+
+        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()],
+                   the_table.c.srcunqid.like(pid))
+
+        results = _execute_query(engine, s)
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct boundaries query.', ex)
+    except SpatialQueryException:
+        raise
+
+    return results

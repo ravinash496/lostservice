@@ -133,3 +133,7 @@ class GisDbInterface(object):
         :return: A list of dictionaries containing the contents of returned rows.
         """
         return spatialdb.get_containing_boundary_for_polygon(points, srid, boundary_table, self._engine)
+
+
+    def get_boundaries_for_previous_id(self, pid):
+        return spatialdb.get_boundaries_for_previous_id(pid, self._engine)

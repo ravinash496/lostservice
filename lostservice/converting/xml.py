@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -18,6 +18,8 @@ from lostservice.model.location import Point
 from lostservice.model.location import Location
 from lostservice.model.requests import FindServiceRequest
 from lostservice.model.requests import ListServicesRequest
+from lostservice.model.requests import GetServiceBoundaryRequest
+import io
 
 LOST_PREFIX = 'lost'
 LOST_URN = 'urn:ietf:params:xml:ns:lost1'
@@ -31,7 +33,7 @@ CAN_PREFIX = 'can'
 CAN_URN = 'urn:nena:xml:ns:pidf:nenaCivicAddr'
 CAE_PREFIX = 'cae'
 CAE_URN = 'urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr:ext'
-
+GEO_PROFILE = 'geodetic-2d'
 
 _namespace_map = {LOST_PREFIX: LOST_URN,
                   CIVIC_ADDRESS_PREFIX: CIVIC_ADDRESS_URN,
@@ -42,18 +44,19 @@ _namespace_map = {LOST_PREFIX: LOST_URN,
 
 
 class XmlConverter(Converter):
-    """ 
+    """
     Base class for all types of XML converters.
     """
+
     def __init__(self):
         super(XmlConverter, self).__init__()
 
     def _run_xpath(self, node, xpath):
         """
-        Gets the content of a child of the given element.  If the search returns multiple matches, 
+        Gets the content of a child of the given element.  If the search returns multiple matches,
          only the first will be used.
-         
-        :param node: The node from which the search will be initiated. 
+
+        :param node: The node from which the search will be initiated.
         :type node: ``_ElementTree``
         :param xpath: An xpath which selects the desired element.
         :type xpath: ``str``
@@ -75,7 +78,7 @@ class XmlConverter(Converter):
         """
         Abstract method for message parsing to be implemented by subclasses.
 
-        :param data: The data to be parsed. 
+        :param data: The data to be parsed.
         :return: An instance of type corresponding to the input data.
         """
         raise NotImplementedError('The parse method must be implemented in a subclass.')
@@ -94,10 +97,11 @@ class CivicXmlConverter(XmlConverter):
     """
     Implementation class for converting civic addresses from/to XML.
     """
+
     def __init__(self):
         """
         Constructs a new CivicXmlParser instance.
-        
+
         :return CivicXmlParser: A new CivicXmlParser instance.
         """
         super(CivicXmlConverter, self).__init__()
@@ -105,7 +109,7 @@ class CivicXmlConverter(XmlConverter):
     def parse(self, data):
         """
         Parse a node containing a civic address.
-        
+
         :param data: The civic address node.
         :type data: :py:class:`_ElementTree`
         :return: A CivicAddress instance.
@@ -166,10 +170,11 @@ class PointXmlConverter(XmlConverter):
     """
     Implementation class for converting points from/to XML.
     """
+
     def __init__(self):
         """
         Constructs a new PointXmlParser instance.
-        
+
         :return PointXmlParser: A new PointXmlParser instance.
         """
         super(PointXmlConverter, self).__init__()
@@ -177,7 +182,7 @@ class PointXmlConverter(XmlConverter):
     def parse(self, data):
         """
         Parse a node containing a point.
-        
+
         :param data: The point node.
         :type data: :py:class:`_ElementTree`
         :return: A Point instance.
@@ -210,10 +215,11 @@ class CircleXmlConverter(XmlConverter):
     """
     Implementation class for converting circles from/to XML.
     """
+
     def __init__(self):
         """
         Constructs a new CircleXmlParser instance.
-        
+
         :return CircleXmlParser: A new CircleXmlParser instance.
         """
         super(CircleXmlConverter, self).__init__()
@@ -221,7 +227,7 @@ class CircleXmlConverter(XmlConverter):
     def parse(self, data):
         """
         Parse a node containing a circle.
-        
+
         :param data: The circle node.
         :type data: :py:class:`_ElementTree`
         :return: A Circle instance.
@@ -260,6 +266,7 @@ class LocationXmlConverter(XmlConverter):
     """
     Implementation class for converting LoST location elements.
     """
+
     def __init__(self):
         """
         Constructs a new LocationXmlParser instance.
@@ -269,11 +276,11 @@ class LocationXmlConverter(XmlConverter):
     def _parse_geodetic(self, data):
         """
         Parses a node containing one of the geodetic-2d location types.
-        
+
         :param data: The node containing the geometry to be parsed.
         :type data: :py:class:`_ElementTree`
         :return: A model instance representing the geometry.
-        :rtype: A subclass of :py:class:`Geodetic2D` 
+        :rtype: A subclass of :py:class:`Geodetic2D`
         """
         retval = None
         parser = None
@@ -288,7 +295,7 @@ class LocationXmlConverter(XmlConverter):
     def parse(self, data):
         """
         Parse a node containing a location.
-        
+
         :param data: The location node.
         :type data: :py:class:`_ElementTree`
         :return: A Location instance.
@@ -332,7 +339,7 @@ class FindServiceXmlConverter(XmlConverter):
     def parse(self, data):
         """
         Parse a findService LoST request.
-        
+
         :param data: The findService request XML.
         :type data: ``str`` or :py:class:`_ElementTree`
         :return: A FindServiceRequest instance.
@@ -368,8 +375,10 @@ class FindServiceXmlConverter(XmlConverter):
 
             # Add mapping sub element
             mapping = lxml.etree.SubElement(xml_response, 'mapping',
-                                            attrib={'expires': str(item['mapping_expires']), 'lastUpdated': str(item['mapping_lastupdate']),
-                                                    'source': item['mapping_source'], 'sourceId': item['mapping_sourceid']})
+                                            attrib={'expires': str(item['mapping_expires']),
+                                                    'lastUpdated': str(item['mapping_lastupdate']),
+                                                    'source': item['mapping_source'],
+                                                    'sourceId': item['mapping_sourceid']})
 
             # add the displayname, serviceurn, routeuri, servicenum to mapping
             services_element = lxml.etree.SubElement(mapping, 'displayName')
@@ -386,7 +395,10 @@ class FindServiceXmlConverter(XmlConverter):
             else:
                 # TODO element tag throws invalid tag for gml even namespace registered
                 services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile=item['profile'])
-                services_element.text = item['non_lost_data']
+                final_gml_as_xml = io.StringIO(
+                    '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['non_lost_data']))
+                final_gml = etree.parse(final_gml_as_xml).getroot()
+                services_element.extend(final_gml)
 
             services_element = lxml.etree.SubElement(mapping, 'uri')
             services_element.text = item['routeuri']
@@ -402,10 +414,8 @@ class FindServiceXmlConverter(XmlConverter):
             for a_path in data[0]['path']:
                 via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
 
-
         services_element = lxml.etree.SubElement(xml_response, 'locationUsed')
         services_element.text = ' '.join(data[0]['locationUsed'])
-
 
         return xml_response
 
@@ -453,13 +463,13 @@ class ListServicesXmlConverter(XmlConverter):
         # add the services element, filling in with the list of services in the reponse.
         services_element = lxml.etree.SubElement(xml_response, 'serviceList')
         services_element.text = ' '.join(data.services)
-        # add the path element 
+        # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')
         # not generate a 'via' element for each source.
         if data.path is not None:
             for a_path in data.path:
                 via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
-        
+
         return xml_response
 
 
@@ -517,7 +527,15 @@ class GetServiceBoundaryXmlConverter(XmlConverter):
         :return: A GetServiceBoundaryRequest instance.
         :rtype: :py:class:`GetServiceBoundaryRequest`
         """
-        raise NotImplementedError("Can't parse getServiceBoundary requests just yet, come back later.")
+        root = self.get_root(data)
+        request = GetServiceBoundaryRequest()
+        try:
+            request.key = root.get("key")
+        except:
+            request.key = None
+
+        return request
+        # raise NotImplementedError("Can't parse getServiceBoundary requests just yet, come back later.")
 
     def format(self, data):
         """
@@ -528,9 +546,19 @@ class GetServiceBoundaryXmlConverter(XmlConverter):
         :return: The formatted output.
         :rtype: :py:class:`_ElementTree`
         """
-        raise NotImplementedError('TODO: Implement formatting of GetServiceBoundaryResponses.')
+        # create the root element of the xml response.
+        xml_response = lxml.etree.Element('getServiceBoundaryResponse',
+                                          nsmap={None: LOST_URN, GML_PREFIX: GML_URN})
 
+        for item in data:
+            services_element = lxml.etree.SubElement(xml_response, 'serviceBoundary',
+                                                     profile=item.get('profile', GEO_PROFILE))
+            final_gml_as_xml = io.StringIO(
+                '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['ST_AsGML_1']))
+            final_gml = etree.parse(final_gml_as_xml).getroot()
+            services_element.extend(final_gml)
 
+        return xml_response
 
 
 
