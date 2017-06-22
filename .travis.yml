@@ -4,6 +4,10 @@ python:
 
 sudo: required
 
+env:
+  CPLUS_INCLUDE_PATH=/usr/include/gdal
+  C_INCLUDE_PATH=/usr/include/gdal
+
 services:
   - docker
 
@@ -19,8 +23,6 @@ before_install:
   - sudo add-apt-repository -y ppa:ubuntugis/ppa -y
   - sudo apt-get update -q
   - sudo apt-get install -y gdal-bin libgdal-dev -y
-  - EXPORT CPLUS_INCLUDE_PATH=/usr/include/gdal
-  - EXPORT C_INCLUDE_PATH=/usr/include/gdal
 
 after_success:
   - coverage report
