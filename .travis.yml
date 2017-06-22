@@ -1,0 +1,32 @@
+language: python
+python:
+  - "3.6"
+
+sudo: required
+
+services:
+  - docker
+
+script:
+ - pytest --cov=lostservice ./tests/test_*
+
+install:
+  - pip install -r requirements.txt
+  - pip install coverage
+  - pip install pytest-cov
+
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntugis/ppa -y
+  - sudo apt-get update -q
+  - sudo apt-get install -y gdal-bin libgdal-dev -y
+  - EXPORT CPLUS_INCLUDE_PATH=/usr/include/gdal
+  - EXPORT C_INCLUDE_PATH=/usr/include/gdal
+
+after_success:
+  - coverage report
+  - docker build -t lostservice_img .
+  - docker login SpatialRouterRegistry.azurecr.io -u SpatialRouterRegistry -p "R09O8/N=6S8rsYW4poTHuM5Zz+ciHVc9"
+  - docker tag lostservice_img SpatialRouterRegistry.azurecr.io/lostservice_img
+  - docker push SpatialRouterRegistry.azurecr.io/lostservice_img
+
+after_failure:
