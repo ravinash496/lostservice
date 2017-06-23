@@ -4,21 +4,21 @@
 import unittest
 from unittest.mock import patch
 from unittest.mock import MagicMock
-import lostservice.logger.auditlog as auditlog
+import lostservice
 
 
 class AuditLogTest(unittest.TestCase):
 
     def test_audit_noop(self):
-        target = auditlog.AuditLog()
+        target = lostservice.logger.auditlog.AuditLog()
         try:
             target.record_event(None)
         except:
             self.fail("record_event threw an exception.")
 
-    @patch('test_logging_auditing.auditlog.AuditListener')
+    @patch('lostservice.logger.auditlog.AuditListener')
     def test_audit_none(self, mocklistener):
-        target = auditlog.AuditLog()
+        target = lostservice.logger.auditlog.AuditLog()
         mocklistener.record_event = MagicMock()
         target.register_listener(mocklistener)
 
@@ -27,14 +27,18 @@ class AuditLogTest(unittest.TestCase):
         mocklistener.record_event.assert_called_once()
         mocklistener.record_event.assert_called_with(None)
 
-    @patch('test_logging_auditing.auditlog.AuditListener')
+    @patch('lostservice.logger.auditlog.AuditListener')
     def test_audit_simple(self, mocklistener):
-        target = auditlog.AuditLog()
+        target = lostservice.logger.auditlog.AuditLog()
         mocklistener.record_event = MagicMock()
         target.register_listener(mocklistener)
-        event = auditlog.AuditableEvent()
+        event = lostservice.logger.auditlog.AuditableEvent()
 
         target.record_event(event)
 
         mocklistener.record_event.assert_called_once()
         mocklistener.record_event.assert_called_with(event)
+
+
+if __name__ == '__main__':
+    unittest.main()
