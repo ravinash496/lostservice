@@ -1,42 +1,49 @@
 language: python
+
 python:
-  - "3.6"
+- '3.6'
 
 branches:
   only:
-    - master
+  - master
 
 sudo: required
 
 env:
-  CPLUS_INCLUDE_PATH=/usr/include/gdal
-  C_INCLUDE_PATH=/usr/include/gdal
+  matrix:
+  - CPLUS_INCLUDE_PATH=/usr/include/gdal
+  - C_INCLUDE_PATH=/usr/include/gdal
+  global:
+  - secure: frPt4xHu8RqF+GoVNl8IpQ3MBOL1kcTeklgb9nV4kYQF7PDDRfl72S/s4uPvenJG6X8Zzg0r/5lYYHw11g8al9zPPrmbrQf/NIXHCZjY3FmJpDF/QLTQ/z3woKjgSSQ+vAgJ80puKqRMDTR4gSef/y4UWVn8B5PhtqLyQE6RWJ9gZj8NJBCHlVN5Ojo2njxq9Z5U5tXeO02Sjq6TSKdSQAihWwmtWdufM7/cWMUliJ+KBX99KOfgJBdMQu4V+XV5OrZ2LIAXYyz5jWSDmMYrlTahjHQmK6hLWnfFD5+iZuMiGjWYPlnnZN2USawolDKp4Bssg+3UPixA5YIsWbnGt8ocebLCwD1sjXTOcR5LGKcm9nCprfBbV0GdQSWcqvOj9CYpZ7oa4fOOKXjqIz/jgisD624aRHZE/7LOezf/innbD/obNqAM8R9qkBKpB5iDfNbiLlKuADER7/fEdIenhCi/RTBDT1yIAmNwCpgp0nH/+twIRz+2e6O0UXHhCbpsCkFzobcnbOUEVHewo/UoO1DKcXvkvF9hc+ndkCUN03HPkhJkryoJ0YTQbv4/bEqcv1MuPGGij5nx8Azd3VGAtsf3CBnWjFkxE3AK9xa2Sr7CgNzCyOQ/jIVolDqWC2Q+NVMUE7dKAq241japwI3PoD9cC2Jn80srBNRAZmK0I6U=
+  - secure: lIE3fxFWyTkC9QbocvNrcv2tYs3ndXHz4Mrf8T3KDWeD9eXKmcBQ7sPESzVLBgkHIj+/EpU4AtPckozzW27cvNFiym50I7+xgKV3dHW3NLq4ECXu66IGfn9pIwyqelBMuVQHg/LN71EHtECNJva6U8KucrvAu3zeE+7XS4suUW70Qyx2zilp/FsppXKr5Hnqkziym0zqeb1r4mb/APMuJMj/5RzatIeWQAHdSa8e8GTrDgmMA4iN/stkNjFZ/s10K787nqRKEhAIUCM2IauH99am8CzzHBK5fWA9fm/sVmsOL+J9+aV5EE2epNUjEFm5cY1J5pw870IHKySUAU4E9CXcUSp37KqEIW/ugIW//bak31vxBAqeNA6xlMa5YrcgrJptM5oJe8iur5z+JHLByJ0C1ZVvZFIIpQVLMT2S4TvLAdExcfC6nXPxsVnz4YeIO26hJEv1Qy8WzM6WtKFwqH8nNGEnzL5jDcbt+BWglhIrpMBAEVe1kcOH+JYqfmml9jxSQLDE814SugQMPQHweL1oyhz1HoJqg43ImcoafY8ctQa+UozGPq2Cgel6qxUUq5xniV87NrMSanlsAVS26Lu8lKuty6sfcKQ+wMGQdh5h/nipka1bxujZ+qiPfKxR0cvY4cp6WJNK03cF2im5tVki4u/eV/HDa3RSRcotj7A=
 
 services:
-  - docker
+- docker
 
 script:
- - pytest --cov=lostservice ./tests/test_*
+- pytest --cov=lostservice ./tests/test_*
 
 install:
-  - pip install -r requirements.txt
-  - pip install coverage
-  - pip install pytest-cov
+- pip install -r requirements.txt
+- pip install coverage
+- pip install pytest-cov
 
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntugis/ppa -y
-  - sudo apt-get update -q
-  - sudo apt-get install -y gdal-bin libgdal-dev -y
+- sudo add-apt-repository -y ppa:ubuntugis/ppa -y
+- sudo apt-get update -q
+- sudo apt-get install -y gdal-bin libgdal-dev -y
 
 after_success:
-  - coverage report
-  - docker build -t lostservice .
-#  - docker login SpatialRouterRegistry.azurecr.io -u SpatialRouterRegistry -p "R09O8/N=6S8rsYW4poTHuM5Zz+ciHVc9"
-#  - docker tag lostservice_img:latest SpatialRouterRegistry.azurecr.io/lostservice_img:latest
-#  - docker push SpatialRouterRegistry.azurecr.io/lostservice_img
-  - docker login -u AWS -p eyJwYXlsb2FkIjoiamRPclpDMmQrWXpLUmlDSGUxTzVPS1ZCWEkwRXZTWSs2clhQWFBpUUg2QzFPYWlBK2g0elA1WDdZK0NZUlh1QWNTVkFRTVBLZVRLT3ZvK3Zqc2lKV2p3R281K2hTbnVvdkdhZ3FnUy9Nc0Vkbkk3VXN0dWp4OTIyOVZJWFdoOHloM2kxU0wrUk9uZlZhV05HblliU0VUanhxSnlWcnVva3hWblZYL0EySmZjaUxmNEV1MjZRQ0U2aXdOUFBrZnlucEF6Wkg5ZUhiU1FpMGJrR2NEcUZBK3ZHOUdIUzhodkdTN0RXU1B5QllibnJmYndpVVlDVld3T3FETjdqOFR3OVp0MWlyM0k2K2dmNVh2TTFOVFN4UC9UMkt6T29TRlZzSDh1T3ZsSHR6emdvRGVMRTcvc0lTZldBdUE1OGg0N05zUVVVWnptRWFFSUMvU3dNTElzUkFWN3Zud0VQWkVJVWdiOUVwSnRwMHNBd2tGS3hFdVBaak5QaC9JaEloWDVzMGY3cHBnU2ZhbHMzMEFlVlRONXlGd2QwNE1JaXFROXVySndQSmNSVU9NZ2NsMW50V01nUjVCSzVRZGtFUjdqckI1a2tyNnNRR1FFRDRydHNLc2t4QklTMVF4WVZFaHltWW5HMStnTHEyTmRnYks0NUtEaG5keDZHdStaVjJscVV1RmRpZEFSeFhhVGx1aWFxeHBSTmgwZ3NyMWxTZVdrVVhlWHBzOTJiUHo5WnpuMWx5bDhnbFJWekhpQmhzZGpsZndUTHNwUm1ydXV1WTJiYm5nNEQ0RWV5RFVmT214cVkrQVhJbmdpWXNubjZSM2c5T2IxYjc2QTlrSWVpREpjMFh6VCt4UldoTDJMTjFLdWt5SVBoZGpPQnRlN2FTSkd1R2RPL1RQMnl2Z0hua0tsemcrWVRhVm9KZXlEamZMQTczYjc2Wk5IaWltazNZc2pNaWpPWXFORFZtWm4xOHg1bzdoYzlGV0ozNStnOVRwbVNMMHd0bFdWdVV3Ni94STdrcUhUdXUybjUxdmRyUmxNNldJcWxOejg4R3I5Qmovclh0NzBKbzZ3YmY5L3BEYWZpKzRDbFE0em9LTzlLWXBWeHRSZUFhOUUxM1doMXVJUFU0UTZWQW9BZWhuN0xTcDhQUUJQTUN5bGhqVWJvelp2cDNJelNtK1kyekVqcTB2eGFsUkgzYkx1ejMrZFVUcm1QRzlBZW9kTk96cWh6SzVyYkQrK3pFaHJYWWJ5cTJVSk80U0NIZ29JNEZ5Q1JOMDBJTkY4ZGJZbW1FMTJ3NW9XUFBzNW0yQ1k9IiwiZGF0YWtleSI6IkFRRUJBSGo2bGM0WElKdy83bG4wSGMwMERNZWs2R0V4SENiWTRSSXBUTUNJNThJblV3QUFBSDR3ZkFZSktvWklodmNOQVFjR29HOHdiUUlCQURCb0Jna3Foa2lHOXcwQkJ3RXdIZ1lKWUlaSUFXVURCQUV1TUJFRURMZDliU1hwTFVWK1dncU5iUUlCRUlBN2Q1QSt5UlBDYzZpaDlWQzdheEhwWWJPVTNjTGFUa3JScHdMeTUvRzY4YWsrbUo0Z1FkY2p0UWFJK3AwdmIzdjBMbUU1ZzRVRDlzOVZOd0U9IiwidmVyc2lvbiI6IjEiLCJ0eXBlIjoiREFUQV9LRVkifQ== https://709177336629.dkr.ecr.us-west-2.amazonaws.com
-  - docker tag lostservice:latest 709177336629.dkr.ecr.us-west-2.amazonaws.com/lostservice:latest
-  - docker push 709177336629.dkr.ecr.us-west-2.amazonaws.com/lostservice:latest
+- coverage report
+- docker --version
+- docker build -t spatialrouter/lostservice .
+
+deploy:
+- pip install --user awscli
+- export PATH=$PATH:$HOME/.local/bin
+- eval $(aws ecr get-login --region us-west-2)
+- docker tag spatialrouter/lostservice:latest 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
+- docker push 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
 
 notifications:
   webhooks: https://outlook.office.com/webhook/8e85e59c-da42-4a8e-ad98-a7f0173b2a0e@ba05d72b-83fc-45fc-873b-b2841e0752de/TravisCI/a0a34daa96724c4cb6309283da957e6a/56b9b902-14c4-4a02-8944-45059ec4524c
