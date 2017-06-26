@@ -225,7 +225,15 @@ class GetServiceBoundaryHandler(Handler):
         :return: The response.
         :rtype: :py:class:`GetServiceBoundaryResponse`
         """
-        results = self._db_wrapper.get_boundaries_for_previous_id(request.key)
+        # Get the table mappings, this should come from cache eventually.
+        mappings = self._db_wrapper.get_urn_table_mappings()
+
+        # loop through all the tables to find the id until its found.
+        for urn_mapping in mappings.keys():
+            esb_table = mappings[urn_mapping]
+            results = self._db_wrapper.get_boundaries_for_previous_id(request.key, esb_table)
+            if results:
+                break
         return (results)
 
 
