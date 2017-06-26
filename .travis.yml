@@ -10,7 +10,6 @@ branches:
 sudo: required
 
 env:
-  matrix:
   - CPLUS_INCLUDE_PATH=/usr/include/gdal
   - C_INCLUDE_PATH=/usr/include/gdal
   global:
