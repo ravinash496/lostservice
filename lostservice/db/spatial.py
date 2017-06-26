@@ -373,7 +373,7 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
 
 
-def get_boundaries_for_previous_id(pid, engine):
+def get_boundaries_for_previous_id(pid, engine, boundary_table):
     """
     Executes an query to get the boundary.
 
@@ -388,10 +388,10 @@ def get_boundaries_for_previous_id(pid, engine):
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
-        the_table = Table("esbpsap", tbl_metadata, autoload=True)
+        the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
         s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()],
-                   the_table.c.srcunqid.like(pid))
+                   the_table.c.gcunqid.like(pid))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
