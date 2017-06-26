@@ -37,8 +37,6 @@ after_success:
 - coverage report
 - docker --version
 - docker build -t spatialrouter/lostservice .
-
-deploy:
 - pip install --user awscli
 - export PATH=$PATH:$HOME/.local/bin
 - eval $(aws ecr get-login --region us-west-2)
