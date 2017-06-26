@@ -26,11 +26,12 @@ before_install:
 - sudo apt-get install -y gdal-bin libgdal-dev -y
 after_success:
 - coverage report
-- docker --version
-- docker build -t spatialrouter/lostservice .
-- export PATH=$PATH:$HOME/.local/bin
-- eval $(aws ecr get-login --region us-west-2)
-- docker tag spatialrouter/lostservice:latest 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
-- docker push 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
+- if [ "$TRAVIS_BRANCH" == "master" ] then
+  docker --version
+  docker build -t spatialrouter/lostservice .
+  eval $(aws ecr get-login --region us-west-2)
+  docker tag spatialrouter/lostservice:latest 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
+  docker push 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
+  fi
 notifications:
   webhooks: https://outlook.office.com/webhook/8e85e59c-da42-4a8e-ad98-a7f0173b2a0e@ba05d72b-83fc-45fc-873b-b2841e0752de/TravisCI/a0a34daa96724c4cb6309283da957e6a/56b9b902-14c4-4a02-8944-45059ec4524c
