@@ -29,8 +29,7 @@ Windows:
 [lxml-3.7.3-cp36-cp36m-win_amd64.whl](https://pypi.python.org/packages/cb/18/5e1a771220b23640b984765133414070c2f52da7102987b3377a51ccfa2c/lxml-3.7.3-cp36-cp36m-win_amd64.whl#md5=f8b0b8e0363305ecba33925d31d27631)  
 `pip install lxml-3.7.3-cp36-cp36m-win_amd64.whl`  
 
-
-### Installing Packages from Scratch  
+### Installing Packages from Scratch
 psychpg2:  
 `pip install psycopg2`  
 
