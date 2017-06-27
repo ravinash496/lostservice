@@ -22,7 +22,7 @@ if [ -z "$TRAVIS_PULL_REQUEST" ] || [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
 
     echo "Deploying $TRAVIS_BRANCH on $TASK_DEFINITION"
     ./ecs-deploy.sh -c $CLUSTER -n $SERVICE -i $REMOTE_IMAGE_URL:latest
-
+    exit $?
   else
     echo "Skipping deploy because branch is not 'master'"
   fi
