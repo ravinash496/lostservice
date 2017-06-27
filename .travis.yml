@@ -10,6 +10,11 @@ env:
   global:
   - CPLUS_INCLUDE_PATH=/usr/include/gdal
   - C_INCLUDE_PATH=/usr/include/gdal
+  - AWS_DEFAULT_REGION=us-west-2
+  - IMAGE_NAME=spatialrouter/lostservice
+  - REMOTE_IMAGE_URL=709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice
+  - TASK_DEFINITION=spatialrouter-30-ci-task
+  - SERVICE=spatialrouter-30-ci-service
   - secure: frPt4xHu8RqF+GoVNl8IpQ3MBOL1kcTeklgb9nV4kYQF7PDDRfl72S/s4uPvenJG6X8Zzg0r/5lYYHw11g8al9zPPrmbrQf/NIXHCZjY3FmJpDF/QLTQ/z3woKjgSSQ+vAgJ80puKqRMDTR4gSef/y4UWVn8B5PhtqLyQE6RWJ9gZj8NJBCHlVN5Ojo2njxq9Z5U5tXeO02Sjq6TSKdSQAihWwmtWdufM7/cWMUliJ+KBX99KOfgJBdMQu4V+XV5OrZ2LIAXYyz5jWSDmMYrlTahjHQmK6hLWnfFD5+iZuMiGjWYPlnnZN2USawolDKp4Bssg+3UPixA5YIsWbnGt8ocebLCwD1sjXTOcR5LGKcm9nCprfBbV0GdQSWcqvOj9CYpZ7oa4fOOKXjqIz/jgisD624aRHZE/7LOezf/innbD/obNqAM8R9qkBKpB5iDfNbiLlKuADER7/fEdIenhCi/RTBDT1yIAmNwCpgp0nH/+twIRz+2e6O0UXHhCbpsCkFzobcnbOUEVHewo/UoO1DKcXvkvF9hc+ndkCUN03HPkhJkryoJ0YTQbv4/bEqcv1MuPGGij5nx8Azd3VGAtsf3CBnWjFkxE3AK9xa2Sr7CgNzCyOQ/jIVolDqWC2Q+NVMUE7dKAq241japwI3PoD9cC2Jn80srBNRAZmK0I6U=
   - secure: lIE3fxFWyTkC9QbocvNrcv2tYs3ndXHz4Mrf8T3KDWeD9eXKmcBQ7sPESzVLBgkHIj+/EpU4AtPckozzW27cvNFiym50I7+xgKV3dHW3NLq4ECXu66IGfn9pIwyqelBMuVQHg/LN71EHtECNJva6U8KucrvAu3zeE+7XS4suUW70Qyx2zilp/FsppXKr5Hnqkziym0zqeb1r4mb/APMuJMj/5RzatIeWQAHdSa8e8GTrDgmMA4iN/stkNjFZ/s10K787nqRKEhAIUCM2IauH99am8CzzHBK5fWA9fm/sVmsOL+J9+aV5EE2epNUjEFm5cY1J5pw870IHKySUAU4E9CXcUSp37KqEIW/ugIW//bak31vxBAqeNA6xlMa5YrcgrJptM5oJe8iur5z+JHLByJ0C1ZVvZFIIpQVLMT2S4TvLAdExcfC6nXPxsVnz4YeIO26hJEv1Qy8WzM6WtKFwqH8nNGEnzL5jDcbt+BWglhIrpMBAEVe1kcOH+JYqfmml9jxSQLDE814SugQMPQHweL1oyhz1HoJqg43ImcoafY8ctQa+UozGPq2Cgel6qxUUq5xniV87NrMSanlsAVS26Lu8lKuty6sfcKQ+wMGQdh5h/nipka1bxujZ+qiPfKxR0cvY4cp6WJNK03cF2im5tVki4u/eV/HDa3RSRcotj7A=
 services:
@@ -27,10 +32,7 @@ before_install:
 - sudo apt-get install -y gdal-bin libgdal-dev -y
 after_success:
 - coverage report
-- docker --version
-- docker build -t spatialrouter/lostservice .
-- eval $(aws ecr get-login --region us-west-2)
-- docker tag spatialrouter/lostservice:latest 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
-- docker push 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
+- lostservice_deploy.sh
+
 notifications:
   webhooks: https://outlook.office.com/webhook/8e85e59c-da42-4a8e-ad98-a7f0173b2a0e@ba05d72b-83fc-45fc-873b-b2841e0752de/TravisCI/a0a34daa96724c4cb6309283da957e6a/56b9b902-14c4-4a02-8944-45059ec4524c
