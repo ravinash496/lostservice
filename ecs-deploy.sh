@@ -310,8 +310,17 @@ function updateService() {
         DESIRED_COUNT="--desired-count $DESIRED"
     fi
 
+    # Get the ID of the currently running task so we can stop it.
+    CURRENT_TASK_ID=`$AWS_ECS list-tasks --cluster $CLUSTER --service-name $SERVICE | jq -r .taskArns[0]`
+    echo "The ID of the currently running task is $CURRENT_TASK_ID"
+
     # Update the service
+    echo "Updating service $SERVICE with new task definition $NEW_TASKDEF."
     UPDATE=`$AWS_ECS update-service --cluster $CLUSTER --service $SERVICE $DESIRED_COUNT --task-definition $NEW_TASKDEF $DEPLOYMENT_CONFIG`
+
+    echo "Stopping the current task so it will restart with the new version."
+    echo "HEADS UP - This will need to change if/when we move to running multiple tasks."
+    STOPPED_TASK=`$AWS_ECS stop-task --cluster $CLUSTER --task $CURRENT_TASK_ID`
 
     # Only excepts RUNNING state from services whose desired-count > 0
     SERVICE_DESIREDCOUNT=`$AWS_ECS describe-services --cluster $CLUSTER --service $SERVICE | jq '.services[]|.desiredCount'`
