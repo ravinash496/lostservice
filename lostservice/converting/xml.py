@@ -274,7 +274,7 @@ class PolygonXmlConverter(XmlConverter):
 
     def parse(self, data):
         """
-        Parse a node containing a point.
+        Parse a node containing a polygon.
 
         :param data: The point node.
         :type data: :py:class:`_ElementTree`
@@ -579,7 +579,7 @@ class GetServiceBoundaryXmlConverter(XmlConverter):
             request.key = None
 
         return request
-        #raise NotImplementedError("Can't parse getServiceBoundary requests just yet, come back later.")
+
 
     def format(self, data):
         """
