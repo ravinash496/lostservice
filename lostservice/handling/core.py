@@ -124,12 +124,17 @@ class FindServiceHandler(Handler):
                 float(request.location.location.radius),
                 request.location.location.uom, esb_table, return_area, return_shape)
 
-
         elif type(request.location.location) is Point:
             results = self._db_wrapper.get_containing_boundary_for_point(
                 request.location.location.longitude,
                 request.location.location.latitude,
                 request.location.location.spatial_ref,
+                esb_table)
+
+        else:
+            results = self._db_wrapper.get_containing_boundary_for_polygon(
+                request.location.location.get("vertices"),
+                request.location.location.get("spatial_ref"),
                 esb_table)
 
 
