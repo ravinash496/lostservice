@@ -11,12 +11,15 @@ The main entry point for ECRF/LVF services.
 import os
 import argparse
 import logging
+import datetime
+import pytz
 from lxml import etree
 from injector import Module, provider, Injector, singleton
 import lostservice.configuration as config
 import lostservice.logger.auditlog as auditlog
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
+import lostservice.logger.nenalog as nenalog
 
 
 class LostBindingModule(Module):
@@ -170,6 +173,8 @@ class LostApplication(object):
         self._logger.info('Starting LoST query execution . . .')
         self._logger.debug(data)
 
+        starttime = datetime.datetime.now(tz=pytz.utc)
+
         # Here's what's gonna happen . . .
         # 1. Parse the request and pull out the root element.
         parsed_request = etree.fromstring(data)
@@ -184,6 +189,13 @@ class LostApplication(object):
 
         # 4. serialize the xml back out into a string and return it.
         response = etree.tostring(parsed_response)
+
+        endtime = datetime.datetime.now(tz=pytz.utc)
+
+        # TODO
+        #serverid = _config.get('Service', 'source_uri', as_object=False, required=False)
+        serverid = 'authoritative.example'
+        nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, serverid)
 
         self._logger.debug(response)
         self._logger.info('Finished LoST query execution . . .')

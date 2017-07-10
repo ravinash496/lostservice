@@ -387,7 +387,7 @@ class FindServiceXmlConverter(XmlConverter):
             services_element = lxml.etree.SubElement(mapping, 'service')
             services_element.text = item['serviceurn']
 
-            if data[0]['value_or_reference'] == "Reference" or data[0]['value_or_reference'] is None:
+            if data[0]['value_or_reference'] == "reference" or data[0]['value_or_reference'] is None:
                 attr_element = collections.OrderedDict()
                 attr_element['source'] = data[0]['mapping_source']
                 attr_element['key'] = data[0]['mapping_sourceid']
