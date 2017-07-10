@@ -20,6 +20,7 @@ from lostservice.db.gisdb import GisDbInterface
 from lostservice.handler import Handler
 import lostservice.model.responses as responses
 from lostservice.model.location import Circle
+from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
 from lostservice.configuration import PolygonMultipleMatchPolicyEnum
 from lostservice.configuration import ServiceExpiresPolicyEnum
@@ -123,6 +124,17 @@ class FindServiceHandler(Handler):
                 request.location.location.spatial_ref,
                 float(request.location.location.radius),
                 request.location.location.uom, esb_table, return_area, return_shape)
+
+        elif type(request.location.location) is Ellipse:
+
+            results = self._db_wrapper.get_containing_boundary_for_ellipse(
+                request.location.location.latitude,
+                request.location.location.longitude,
+                request.location.location.spatial_ref,
+                float(request.location.location.semiMajorAxis),
+                float(request.location.location.semiMinorAxis),
+                float(request.location.location.orientation),
+                esb_table)
 
         elif type(request.location.location) is Point:
             results = self._db_wrapper.get_containing_boundary_for_point(

@@ -14,6 +14,7 @@ import collections
 from lostservice.converter import Converter
 from lostservice.model.location import CivicAddress
 from lostservice.model.location import Circle
+from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
 from lostservice.model.location import Location
 from lostservice.model.requests import FindServiceRequest
@@ -274,7 +275,7 @@ class PolygonXmlConverter(XmlConverter):
 
     def parse(self, data):
         """
-        Parse a node containing a polygon.
+        Parse a node containing a point.
 
         :param data: The point node.
         :type data: :py:class:`_ElementTree`
@@ -293,6 +294,62 @@ class PolygonXmlConverter(XmlConverter):
                 vertices=[float(lon),float(lat)]
                 points['vertices'].append(vertices)
         return points
+
+    def format(self, data):
+        """
+        Formats a point.
+
+        :param data: The point to be formatted.
+        :type data: :py:class:`Point`
+        :return: The formatted output.
+        :rtype: :py:class:`_ElementTree`
+        """
+        raise NotImplementedError('TODO: Implement formatting of points.')
+
+
+class EllipseXmlConverter(XmlConverter):
+    """
+    Implementation class for converting ellipse points from/to XML.
+    """
+
+    def __init__(self):
+        """
+        Constructs a new EllipseXmlConverter instance.
+
+        :return PointXmlParser: A new EllipseXmlConverter instance.
+        """
+        super(EllipseXmlConverter, self).__init__()
+
+    def parse(self, data):
+        """
+        Parse a node containing a point.
+
+        :param data: The point node.
+        :type data: :py:class:`_ElementTree`
+        :return: A Point instance.
+        :rtype: :py:class:`Point`
+        """
+        sr_template = './@{0}'
+        node_template = './{0}:{1}/text()'
+        uom_template = './{0}:{1}/@{2}'
+
+        ellipse = Ellipse()
+        ellipse.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
+
+        position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
+        lat, lon = position.split()
+        ellipse.latitude = float(lat)
+        ellipse.longitude = float(lon)
+
+        ellipse.semiMajorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis'))
+        ellipse.semiMinorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis'))
+        ellipse.orientation = float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
+        #ellipse.orientation = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
+        ellipse.semiMajorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
+        ellipse.semiMinorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
+        ellipse.orientationuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'orientation', 'uom'))
+
+        return ellipse
 
     def format(self, data):
         """
@@ -332,6 +389,8 @@ class LocationXmlConverter(XmlConverter):
             parser = PointXmlConverter()
         elif 'Polygon' == qname.localname:
             parser = PolygonXmlConverter()
+        elif 'Ellipse' == qname.localname:
+            parser = EllipseXmlConverter()
         elif 'Circle':
             parser = CircleXmlConverter()
         retval = parser.parse(data)
@@ -579,7 +638,7 @@ class GetServiceBoundaryXmlConverter(XmlConverter):
             request.key = None
 
         return request
-
+        #raise NotImplementedError("Can't parse getServiceBoundary requests just yet, come back later.")
 
     def format(self, data):
         """
