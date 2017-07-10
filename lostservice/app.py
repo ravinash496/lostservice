@@ -197,6 +197,8 @@ if __name__ == "__main__":
     # parser.add_argument('config', help='the path to the configuration file.')
     parser.add_argument('request', help='the path to a file containing a LoST request')
     args = parser.parse_args()
+    custom_ini_file = os.path.join(os.path.dirname(__file__), './lostservice.ini')
+    os.environ['CONFIGFILE'] = custom_ini_file
 
     request = None
     with open(args.request, 'r') as request_file:
