@@ -19,8 +19,9 @@ import lostservice.configuration as config
 import lostservice.logger.auditlog as auditlog
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
-import lostservice.logger.nenalog as nenalog
 
+import lostservice.logger.nenalog_simple as nenalog
+#import lostservice.logger.nenalog as nenalog
 
 class LostBindingModule(Module):
     """
@@ -195,6 +196,8 @@ class LostApplication(object):
         # TODO
         #serverid = _config.get('Service', 'source_uri', as_object=False, required=False)
         serverid = 'authoritative.example'
+
+        # nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, serverid)
         nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, serverid)
 
         self._logger.debug(response)

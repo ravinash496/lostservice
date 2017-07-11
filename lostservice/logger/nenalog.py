@@ -188,23 +188,21 @@ def _create_findservice(client, dict_test):
     #     urn: ietf:params: xml:ns: lost1}serviceBoundary,
     # recursive: xsd:boolean
 
+    # loc = {'location': {'id': '24b276e1-7eca-48d5-be24-30e0dd4c1ca0', 'profile': 'geodetic-2d',
+    #               '_value_1': {'spatial_ref': 'urn:ogc:def:crs:EPSG::4326', 'lon': -68.4977255651657,
+    #                            'radius': '916105.41237061098', 'uom': 'urn:ogc:def:uom:EPSG::9001',
+    #                            'lat': 45.4430670070877}}}
 
 
-    loc = {'location': {'id': '24b276e1-7eca-48d5-be24-30e0dd4c1ca0', 'profile': 'geodetic-2d',
-                  '_value_1': {'spatial_ref': 'urn:ogc:def:crs:EPSG::4326', 'lon': -68.4977255651657,
-                               'radius': '916105.41237061098', 'uom': 'urn:ogc:def:uom:EPSG::9001',
-                               'lat': 45.4430670070877}}}
 
-    # loc = {'Circle': {'spatial_ref': 'urn:ogc:def:crs:EPSG::4326', 'lon': -68.4977255651657,
-    #                                  'radius': '916105.41237061098', 'uom': 'urn:ogc:def:uom:EPSG::9001',
-    #                                  'lat': 45.4430670070877}}
+    loc = {'Circle': {'spatial_ref': 'urn:ogc:def:crs:EPSG::4326', 'lon': -68.4977255651657,
+                                     'radius': '916105.41237061098', 'uom': 'urn:ogc:def:uom:EPSG::9001',
+                                     'lat': 45.4430670070877}}
     id = '24b276e1-7eca-48d5-be24-30e0dd4c1ca0'
     profile = 'geodetic-2d'
 
     ser = {'service': 'urn:nena:service:sos.police'}
     serb = {'serviceBoundary': 'reference'}
-
-
 
 
     # Get location as array?
@@ -216,7 +214,21 @@ def _create_findservice(client, dict_test):
     location_array['profile'] = profile
     location_array['id'] = id
 
+    # Fail - argument of type 'AnyObject' is not iterable
+    # fulllocation = xsd.AnyObject(location_element, location_element({'Circle': {'spatial_ref': 'urn:ogc:def:crs:EPSG::4326',
+    #                                                                'lon': -68.4977255651657,
+    #                                                                'radius': '916105.41237061098',
+    #                                                                'uom': 'urn:ogc:def:uom:EPSG::9001',
+    #                                                                'lat': 45.4430670070877}},
+    #                                                                {'id': '24b276e1-7eca-48d5-be24-30e0dd4c1ca0'},
+    #                                                                {'profile': 'geodetic-2d'}))
 
+    # Fail - argument of type 'AnyObject' is not iterable
+    # location_array['_value_1'] = xsd.AnyObject(location_element, location_element({'Circle': {'spatial_ref': 'urn:ogc:def:crs:EPSG::4326',
+    #                                                                'lon': -68.4977255651657,
+    #                                                                'radius': '916105.41237061098',
+    #                                                                'uom': 'urn:ogc:def:uom:EPSG::9001',
+    #                                                                'lat': 45.4430670070877}}))
 
 
     service = client.get_element('ns10:service')
@@ -276,12 +288,13 @@ def _create_findservice(client, dict_test):
 
 
     #Using InputDict
-    t1['location'].append(location_array)
-    t1['recursive'] = False
-    t1['validateLocation'] = False
+    # t1['location'].append(location_array)
+    # t1['recursive'] = False
+    # t1['validateLocation'] = False
 
-    find_service = find_service_element([location_array], ser, path, uri, True, service_boundary, False)
+    find_service = find_service_element(location=[location_array], service=ser, path=path, validateLocation=True, serviceBoundary=service_boundary, recursive=False)
 
+    #find_service = find_service_element([location_array], ser, path, uri, True, service_boundary, False)
 
     return find_service
 
