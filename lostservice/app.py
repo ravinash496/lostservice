@@ -20,8 +20,7 @@ import lostservice.logger.auditlog as auditlog
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 
-import lostservice.logger.nenalog_simple as nenalog
-#import lostservice.logger.nenalog as nenalog
+import lostservice.logger.nenalogging as nenalog
 
 class LostBindingModule(Module):
     """
