@@ -716,3 +716,149 @@ class Circle(Geodetic2D):
     @uom.setter
     def uom(self, value):
         self._uom = value
+
+
+class Ellipse(Geodetic2D):
+    """
+    A class for representing Ellipse geometries.
+    """
+
+    def __init__(self, spatial_ref=None, lat=None, lon=None,
+                 majorAxis=None, majorAxisuom=None,
+                 minorAxis=None, minorAxisuom=None,
+                 orinetation=None, orinetationuom=None  ):
+        """
+        Constructor for Ellipse geometries.
+
+        :param spatial_ref: The spatial reference URN.
+        :type spatial_ref: ``str``
+        :param lat: Latitude
+        :type lat: ``float``
+        :param lon: Longitude
+        :type lon: ``float``
+        :param majorAxis: majorAxis of the Ellipse
+        :type majorAxis: ``float``
+        :param majorAxisuom: Unit of measure identifier for the majorAxis.
+        :type majorAxisuom: ``str``
+        :param minorAxis: minorAxis of the Ellipse
+        :type minorAxis: ``float``
+        :param minorAxisuom: Unit of measure identifier for the minorAxis.
+        :type minorAxisuom: ``str``
+        :param orinetation: orinetation of the Ellipse
+        :type orinetation: ``float``
+        :param orinetationuom: Unit of measure identifier for the orinetation.
+        :type orinetationuom: ``str``
+        """
+        super(Ellipse, self).__init__(spatial_ref)
+        self._lat = lat
+        self._lon = lon
+        self._majorAxis = majorAxis
+        self._majorAxisuom = majorAxisuom
+        self._minorAxis = minorAxis
+        self._minorAxisuom = minorAxisuom
+        self._orinetation = orinetation
+        self._orinetationuom = orinetationuom
+
+    @property
+    def latitude(self):
+        """
+        The latitude.
+
+        :rtype: ``float``
+        """
+        return self._lat
+
+    @latitude.setter
+    def latitude(self, value):
+        self._lat = value
+
+    @property
+    def longitude(self):
+        """
+        The longitude.
+
+        :rtype: ``float``
+        """
+        return self._lon
+
+    @longitude.setter
+    def longitude(self, value):
+        self._lon = value
+
+    @property
+    def majorAxis(self):
+        """
+        The _majorAxis.
+
+        :rtype: ``float``
+        """
+        return self.__majorAxis
+
+    @majorAxis.setter
+    def majorAxis(self, value):
+        self.__majorAxis = value
+
+    @property
+    def majorAxisuom(self):
+        """
+        The unit of measure identifier.
+
+        :rtype: ``str``
+        """
+        return self.__majorAxisuom
+
+    @majorAxisuom.setter
+    def majorAxisuom(self, value):
+        self._majorAxisuom = value
+
+    @property
+    def minorAxis(self):
+        """
+        The minorAxis.
+
+        :rtype: ``float``
+        """
+        return self._minorAxis
+
+    @minorAxis.setter
+    def minorAxis(self, value):
+        self._minorAxis = value
+
+    @property
+    def minorAxisuom(self):
+        """
+        The unit of measure identifier.
+
+        :rtype: ``str``
+        """
+        return self._minorAxisuom
+
+    @minorAxisuom.setter
+    def minorAxisuom(self, value):
+        self._minorAxisuom = value
+
+    @property
+    def orinetation(self):
+        """
+        The orinetation.
+
+        :rtype: ``float``
+        """
+        return self._orinetation
+
+    @orinetation.setter
+    def orinetation(self, value):
+        self._orinetation = value
+
+    @property
+    def orinetationuom(self):
+        """
+        The unit of measure identifier.
+
+        :rtype: ``str``
+        """
+        return self._orinetationuom
+
+    @orinetationuom.setter
+    def orinetationuom(self, value):
+        self._orinetationuom = value

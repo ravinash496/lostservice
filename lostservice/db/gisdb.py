@@ -135,5 +135,8 @@ class GisDbInterface(object):
         return spatialdb.get_containing_boundary_for_polygon(points, srid, boundary_table, self._engine)
 
 
-    def get_boundaries_for_previous_id(self, pid):
-        return spatialdb.get_boundaries_for_previous_id(pid, self._engine)
+    def get_boundaries_for_previous_id(self, pid, boundary_table):
+        return spatialdb.get_boundaries_for_previous_id(pid, self._engine, boundary_table)
+
+    def get_containing_boundary_for_ellipse(self, lat, long, srid, major, minor, orientation,boundary_table):
+        return spatialdb.get_containing_boundary_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table, self._engine,)

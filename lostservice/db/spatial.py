@@ -14,6 +14,7 @@ from sqlalchemy.sql import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.functions import func
 from shapely.geometry import Point
+from shapely import affinity
 from shapely.geometry.polygon import LinearRing
 from shapely.wkt import loads
 from geoalchemy2.shape import from_shape
@@ -165,6 +166,7 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
         else:
             s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Intersects(geom))
 
+        print (s)
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -201,6 +203,31 @@ def get_containing_boundary_for_point(x, y, srid, boundary_table, engine):
     wkb_pt = from_shape(pt, trimmed_srid)
     # Run the query.
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
+
+
+def getutmsrid(latitude,longitude):
+    """
+
+    :param latitude: latitude to find the utm srid
+    :param longitude: longitude to find the utm srid
+    :return: UTM srid
+    """
+    prefix = 0
+    if latitude>0:
+        '''All EPSG UTM codes in the northern hemisphere start with 326**'''
+        prefix = 32600
+    else:
+        '''All EPSG UTM codes in the southern hemisphere start with 327**'''
+        prefix = 32700
+
+    '''UTM zones are all 6 degrees apart - 60 zones for 360 degrees
+    Zone 1 starts from 180 degrees to 174 degrees west longitude
+    Zone 31 starts from 0 degrees to 6 degreess east longitude
+
+    Convert -180 to 180 degrees latitude on a 360 degree scale, 
+    then divde by 6 and add 1 to get the zone number'''
+    zone = int(float((longitude+180)/6))+1
+    return prefix + zone
 
 
 def _transform_circle(x, y, srid, radius, uom):
@@ -326,6 +353,53 @@ def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_tab
         return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
 
 
+def get_containing_boundary_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table, engine):
+    """
+    Executes a contains query for a polygon.
+
+    :param lat: latitude value .
+    :type lat: `float`
+    :param long: longitude value .
+    :type long: `float`
+    :param srid: The spatial reference Id of the ellipse.
+    :type srid: `str`
+    :param major: The majorAxis value.
+    :type major: `int`
+    :param minor: The minorAxis value.
+    :type minor: `int`
+    :param orientation: The orientation of ellipse.
+    :type orientation: `float`
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+    # Pull out just the number from the SRID
+
+    trimmed_srid = srid.split('::')[1]
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table(boundary_table, tbl_metadata, autoload=True)
+
+        utmsrid = getutmsrid(latitude=lat, longitude=long)
+        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(),
+                    the_table.c.wkb_geometry.ST_Area(
+                        the_table.c.wkb_geometry.ST_Intersects(
+                            func.createellipse(lat, long, major,minor,orientation,utmsrid))
+                    ).label('AREA_RET')],
+                   the_table.c.wkb_geometry.ST_Intersects(
+                       func.createellipse(lat, long, major,minor,orientation,utmsrid)))
+        results = _execute_query(engine, s)
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct ellipse intersection query.', ex)
+    except SpatialQueryException:
+        raise
+    return results
+
+
 def get_containing_boundary_for_polygon(points, srid, boundary_table, engine):
     """
     Executes a contains query for a polygon.
@@ -373,7 +447,7 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
 
 
-def get_boundaries_for_previous_id(pid, engine):
+def get_boundaries_for_previous_id(pid, engine, boundary_table):
     """
     Executes an query to get the boundary.
 
@@ -388,10 +462,10 @@ def get_boundaries_for_previous_id(pid, engine):
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
-        the_table = Table("esbpsap", tbl_metadata, autoload=True)
+        the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
         s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()],
-                   the_table.c.srcunqid.like(pid))
+                   the_table.c.gcunqid.like(pid))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:

@@ -20,6 +20,7 @@ from lostservice.db.gisdb import GisDbInterface
 from lostservice.handler import Handler
 import lostservice.model.responses as responses
 from lostservice.model.location import Circle
+from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
 from lostservice.configuration import PolygonMultipleMatchPolicyEnum
 from lostservice.configuration import ServiceExpiresPolicyEnum
@@ -124,12 +125,28 @@ class FindServiceHandler(Handler):
                 float(request.location.location.radius),
                 request.location.location.uom, esb_table, return_area, return_shape)
 
+        elif type(request.location.location) is Ellipse:
+
+            results = self._db_wrapper.get_containing_boundary_for_ellipse(
+                request.location.location.latitude,
+                request.location.location.longitude,
+                request.location.location.spatial_ref,
+                float(request.location.location.semiMajorAxis),
+                float(request.location.location.semiMinorAxis),
+                float(request.location.location.orientation),
+                esb_table)
 
         elif type(request.location.location) is Point:
             results = self._db_wrapper.get_containing_boundary_for_point(
                 request.location.location.longitude,
                 request.location.location.latitude,
                 request.location.location.spatial_ref,
+                esb_table)
+
+        else:
+            results = self._db_wrapper.get_containing_boundary_for_polygon(
+                request.location.location.get("vertices"),
+                request.location.location.get("spatial_ref"),
                 esb_table)
 
 
@@ -225,7 +242,15 @@ class GetServiceBoundaryHandler(Handler):
         :return: The response.
         :rtype: :py:class:`GetServiceBoundaryResponse`
         """
-        results = self._db_wrapper.get_boundaries_for_previous_id(request.key)
+        # Get the table mappings, this should come from cache eventually.
+        mappings = self._db_wrapper.get_urn_table_mappings()
+
+        # loop through all the tables to find the id until its found.
+        for urn_mapping in mappings.keys():
+            esb_table = mappings[urn_mapping]
+            results = self._db_wrapper.get_boundaries_for_previous_id(request.key, esb_table)
+            if results:
+                break
         return (results)
 
 
