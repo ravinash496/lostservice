@@ -1,6 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. currentmodule:: nenalogging
+.. moduleauthor:: Darell Stoick, Pat Blair  
+
+Class to handle sending Logs to Logging Service(s)
+"""
+
+
 from lxml import etree
 import requests
 import uuid
+
+import asyncio
+import aiohttp
 
 class NENALoggingException(Exception):
     """
@@ -32,13 +45,33 @@ wrapper_nsmap = {
 }
 
 
-def create_NENA_log_events(request_text, query_type, start_time, response_text, end_time, server_id):
-    # add query_ip_port, response_ip_port
+def create_NENA_log_events(request_text, query_type, start_time, response_text, end_time, conf):
+    """
+    Create and Send Request and Resposne to the list of configured logging service urls.
+    :param request_text: 
+    :param query_type: 
+    :param start_time: UTC
+    :param response_text: 
+    :param end_time:  UTC
+    :param conf: 
+    :return: 
+    """
+
+    #get settings from ini file
+    logging_service_urls = conf.get('Logging', 'logging_services', as_object=True, required=False)
+    server_id = conf.get('Service', 'source_uri', as_object=False, required=False)
+
+    # Check to see if Nena Loggging Service has been configured (optional)
+    if len(logging_service_urls) < 1:
+        print('NENA Logging: No Service configured')
+        return
+
+    # add query_ip_port, response_ip_port  TODO get IP and Port
     query_ip_port = '127.0.0.1:8080'
     response_ip_port = '127.0.0.1:8080'
 
     # Create Log ID used for both Request and Response
-    nena_log_id = uuid.uuid4()
+    nena_log_id = str(uuid.uuid4())
 
     is_valid_query = QUERYOTHER
     if (str.lower(query_type) == 'findservice') or (str.lower(query_type) == 'listservice') or (
@@ -65,13 +98,24 @@ def create_NENA_log_events(request_text, query_type, start_time, response_text, 
     #Envelope
 
 
-    request_response = _send_nenalog_request(nena_log_id, request_text, query_type, start_time, server_id, query_ip_port, is_valid_query)
-    response_response = _send_nenalog_response(nena_log_id, response_text, end_time, server_id, response_ip_port)
+    _send_nenalog_request(nena_log_id, request_text, start_time, server_id, query_ip_port, is_valid_query, logging_service_urls)
+    _send_nenalog_response(nena_log_id, response_text, end_time, server_id, response_ip_port, logging_service_urls)
 
-    #TODO LogResponse - if not 200 or always?
+# End of create_NENA_log_events
 
+def _send_nenalog_request(nena_log_id, request_text, start_time, server_id, query_ip_port, is_valid_query, logging_service_urls):
+    """
+    Send the Request
+    :param nena_log_id: 
+    :param request_text: 
+    :param start_time: 
+    :param server_id: 
+    :param query_ip_port: 
+    :param is_valid_query: 
+    :param logging_service_urls: 
+    :return: 
+    """
 
-def _send_nenalog_request(nena_log_id, request_text, query_type, start_time, server_id, query_ip_port, is_valid_query):
     # Create the SOAP envelope.
     soap_env = etree.Element('{%s}Envelope' % SOAP_ENV_NS, nsmap=wrapper_nsmap)
     # Create the SOAP body.
@@ -79,13 +123,13 @@ def _send_nenalog_request(nena_log_id, request_text, query_type, start_time, ser
     # Now add the LogEventMessageRequest.
     log_event_message_req = etree.SubElement(soap_body, '{%s}LogEventMessageRequest' % LOG_EXCH_NS)
 
-    # Create LogEventTimestamp
-    log_event_timestamp = etree.SubElement(log_event_message_req, '{%s}LogEventTimestamp' % DATA_TYPES_NS)
-    log_event_timestamp.text = str(start_time)
-
     # Create ElementID
     element_id = etree.SubElement(log_event_message_req, '{%s}ElementId' % DATA_TYPES_NS)
     element_id.text = server_id
+
+    # Create LogEventTimestamp
+    log_event_timestamp = etree.SubElement(log_event_message_req, '{%s}LogEventTimestamp' % DATA_TYPES_NS)
+    log_event_timestamp.text = str(start_time)
 
     # Create EventValuesCode  -LoSTQuery
     event_value_code = etree.SubElement(log_event_message_req, '{%s}EventValuesCode' % CODE_LIST_NS)
@@ -96,7 +140,6 @@ def _send_nenalog_request(nena_log_id, request_text, query_type, start_time, ser
     # NENA logging setting that specifies the IP Address and Port to be sent with LogEvents to the logging service.
     # This should be the public IP address and Port to access the ECRF/LVF.
     other_element_address = etree.SubElement(log_event_message_req, '{%s}OtherElementAddress' % CODE_LIST_NS)
-    # TODO VB version uses Httpcontext to get IP and Port
     other_element_address.text = query_ip_port
 
     # Create LogEventBody
@@ -119,17 +162,29 @@ def _send_nenalog_request(nena_log_id, request_text, query_type, start_time, ser
     direction_values_code_type = etree.SubElement(log_event_body, '{%s}DirectionValuesCodeType' % CODE_LIST_NS)
     direction_values_code_type.text = 'incoming'
 
+    # Create LostQueryID
+    lost_query_id = etree.SubElement(log_event_body, '{%s}LoSTQueryId' % DATA_TYPES_NS)
+    lost_query_id.text = nena_log_id
+
     print(etree.tostring(soap_env, pretty_print=True))
 
-    #TODO replace URL with logging service setting
-    r = requests.post("http://LP-DSTOICK-1:8088/mockLoggingBinding", data=etree.tostring(soap_env))
+    futures = [_post_async_nena_logging(soap_env, request_text, url) for key, url in logging_service_urls.items()]
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.wait(futures))
 
-    print(r.text)
+# End of _send_nenalog_request
 
-    return r
-
-
-def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, response_ip_port):
+def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, response_ip_port, logging_service_urls):
+    """
+    Send the Response
+    :param nena_log_id: 
+    :param response_text: 
+    :param end_time: 
+    :param server_id: 
+    :param response_ip_port: 
+    :param logging_service_urls: 
+    :return: 
+    """
 
     # Create the SOAP envelope.
     soap_env = etree.Element('{%s}Envelope' % SOAP_ENV_NS, nsmap=wrapper_nsmap)
@@ -138,20 +193,20 @@ def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, resp
     # Now add the LogEventMessageRequest.
     log_event_message_req = etree.SubElement(soap_body, '{%s}LogEventMessageRequest' % LOG_EXCH_NS)
 
-    # Create LogEventTimestamp
-    log_event_timestamp = etree.SubElement(log_event_message_req, '{%s}LogEventTimestamp' % DATA_TYPES_NS)
-    log_event_timestamp.text = str(end_time)
-
     # Create ElementID
     element_id = etree.SubElement(log_event_message_req, '{%s}ElementId' % DATA_TYPES_NS)
     element_id.text = server_id
+
+    # Create LogEventTimestamp
+    log_event_timestamp = etree.SubElement(log_event_message_req, '{%s}LogEventTimestamp' % DATA_TYPES_NS)
+    log_event_timestamp.text = str(end_time)
 
     # Create EventValuesCode  -LoSTResponse
     event_value_code = etree.SubElement(log_event_message_req, '{%s}EventValuesCode' % CODE_LIST_NS)
     event_value_code.text = 'LoSTResponse'
 
+    # Create OtherElementAddress  -queryIpAndPort
     other_element_address = etree.SubElement(log_event_message_req, '{%s}OtherElementAddress' % CODE_LIST_NS)
-    # TODO VB version uses Httpcontext to get IP and Port
     other_element_address.text = response_ip_port
 
     # Create LogEventBody
@@ -164,6 +219,11 @@ def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, resp
     direction_values_code_type = etree.SubElement(log_event_body, '{%s}DirectionValuesCodeType' % CODE_LIST_NS)
     direction_values_code_type.text = 'outgoing'
 
+    # Create LostResponseID
+    lost_resposne_id = etree.SubElement(log_event_body, '{%s}LoSTResponseId' % DATA_TYPES_NS)
+    lost_resposne_id.text = nena_log_id
+
+
     # Now add the the response to the lost_query_adapter
     # (findService,listServicesByLocation,listServices, getServiceBoundary) ...
     xml_response = etree.fromstring(response_text)
@@ -171,9 +231,29 @@ def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, resp
 
     print(etree.tostring(soap_env, pretty_print=True))
 
-    # TODO replace URL with logging service setting
-    r = requests.post("http://LP-DSTOICK-1:8088/mockLoggingBinding", data=etree.tostring(soap_env))
+    futures = [_post_async_nena_logging(soap_env, response_text, url) for key, url in logging_service_urls.items()]
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.wait(futures))
 
-    print(r.text)
+# End of _send_nenalog_response
 
-    return r
+async def _post_async_nena_logging(soap_env, raw_text, url):
+    """
+    Async Post to the logging service
+    :param soap_env: 
+    :param raw_text: 
+    :param url: 
+    :return: 
+    """
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(url, data=etree.tostring(soap_env)) as response:
+                if response.status != 200:
+                    print('NENA Logging Failure: %s :Raw Event: %s' % (response.text, raw_text))
+
+        except Exception as e:
+            print('%s :Raw Event: %s' % (str(e), raw_text))
+        #TODO Log Error(s)
+
+# End of _post_async_nena_logging

@@ -190,14 +190,12 @@ class LostApplication(object):
         # 4. serialize the xml back out into a string and return it.
         response = etree.tostring(parsed_response)
 
+        # Create End Time (response has been sent)
         endtime = datetime.datetime.now(tz=pytz.utc)
 
-        # TODO
-        #serverid = _config.get('Service', 'source_uri', as_object=False, required=False)
-        serverid = 'authoritative.example'
-
-        # nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, serverid)
-        nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, serverid)
+        conf = self._di_container.get(config.Configuration)
+        # Send Logs to configured NENA Logging Services
+        nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
         self._logger.debug(response)
         self._logger.info('Finished LoST query execution . . .')
