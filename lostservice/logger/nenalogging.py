@@ -71,7 +71,7 @@ def create_NENA_log_events(request_text, query_type, start_time, response_text, 
     response_ip_port = '127.0.0.1:8080'
 
     # Create Log ID used for both Request and Response
-    nena_log_id = str(uuid.uuid4())
+    nena_log_id = 'urn:nena:uid:logEvent:%s' % str(uuid.uuid4())
 
     is_valid_query = QUERYOTHER
     if (str.lower(query_type) == 'findservice') or (str.lower(query_type) == 'listservice') or (
@@ -153,10 +153,15 @@ def _send_nenalog_request(nena_log_id, request_text, start_time, server_id, quer
         # (findService,listServicesByLocation,listServices, getServiceBoundary) to the lost_query_adapter...
         xml_request = etree.fromstring(request_text)
         lost_query_adapter.append(xml_request)
+
     elif(is_valid_query == QUERYMALFROMED):
+
+        # create LoSTQueryAdapter
+        lost_malformed_query = etree.SubElement(log_event_body, '{%s}LoSTMalformedQuery' % DATA_TYPES_NS)
+
         # Malformed query apply text to LogEventBody
         xml_request = etree.fromstring(request_text)
-        log_event_body.append(xml_request)
+        lost_malformed_query.append(xml_request)
 
     # Create DirectionValuesCodeType
     direction_values_code_type = etree.SubElement(log_event_body, '{%s}DirectionValuesCodeType' % CODE_LIST_NS)

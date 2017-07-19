@@ -194,6 +194,8 @@ class LostApplication(object):
         endtime = datetime.datetime.now(tz=pytz.utc)
 
         conf = self._di_container.get(config.Configuration)
+
+        #TODO Identify Malformed Query Types
         # Send Logs to configured NENA Logging Services
         nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
