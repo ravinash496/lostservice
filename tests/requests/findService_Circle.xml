@@ -1,4 +1,4 @@
-<findService xmlns="urn:ietf:params:xml:ns:lost1" validateLocation="false" serviceBoundary="Value">
+<findService xmlns="urn:ietf:params:xml:ns:lost1" validateLocation="false" serviceBoundary="value">
    <location id="24b276e1-7eca-48d5-be24-30e0dd4c1ca0" profile="geodetic-2d">
       <gs:Circle xmlns:gs="http://www.opengis.net/pidflo/1.0" xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
          <gml:pos>45.4430670070877 -68.4977255651657</gml:pos>
