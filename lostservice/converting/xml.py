@@ -428,6 +428,33 @@ class LocationXmlConverter(XmlConverter):
         """
         raise NotImplementedError('TODO: Implement formatting of locations.')
 
+class PathXmlConverter(XmlConverter):
+    """
+    Implementation class for converting LoST path elements.
+    """
+    def __init__(self):
+        """
+        Constructs a new PathXmlParser instance.
+        """
+        super(PathXmlConverter, self).__init__()
+
+    def parse(self, data):
+        """
+        Parse a node containing a path.
+
+        :param data: The path node.
+        :type data: :py:class:`_ElementTree`
+        :return: A Path instance.
+        :rtype: :py:list:`source`
+        """
+
+        source_list = []
+
+        for item in data:
+            source = item.attrib['source']
+            source_list.append(source)
+
+        return source_list
 
 class FindServiceXmlConverter(XmlConverter):
     """
@@ -454,11 +481,15 @@ class FindServiceXmlConverter(XmlConverter):
         request = FindServiceRequest()
 
         location_parser = LocationXmlConverter()
+        path_parser = PathXmlConverter()
 
         location = root.find('{urn:ietf:params:xml:ns:lost1}location')
         request.serviceBoundary = root.attrib.get('serviceBoundary')
         request.location = location_parser.parse(location)
         request.service = root.find('{urn:ietf:params:xml:ns:lost1}service').text
+        path = root.find('{urn:ietf:params:xml:ns:lost1}path')
+        if path != None:
+            request.path = path_parser.parse(path)
 
         return request
 
@@ -549,6 +580,13 @@ class ListServicesXmlConverter(XmlConverter):
             request.service = root.find('{urn:ietf:params:xml:ns:lost1}service').text
         except:
             request.service = None
+
+        path_parser = PathXmlConverter()
+        path = root.find('{urn:ietf:params:xml:ns:lost1}path')
+        if path != None:
+            request.path = path_parser.parse(path)
+        else:
+            request.path = []
 
         return request
 
@@ -660,8 +698,12 @@ class GetServiceBoundaryXmlConverter(XmlConverter):
             final_gml = etree.parse(final_gml_as_xml).getroot()
             services_element.extend(final_gml)
 
-
-
+        if data[0] is not None:
+            # add the path element
+            path_element = lxml.etree.SubElement(xml_response, 'path')
+            # not generate a 'via' element for each source.
+            if data[0]['path'] is not None:
+                via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': data[0]['path']})
 
         return xml_response
 

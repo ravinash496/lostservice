@@ -64,8 +64,12 @@ class ListServicesHandler(Handler):
             filtered = filter(lambda s: root_service in s, service_list)
             service_list = filtered
 
-        path = self._config.get('Service', 'source_uri', as_object=False, required=False)
-        response = responses.ListServicesResponse(service_list, [path])
+        # No Recursion available so just add our path
+        our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
+
+        # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
+        request.path.append(our_path)
+        response = responses.ListServicesResponse(service_list, request.path)
 
         return response
 
@@ -178,9 +182,6 @@ class FindServiceHandler(Handler):
             if lastupdatefield is not None:
                 response_mapping['mapping_lastupdate'] = row[lastupdatefield]
 
-            path = self._config.get('Service', 'source_uri', as_object=False, required=False)
-            response_mapping['path'] = [path]
-
             response_mapping['mapping_source'] = self._config.get('Service', 'source_uri', as_object=False, required=False)
 
             #Get the entire dictionary of settings for this service
@@ -211,6 +212,14 @@ class FindServiceHandler(Handler):
             response_mapping_list.append(response_mapping)
 
         # End of For
+
+        # Add Path(s) to any already found in request - recursion is possible
+        if len(response_mapping_list) > 0:
+            our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
+
+            # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
+            request.path.append(our_path)
+            response_mapping_list[0]['path'] = request.path
 
         return response_mapping_list
 
@@ -250,7 +259,13 @@ class GetServiceBoundaryHandler(Handler):
             esb_table = mappings[urn_mapping]
             results = self._db_wrapper.get_boundaries_for_previous_id(request.key, esb_table)
             if results:
+                # No Recursion available so just add our path
+                our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
+                # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
+                results[0]['path'] = our_path
+
                 break
+
         return (results)
 
 
