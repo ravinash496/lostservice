@@ -5,4 +5,5 @@
       </gml:Point>
    </location>
    <service>urn:nena:service:sos.EMS</service>
+   <path><via source="othervender.example"/></path>
 </findService>

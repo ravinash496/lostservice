@@ -74,7 +74,7 @@ def create_NENA_log_events(request_text, query_type, start_time, response_text, 
     nena_log_id = 'urn:nena:uid:logEvent:%s' % str(uuid.uuid4())
 
     is_valid_query = QUERYOTHER
-    if (str.lower(query_type) == 'findservice') or (str.lower(query_type) == 'listservice') or (
+    if (str.lower(query_type) == 'findservice') or (str.lower(query_type) == 'listservices') or (
               str.lower(query_type) == 'listervicebylocation') or (str.lower(query_type) == 'getserviceboundary'):
 
         is_valid_query = QUERYVALID
