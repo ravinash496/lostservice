@@ -69,7 +69,7 @@ class ListServicesHandler(Handler):
 
         # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
         request.path.append(our_path)
-        response = responses.ListServicesResponse(service_list, request.path)
+        response = responses.ListServicesResponse(service_list, request.path, request.nonlostdata)
 
         return response
 
@@ -175,9 +175,8 @@ class FindServiceHandler(Handler):
             if 'ST_AsGML_1' in row:
                 response_mapping['non_lost_data'] = row['ST_AsGML_1']
 
-            # Is this config setting necessary? All UDM tables have this and it is well known.
             response_mapping['mapping_lastupdate'] = None
-            lastupdatefield = self._config.get('Service', 'last_update_field', as_object=False, required=False)
+            lastupdatefield = 'updatedate'
 
             if lastupdatefield is not None:
                 response_mapping['mapping_lastupdate'] = row[lastupdatefield]
@@ -213,13 +212,17 @@ class FindServiceHandler(Handler):
 
         # End of For
 
-        # Add Path(s) to any already found in request - recursion is possible
+
         if len(response_mapping_list) > 0:
+            # Add Path(s) to any already found in request - recursion is possible
             our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
 
             # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
             request.path.append(our_path)
             response_mapping_list[0]['path'] = request.path
+
+            # Add NonLoSTdata items
+            response_mapping_list[0]['nonlostdata'] = request.nonlostdata
 
         return response_mapping_list
 
@@ -263,6 +266,9 @@ class GetServiceBoundaryHandler(Handler):
                 our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
                 # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
                 results[0]['path'] = our_path
+
+                # Add NonLoSTdata items
+                results[0]['nonlostdata'] = request.nonlostdata
 
                 break
 

@@ -6,4 +6,5 @@
    </location>
    <service>urn:nena:service:sos.EMS</service>
    <path><via source="othervender.example"/></path>
+   <nena:nenaCallIncidentId xmlns:nena="urn:nena:xml:ns:lostExt:Ids" callID="urn:nena:uid:callid:a56e556d871:bcf.state.pa.us" incidentTrackingId="urn:nena:uid:incidentid:a56e556d871:bcf.state.pa.us"/>
 </findService>
