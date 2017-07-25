@@ -24,7 +24,7 @@ class FindServiceRequest(Request):
     """
     findService request class.
     """
-    def __init__(self, location=None, service=None, serviceBoundary=None):
+    def __init__(self, location=None, service=None, serviceBoundary=None, path=[]):
         """
         Constructor
 
@@ -34,6 +34,7 @@ class FindServiceRequest(Request):
         self._location = location
         self._service = service
         self._serviceBoundary = serviceBoundary
+        self._path = path
 
     @property
     def location(self):
@@ -73,6 +74,19 @@ class FindServiceRequest(Request):
     @serviceBoundary.setter
     def serviceBoundary(self, value):
         self._serviceBoundary = value
+
+    @property
+    def path(self):
+        """
+        The path type
+
+        :rtype: ``str``
+        """
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
 
 
 
