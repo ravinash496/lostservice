@@ -88,8 +88,10 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
         # Construct the "contains" query and execute it.
-        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(func.ST_SetSRID(geom,4326)))
+        s = select([the_table,
+                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)], the_table.c.wkb_geometry.ST_Contains(geom))
         retval = _execute_query(engine, s)
+
 
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
