@@ -103,27 +103,27 @@ def get_urn_table_mappings(engine):
     return mappings
 
 
-def apply_policy_settings(context, results, request):
+def apply_policy_settings(config, results, request):
     """
      
      :param request: 
      :return: 
      """
 
-    if results != None:
+    if results is not None:
         if len(results) == 1:
             # there is only one result return it
             return results
         else:
 
-            polygon_search_mode_policy = context.get('Policy', 'polygon_search_mode_policy',
-                                                                    as_object=False, required=False)
+            polygon_search_mode_policy = config.get('Policy', 'polygon_search_mode_policy',
+                                                    as_object=False, required=False)
 
             # we have multiple results, then we need to apply policy to formulate the response
             if (type(request.location.location) is Point) or (polygon_search_mode_policy == PolygonSearchModePolicyEnum.SearchUsingCentroid.name):
                 # This covers queries using points, or polygons centroids
                 # TODO Deal with CIVIC
-                point_multiple_match_policy = context.get('Policy', 'point_multiple_match_policy', as_object=False, required=False)
+                point_multiple_match_policy = config.get('Policy', 'point_multiple_match_policy', as_object=False, required=False)
 
                 if point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnAll.name:
                     return results
@@ -140,8 +140,8 @@ def apply_policy_settings(context, results, request):
 
             else:
                 # This covers queries using polygons
-                polygon_multiple_match_policy = context.get('Policy', 'polygon_multiple_match_policy',
-                                                                        as_object=False, required=False)
+                polygon_multiple_match_policy = config.get('Policy', 'polygon_multiple_match_policy',
+                                                           as_object=False, required=False)
                 if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAll.name:
                     return results
                 elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAllLimit5.name:
@@ -159,7 +159,5 @@ def apply_policy_settings(context, results, request):
                     return lst
                 elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnError.name:
                     raise MappingDiscoveryException('Multiple results matched request location')
-
-
 
     return results
