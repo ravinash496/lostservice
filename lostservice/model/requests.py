@@ -24,7 +24,7 @@ class FindServiceRequest(Request):
     """
     findService request class.
     """
-    def __init__(self, location=None, service=None, serviceBoundary=None):
+    def __init__(self, location=None, service=None, serviceBoundary=None, path=[], nonlostdata=[]):
         """
         Constructor
 
@@ -34,6 +34,8 @@ class FindServiceRequest(Request):
         self._location = location
         self._service = service
         self._serviceBoundary = serviceBoundary
+        self._path = path
+        self._nonlostdata = nonlostdata
 
     @property
     def location(self):
@@ -74,13 +76,38 @@ class FindServiceRequest(Request):
     def serviceBoundary(self, value):
         self._serviceBoundary = value
 
+    @property
+    def path(self):
+        """
+        The path type
+
+        :rtype: ``str``
+        """
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
+
+    @property
+    def nonlostdata(self):
+        """
+        The nonlostdata type
+
+        :rtype: ``str``
+        """
+        return self._nonlostdata
+
+    @nonlostdata.setter
+    def nonlostdata(self, value):
+        self._nonlostdata = value
 
 
 class ListServicesRequest(Request):
     """
     listServices request class.
     """
-    def __init__(self, service=None):
+    def __init__(self, service=None, path=[], nonlostdata=[]):
         """
         Constructor
 
@@ -89,6 +116,8 @@ class ListServicesRequest(Request):
         """
         super(ListServicesRequest, self).__init__()
         self._service = service
+        self._path = path
+        self._nonlostdata = nonlostdata
 
     @property
     def service(self):
@@ -103,6 +132,31 @@ class ListServicesRequest(Request):
     def service(self, value):
         self._service = value
 
+    @property
+    def path(self):
+        """
+        The path type
+
+        :rtype: ``str``
+        """
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
+
+    @property
+    def nonlostdata(self):
+        """
+        The nonlostdata type
+
+        :rtype: ``str``
+        """
+        return self._nonlostdata
+
+    @nonlostdata.setter
+    def nonlostdata(self, value):
+        self._nonlostdata = value
 
 class ListServicesByLocationRequest(Request):
     """
@@ -116,9 +170,14 @@ class GetServiceBoundaryRequest(Request):
     """
     getServiceBoundary request class.
     """
-    def __init(self,key=None):
+    def __init__(self, key=None, nonlostdata=[]):
+        """
+        Constructor
+
+        """
         super(GetServiceBoundaryRequest, self).__init__()
-        self._key=key
+        self._key = key
+        self._nonlostdata = nonlostdata
 
     @property
     def key(self):
@@ -133,7 +192,18 @@ class GetServiceBoundaryRequest(Request):
     def key(self, value):
         self._key = value
 
+    @property
+    def nonlostdata(self):
+        """
+        The nonlostdata type
 
+        :rtype: ``str``
+        """
+        return self._nonlostdata
+
+    @nonlostdata.setter
+    def nonlostdata(self, value):
+        self._nonlostdata = value
 
 
 

@@ -57,10 +57,11 @@ class ListServicesResponse(Response):
     :param path: The mapping resolution path.
     :type path: A list of ``str``
     """
-    def __init__(self, services=None, path=None):
+    def __init__(self, services=None, path=None, nonlostdata=[]):
         super(ListServicesResponse, self).__init__()
         self._services = services
         self._path = path
+        self._nonlostdata=nonlostdata
     
     @property
     def services(self):
@@ -87,6 +88,21 @@ class ListServicesResponse(Response):
     @path.setter
     def path(self, value):
         self._path = value
+
+
+    @property
+    def nonlostdata(self):
+        """
+        The mapping resolution path.
+    
+        :rtype: A list of ``str``
+        """
+        return self._nonlostdata
+
+
+    @nonlostdata.setter
+    def nonlostdata(self, value):
+        self._nonlostdata = value
 
 
 class ListServicesByLocationResponse(Response):

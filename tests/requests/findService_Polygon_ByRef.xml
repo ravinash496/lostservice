@@ -1,4 +1,4 @@
-<findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="Reference">
+<findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="reference">
    <location id="a01e56af-739f-4c66-9f39-b13abf08e7bf" profile="geodetic-2d">
       <gml:Polygon xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
          <gml:exterior>
