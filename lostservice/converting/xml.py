@@ -16,6 +16,7 @@ from lostservice.model.location import CivicAddress
 from lostservice.model.location import Circle
 from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
+from lostservice.model.location import Arcband
 from lostservice.model.location import Location
 from lostservice.model.requests import FindServiceRequest
 from lostservice.model.requests import ListServicesRequest
@@ -316,18 +317,18 @@ class EllipseXmlConverter(XmlConverter):
         """
         Constructs a new EllipseXmlConverter instance.
 
-        :return PointXmlParser: A new EllipseXmlConverter instance.
+        :return: A new EllipseXmlConverter instance.
         """
         super(EllipseXmlConverter, self).__init__()
 
     def parse(self, data):
         """
-        Parse a node containing a point.
+        Parse a node containing an ellipse.
 
-        :param data: The point node.
+        :param data: The ellipse node.
         :type data: :py:class:`_ElementTree`
-        :return: A Point instance.
-        :rtype: :py:class:`Point`
+        :return: A Ellipse instance.
+        :rtype: :py:class:`Ellipse`
         """
         sr_template = './@{0}'
         node_template = './{0}:{1}/text()'
@@ -353,14 +354,65 @@ class EllipseXmlConverter(XmlConverter):
 
     def format(self, data):
         """
-        Formats a point.
+        Formats an ellipse.
 
-        :param data: The point to be formatted.
-        :type data: :py:class:`Point`
+        :param data: The ellipse to be formatted.
+        :type data: :py:class:`Ellipse`
         :return: The formatted output.
         :rtype: :py:class:`_ElementTree`
         """
-        raise NotImplementedError('TODO: Implement formatting of points.')
+        raise NotImplementedError('TODO: Implement formatting of ellipses.')
+
+
+class ArcbandXmlConverter(XmlConverter):
+    """
+    Implementation class for converting Arcband elements.
+    """
+    def __init__(self):
+        super(ArcbandXmlConverter, self).__init__()
+
+    def parse(self, data):
+        """
+        Parse a node containing an arcband.
+
+        :param data: The arcband node.
+        :type data: :py:class:`_ElementTree`
+        :return: An Arcband instance.
+        :rtype: :py:class:`Arcband`
+        """
+        sr_template = './@{0}'
+        node_template = './{0}:{1}/text()'
+        uom_template = './{0}:{1}/@{2}'
+
+        arcband = Arcband()
+        arcband.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
+
+        position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
+        lat, lon = position.split()
+        arcband.latitude = float(lat)
+        arcband.longitude = float(lon)
+
+        arcband.inner_radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'innerRadius')))
+        arcband.inner_radius_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'innerRadius', 'uom'))
+        arcband.outer_radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'outerRadius')))
+        arcband.outer_radius_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'outerRadius', 'uom'))
+        arcband.start_angle = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'startAngle')))
+        arcband.start_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'startAngle', 'uom'))
+        arcband.opening_angle = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'openingAngle')))
+        arcband.opening_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'openingAngle', 'uom'))
+
+        return arcband
+
+    def format(self, data):
+        """
+        Formats an arcband.
+
+        :param data: The arcband to be formatted.
+        :type data: :py:class:`Arcband`
+        :return: The formatted output.
+        :rtype: :py:class:`_ElementTree`
+        """
+        raise NotImplementedError('TODO: Implement formatting of arcbandss.')
 
 
 class LocationXmlConverter(XmlConverter):
@@ -391,8 +443,11 @@ class LocationXmlConverter(XmlConverter):
             parser = PolygonXmlConverter()
         elif 'Ellipse' == qname.localname:
             parser = EllipseXmlConverter()
-        elif 'Circle':
+        elif 'Circle' == qname.localname:
             parser = CircleXmlConverter()
+        elif 'ArcBand' == qname.localname:
+            parser = ArcbandXmlConverter()
+
         retval = parser.parse(data)
         return retval
 
@@ -559,9 +614,12 @@ class FindServiceXmlConverter(XmlConverter):
             for a_path in data[0]['path']:
                 via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
 
-
-        services_element = lxml.etree.SubElement(xml_response, 'locationUsed')
-        services_element.text = ' '.join(data[0]['locationUsed'])
+        lxml.etree.SubElement(
+            xml_response,
+            'locationUsed',
+            attrib={'id': data[0]['locationUsed'][0]}
+        )
+        # services_element.text = ' '.join(data[0]['locationUsed'][0])
 
         # Add NonLoSTdata items into response (pass though items)
         for nonlost_item in data[0]['nonlostdata']:

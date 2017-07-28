@@ -10,9 +10,6 @@ Core handler implementation classes.
 
 import datetime
 import pytz
-
-
-from lostservice.db.utilities import get_urn_table_mappings
 from lostservice.db.utilities import apply_policy_settings
 from injector import inject
 from lostservice.configuration import Configuration
@@ -22,8 +19,10 @@ import lostservice.model.responses as responses
 from lostservice.model.location import Circle
 from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
+from lostservice.model.location import Arcband
 from lostservice.configuration import PolygonMultipleMatchPolicyEnum
 from lostservice.configuration import ServiceExpiresPolicyEnum
+import lostservice.geometry as geom
 
 
 class ListServicesHandler(Handler):
@@ -90,7 +89,6 @@ class FindServiceHandler(Handler):
         """
         super(FindServiceHandler, self).__init__(config, db_wrapper)
 
-
     def handle_request(self, request, context):
         """
          Entry point for request handling.
@@ -110,7 +108,6 @@ class FindServiceHandler(Handler):
         esb_table = mappings[request.service]
 
         if type(request.location.location) is Circle:
-
 
             polygon_multiple_match_policy = self._config.get('Policy', 'polygon_multiple_match_policy',
                                                                       as_object=False, required=False)
@@ -147,12 +144,30 @@ class FindServiceHandler(Handler):
                 request.location.location.spatial_ref,
                 esb_table)
 
+        elif type(request.location.location) is Arcband:
+            geom_model = request.location.location
+            arcband = geom.generate_arcband(
+                geom_model.longitude,
+                geom_model.latitude,
+                geom_model.start_angle,
+                geom_model.opening_angle,
+                geom_model.inner_radius,
+                geom_model.outer_radius
+            )
+
+            points = geom.get_vertices_for_geom(arcband)[0]
+
+            results = self._db_wrapper.get_containing_boundary_for_polygon(
+                points,
+                geom_model.spatial_ref,
+                esb_table
+            )
+
         else:
             results = self._db_wrapper.get_containing_boundary_for_polygon(
                 request.location.location.get("vertices"),
                 request.location.location.get("spatial_ref"),
                 esb_table)
-
 
         service_boundary_profile = request.location.profile
 

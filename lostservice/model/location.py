@@ -862,3 +862,177 @@ class Ellipse(Geodetic2D):
     @orinetationuom.setter
     def orinetationuom(self, value):
         self._orinetationuom = value
+
+
+class Arcband(Geodetic2D):
+    """
+    A class for representing Arcband geometries.
+
+    """
+
+    def __init__(self, spatial_ref=None, lat=None, lon=None,
+                 inner_radius=None, inner_radius_uom=None,
+                 outer_radius=None, outer_radios_uom=None,
+                 start_angle=None, start_angle_uom=None,
+                 opening_angle=None, opening_angle_uom=None):
+        """
+        Constructor for arcband geometries.
+
+        :param spatial_ref:
+        :param lat:
+        :param lon:
+        :param inner_radius:
+        :param inner_radius_uom:
+        :param outer_radius:
+        :param outer_radios_uom:
+        :param start_angle:
+        :param start_angle_uom:
+        :param opening_angle:
+        :param opening_angle_uom:
+        """
+
+        super(Arcband, self).__init__(spatial_ref)
+        self._lat = lat
+        self._lon = lon
+        self._inner_radius = inner_radius
+        self._inner_radius_uom = inner_radius_uom
+        self._outer_radius = outer_radius
+        self._outer_radius_uom = outer_radios_uom
+        self._start_angle = start_angle
+        self._start_angle_uom = start_angle_uom
+        self._opening_angle = opening_angle
+        self._opening_angle_uom = opening_angle_uom
+
+    @property
+    def latitude(self):
+        """
+        Center point latitude.
+
+        :rtype: ``str``
+        """
+        return self._lat
+
+    @latitude.setter
+    def latitude(self, value):
+        self._lat = value
+
+    @property
+    def longitude(self):
+        """
+        Center point longitude.
+
+        :rtype: ``str``
+        """
+        return self._lon
+
+    @longitude.setter
+    def longitude(self, value):
+        self._lon = value
+
+    @property
+    def inner_radius(self):
+        """
+        Inner radius.
+
+        :rtype: ``str``
+        """
+        return self._inner_radius
+
+    @inner_radius.setter
+    def inner_radius(self, value):
+        self._inner_radius = value
+
+    @property
+    def inner_radius_uom(self):
+        """
+        Inner radius unit of measure.
+
+        :rtype: ``str``
+        """
+        return self._inner_radius_uom
+
+    @inner_radius_uom.setter
+    def inner_radius_uom(self, value):
+        self._inner_radius_uom = value
+
+    @property
+    def outer_radius(self):
+        """
+        Outer radius.
+
+        :rtype: ``str``
+        """
+        return self._outer_radius
+
+    @outer_radius.setter
+    def outer_radius(self, value):
+        self._outer_radius = value
+
+    @property
+    def outer_radius_uom(self):
+        """
+        Outer radius unit of measure.
+
+        :rtype: ``str``
+        """
+        return self._outer_radius_uom
+
+    @outer_radius_uom.setter
+    def outer_radius_uom(self, value):
+        self._outer_radius_uom = value
+
+    @property
+    def start_angle(self):
+        """
+        Start angle in units clockwise from north.
+
+        :rtype: ``str``
+        """
+        return self._start_angle
+
+    @start_angle.setter
+    def start_angle(self, value):
+        self._start_angle = value
+
+    @property
+    def start_angle_uom(self):
+        """
+        Start angle units of measure
+
+        :rtype: ``str``
+        """
+        return self._start_angle_uom
+
+    @start_angle_uom.setter
+    def start_angle_uom(self, value):
+        self._start_angle_uom = value
+
+    @property
+    def opening_angle(self):
+        """
+        Opening angle in units clockwise from start angle.
+
+        :rtype: ``str``
+        """
+        return self._opening_angle
+
+    @opening_angle.setter
+    def opening_angle(self, value):
+        self._opening_angle = value
+
+    @property
+    def opening_angle_uom(self):
+        """
+        Opening angle units of measure
+
+        :rtype: ``str``
+        """
+        return self._opening_angle_uom
+
+    @opening_angle_uom.setter
+    def opening_angle_uom(self, value):
+        self._opening_angle_uom = value
+
+
+
+
