@@ -552,6 +552,10 @@ class FindServiceXmlConverter(XmlConverter):
             else:
                 services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile=item['profile'])
 
+                final_gml_as_xml = io.StringIO(
+                    '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['service_gml']))
+                final_gml = etree.parse(final_gml_as_xml).getroot()
+                services_element.extend(final_gml)
 
             services_element = lxml.etree.SubElement(mapping, 'uri')
             services_element.text = item['routeuri']

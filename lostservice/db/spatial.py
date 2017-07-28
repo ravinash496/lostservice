@@ -51,7 +51,7 @@ def _execute_query(engine, query):
         with engine.connect() as conn:
             result = conn.execute(query)
             for row in result:
-                print(row)
+                # print(row)
                 row_copy = dict(zip(row.keys(), row))
                 retval.append(row_copy)
             result.close()
@@ -88,7 +88,7 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
         # Construct the "contains" query and execute it.
-        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(geom))
+        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(func.ST_SetSRID(geom,4326)))
         retval = _execute_query(engine, s)
 
     except SQLAlchemyError as ex:
@@ -123,10 +123,10 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
         # Construct the "intersection" query and execute
         if return_intersection_area == True:
             # include a calculation for the intersecting the area
-            s = select([the_table, the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(geom)).label('AREA_RET')],
-                       the_table.c.wkb_geometry.ST_Intersects(geom))
+            s = select([the_table, the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326))).label('AREA_RET')],
+                       the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
         else:
-            s = select([the_table, func.ST_AsGML(geom)], the_table.c.wkb_geometry.ST_Intersects(geom))
+            s = select([the_table, func.ST_AsGML(func.ST_SetSRID(geom,4326))], the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
@@ -162,11 +162,11 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
         if return_intersection_area == True:
             # include a calculation for the intersecting the area
 
-            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(geom)).label(
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326))).label(
                 'AREA_RET')],
-                       the_table.c.wkb_geometry.ST_Intersects(geom))
+                       the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
         else:
-            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Intersects(geom))
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
 
         print (s)
         results = _execute_query(engine, s)
@@ -261,7 +261,8 @@ def _transform_circle(long, lat, srid, radius, uom):
     # The target will depend on the value of uom, but we'll just assume
     # it's 9001/meters for now and project to 3857.
     target = osr.SpatialReference()
-    target.ImportFromEPSG(3857)
+    #target.ImportFromEPSG(3857)
+    target.ImportFromEPSG(getutmsrid(longitude=long, latitude=lat))
 
     # Set up the transform.
     transform = osr.CoordinateTransformation(source, target)
@@ -508,7 +509,7 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
         utmsrid = getutmsrid(longitude=long, latitude=lat)
 
         s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()],
-                   func.ST_Intersects(func.ST_Buffer(func.ST_Transform(geom, utmsrid), buffer_distance),
+                   func.ST_Intersects(func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom,4326), utmsrid), buffer_distance),
                                       the_table.c.wkb_geometry.ST_Transform(utmsrid)))
 
         retval = _execute_query(engine, s)

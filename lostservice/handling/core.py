@@ -134,7 +134,7 @@ class FindServiceHandler(Handler):
             response_mapping['profile'] = service_boundary_profile
 
             if 'ST_AsGML_1' in row:
-                response_mapping['non_lost_data'] = row['ST_AsGML_1']
+                response_mapping['service_gml'] = row['ST_AsGML_1']
 
             response_mapping['mapping_lastupdate'] = None
             lastupdatefield = 'updatedate'
@@ -291,9 +291,8 @@ class FindServiceHandler(Handler):
                     request.location.location.longitude,
                     request.location.location.latitude,
                     request.location.location.spatial_ref,
-                    float(request.location.location.radius),
-                    request.location.location.uom, esb_table, return_area, return_shape,
-                    service_boundary_proximity_search_policy, service_boundary_proximity_buffer)
+                    float(service_boundary_proximity_buffer),
+                    None, esb_table, return_area, return_shape)
 
         else:
             results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
