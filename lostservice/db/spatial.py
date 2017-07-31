@@ -88,10 +88,10 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
         # Construct the "contains" query and execute it.
-        s = select([the_table,
-                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)], the_table.c.wkb_geometry.ST_Contains(geom))
-        retval = _execute_query(engine, s)
+        s = select([the_table, func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)],
+                   the_table.c.wkb_geometry.ST_Contains(geom))
 
+        retval = _execute_query(engine, s)
 
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -123,12 +123,17 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
         # s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(geom))
 
         # Construct the "intersection" query and execute
-        if return_intersection_area == True:
+        if return_intersection_area:
             # include a calculation for the intersecting the area
-            s = select([the_table, the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326))).label('AREA_RET')],
-                       the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
+            s = select(
+                [the_table, the_table.c.wkb_geometry.ST_Area(
+                    the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326))).label('AREA_RET')],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
         else:
-            s = select([the_table, func.ST_AsGML(func.ST_SetSRID(geom,4326))], the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
+
+            s = select(
+                [the_table, func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
@@ -164,11 +169,23 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
         if return_intersection_area == True:
             # include a calculation for the intersecting the area
 
-            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326))).label(
-                'AREA_RET')],
-                       the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
+            s = select(
+                [
+                    the_table,
+                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                    the_table.c.wkb_geometry.ST_Area(
+                        the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326))
+                    ).label('AREA_RET')
+                ],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326))
+            )
         else:
-            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom,4326)))
+            s = select(
+                [
+                    the_table,
+                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)
+                ],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
 
         print (s)
         results = _execute_query(engine, s)
@@ -396,14 +413,22 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
-        utmsrid = getutmsrid(longitude=long,latitude=lat)
-        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(),
-                    the_table.c.wkb_geometry.ST_Area(
+        utmsrid = getutmsrid(longitude=long, latitude=lat)
+        s = select(
+            [
+                the_table,
+                func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                the_table.c.wkb_geometry.ST_Area(
                         the_table.c.wkb_geometry.ST_Intersects(
-                            func.createellipse(lat, long, major,minor,orientation,utmsrid))
-                    ).label('AREA_RET')],
-                   the_table.c.wkb_geometry.ST_Intersects(
-                       func.createellipse(lat, long, major,minor,orientation,utmsrid)))
+                            func.createellipse(lat, long, major, minor, orientation, utmsrid)
+                        )
+                    ).label('AREA_RET')
+            ],
+            the_table.c.wkb_geometry.ST_Intersects(
+                func.createellipse(lat, long, major, minor, orientation, utmsrid)
+            )
+        )
+
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(

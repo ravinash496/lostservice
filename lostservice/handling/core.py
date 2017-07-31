@@ -180,8 +180,7 @@ class FindServiceHandler(Handler):
             our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
 
             # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
-            request.path.append(our_path)
-            response_mapping_list[0]['path'] = request.path
+            response_mapping_list[0]['path'] = request.path + [our_path]
 
             # Add NonLoSTdata items
             response_mapping_list[0]['nonlostdata'] = request.nonlostdata
@@ -213,7 +212,7 @@ class FindServiceHandler(Handler):
                 return_area = True
 
             return_shape = False
-            if request.serviceBoundary == 'Value':
+            if request.serviceBoundary == 'value':
                 return_shape = True
 
             results = self._db_wrapper.get_intersecting_boundaries_for_circle(
