@@ -160,4 +160,16 @@ def apply_policy_settings(config, results, request):
                 elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnError.name:
                     raise MappingDiscoveryException('Multiple results matched request location')
 
-    return results
+        return results
+
+def case_insensitive_string_to_boolean_conversion(value):
+
+    result = False
+
+    if not value:
+        result = False
+    else:
+        if value.lower() in ['true', '1', 't', 'y', 'yes', ]:
+            result = True
+
+    return result

@@ -574,6 +574,17 @@ class FindServiceXmlConverter(XmlConverter):
         # create the root element of the xml response.
         xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN, GML_PREFIX: GML_URN})
 
+        if data is None or len(data) == 0:
+            # Create No Results Response
+
+            xml_error_response = lxml.etree.Element('errors', nsmap={None: LOST_URN}, attrib={'source': 'authoritative.example'})
+            errors_element = lxml.etree.SubElement(xml_error_response, 'notFound',
+                                                     attrib={'message': 'Could not find an answer to the request'})
+            attr = errors_element.attrib
+            attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
+
+            return xml_error_response
+
         for item in data:
 
             # Add mapping sub element
@@ -594,9 +605,10 @@ class FindServiceXmlConverter(XmlConverter):
                 attr_element['key'] = data[0]['mapping_sourceid']
                 lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
             else:
-                # TODO element tag throws invalid tag for gml even namespace registered
                 services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile=item['profile'])
-                final_gml_as_xml=io.StringIO('''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN,item['non_lost_data']))
+
+                final_gml_as_xml = io.StringIO(
+                    '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['service_gml']))
                 final_gml = etree.parse(final_gml_as_xml).getroot()
                 services_element.extend(final_gml)
 
