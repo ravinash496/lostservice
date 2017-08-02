@@ -126,8 +126,8 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
         if return_intersection_area:
             # include a calculation for the intersecting the area
             s = select(
-                [the_table, the_table.c.wkb_geometry.ST_Area(
-                    the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326))).label('AREA_RET')],
+                [the_table, func.ST_Area(
+                    the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))).label('AREA_RET')],
                 the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
         else:
 
@@ -173,8 +173,8 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
                 [
                     the_table,
                     func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
-                    the_table.c.wkb_geometry.ST_Area(
-                        the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326))
+                    func.ST_Area(
+                        the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))
                     ).label('AREA_RET')
                 ],
                 the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326))
@@ -371,14 +371,14 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
     # Now execute the query.
     if return_shape == True:
         if proximity_search == True:
-            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle, proximity_buffer)
+            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle, proximity_buffer, return_intersection_area)
         else:
             # Call Overload to return the GML representation of the shape for ByReference
             return _get_intersecting_boundaries_for_geom_reference(engine, boundary_table, wkb_circle, return_intersection_area)
     else:
         if proximity_search == True:
             return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
-                                                           proximity_buffer)
+                                                           proximity_buffer, return_intersection_area)
         else:
             return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
 
@@ -488,11 +488,9 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
 
     if proximity_search == True:
         return get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_ring,
-                                                proximity_buffer)
+                                                proximity_buffer, return_intersection_area)
     else:
         return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
-#Todo return_intersection_area
-
 
 
 def get_boundaries_for_previous_id(pid, engine, boundary_table):
@@ -525,7 +523,7 @@ def get_boundaries_for_previous_id(pid, engine, boundary_table):
     return results
 
 
-def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom, buffer_distance):
+def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom, buffer_distance, return_intersection_area = False):
     retval = None
     try:
         # Get a reference to the table we're going to look in.
@@ -535,9 +533,25 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
         # Construct the "contains" query and execute it.
         utmsrid = getutmsrid(longitude=long, latitude=lat)
 
-        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()],
+        if return_intersection_area:
+        # include a calculation for the intersecting the area
+
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), func.ST_Area(
+            func.ST_Intersection(
+                func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance), the_table.c.wkb_geometry.ST_Transform(utmsrid))).label(
+            'AREA_RET')],
+                   func.ST_Intersects(
+                       func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance),
+                       the_table.c.wkb_geometry.ST_Transform(utmsrid)))
+
+
+        else:
+
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()],
                    func.ST_Intersects(func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom,4326), utmsrid), buffer_distance),
                                       the_table.c.wkb_geometry.ST_Transform(utmsrid)))
+
+
 
         retval = _execute_query(engine, s)
 
