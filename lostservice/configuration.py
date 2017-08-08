@@ -159,7 +159,7 @@ class Configuration(object):
 
         try:
             if required and not found:
-                print('Option {0} not found not found..'.format(option))
+                print('Option {0} not found...'.format(option))
             elif not required and not found:
                 return None
 

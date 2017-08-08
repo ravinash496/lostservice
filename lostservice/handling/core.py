@@ -94,7 +94,7 @@ class FindServiceHandler(Handler):
     def handle_request(self, request, context):
         """
          Entry point for request handling.
-
+         
          :param request: The request
          :type request: A subclass of :py:class:`FindServiceRequest`
          :param context: The request context.
@@ -197,6 +197,7 @@ class FindServiceHandler(Handler):
         :return: 
         """
 
+        # TODO remove, now in config wrapper
         proximity_search_policy_string = self._config.get('Policy',
                                                                     'service_boundary_proximity_search_policy',
                                                                     as_object=False, required=False)
@@ -205,6 +206,7 @@ class FindServiceHandler(Handler):
 
         if type(request.location.location) is Circle:
 
+            # TODO remove, now in config wrapper
             polygon_multiple_match_policy = self._config.get('Policy', 'polygon_multiple_match_policy',
                                                              as_object=False, required=False)
             return_area = False
@@ -224,6 +226,8 @@ class FindServiceHandler(Handler):
 
             if results is None and service_boundary_proximity_search_policy is True:
                 # No results and Policy says we should buffer and research
+
+                # TODO remove, now in config wrapper
                 service_boundary_proximity_buffer = self._config.get('Policy',
                                                                      'service_boundary_proximity_buffer',
                                                                      as_object=False, required=False)
@@ -250,6 +254,7 @@ class FindServiceHandler(Handler):
 
             if results is None and service_boundary_proximity_search_policy is True:
                 # No results and Policy says we should buffer and research
+                # TODO remove, now in config wrapper
                 service_boundary_proximity_buffer = self._config.get('Policy',
                                                                      'service_boundary_proximity_buffer',
                                                                      as_object=False, required=False)
@@ -273,9 +278,11 @@ class FindServiceHandler(Handler):
             if results is None and service_boundary_proximity_search_policy is True:
                 # No results and Policy says we should buffer and research
                 # Create a Circle
+                # TODO remove, now in config wrapper
                 service_boundary_proximity_buffer = self._config.get('Policy',
                                                                      'service_boundary_proximity_buffer',
                                                                      as_object=False, required=False)
+                # TODO remove, now in config wrapper
                 polygon_multiple_match_policy = self._config.get('Policy', 'polygon_multiple_match_policy',
                                                                  as_object=False, required=False)
                 return_area = False
@@ -320,6 +327,7 @@ class FindServiceHandler(Handler):
                 esb_table)
 
             if results is None and service_boundary_proximity_search_policy is True:
+                # TODO remove, now in config wrapper
                 # No results and Policy says we should buffer and research
                 service_boundary_proximity_buffer = self._config.get('Policy',
                                                                      'service_boundary_proximity_buffer',
