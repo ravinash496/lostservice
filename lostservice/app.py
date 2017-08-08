@@ -21,6 +21,7 @@ import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 
 import lostservice.logger.nenalogging as nenalog
+from lostservice.logger import transactionlogging as translog
 
 class LostBindingModule(Module):
     """
@@ -199,6 +200,13 @@ class LostApplication(object):
         # Send Logs to configured NENA Logging Services
         nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
+        translog.create_transaction_log_event("",
+                                              parsed_request,
+                                              query_name,
+                                              starttime,
+                                              parsed_response,
+                                              endtime,
+                                              conf)
         self._logger.debug(response)
         self._logger.info('Finished LoST query execution . . .')
 
