@@ -51,6 +51,7 @@ def _execute_query(engine, query):
         with engine.connect() as conn:
             result = conn.execute(query)
             for row in result:
+                # print(row)
                 row_copy = dict(zip(row.keys(), row))
                 retval.append(row_copy)
             result.close()
@@ -87,8 +88,11 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
         # Construct the "contains" query and execute it.
-        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(geom))
+        s = select([the_table, func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)],
+                   the_table.c.wkb_geometry.ST_Contains(geom))
+
         retval = _execute_query(engine, s)
+
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
             'Unable to construct contains query.', ex)
@@ -119,12 +123,17 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
         # s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Contains(geom))
 
         # Construct the "intersection" query and execute
-        if return_intersection_area == True:
+        if return_intersection_area:
             # include a calculation for the intersecting the area
-            s = select([the_table, the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(geom)).label('AREA_RET')],
-                       the_table.c.wkb_geometry.ST_Intersects(geom))
+            s = select(
+                [the_table, func.ST_Area(
+                    the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))).label('AREA_RET')],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
         else:
-            s = select([the_table], the_table.c.wkb_geometry.ST_Intersects(geom))
+
+            s = select(
+                [the_table, func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
@@ -160,11 +169,23 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
         if return_intersection_area == True:
             # include a calculation for the intersecting the area
 
-            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), the_table.c.wkb_geometry.ST_Area(the_table.c.wkb_geometry.ST_Intersects(geom)).label(
-                'AREA_RET')],
-                       the_table.c.wkb_geometry.ST_Intersects(geom))
+            s = select(
+                [
+                    the_table,
+                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                    func.ST_Area(
+                        the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))
+                    ).label('AREA_RET')
+                ],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326))
+            )
         else:
-            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()], the_table.c.wkb_geometry.ST_Intersects(geom))
+            s = select(
+                [
+                    the_table,
+                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)
+                ],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
 
         print (s)
         results = _execute_query(engine, s)
@@ -177,14 +198,14 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
     return results
 
 
-def get_containing_boundary_for_point(x, y, srid, boundary_table, engine):
+def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine):
     """
     Executes a contains query for a point.
 
-    :param x: The x coordinate of the point.
-    :type x: `float`
-    :param y: The y coordinate of the point.
-    :type y: `float`
+    :param long: The x coordinate of the point.
+    :type long: `float`
+    :param lat: The lat coordinate of the point.
+    :type lat: `float`
     :param srid: The spatial reference Id of the point.
     :type srid: `str`
     :param boundary_table: The name of the service boundary table.
@@ -194,7 +215,7 @@ def get_containing_boundary_for_point(x, y, srid, boundary_table, engine):
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Create a Shapely Point
-    pt = Point(x, y)
+    pt = Point(long, lat)
 
     # Pull out just the number from the SRID
     trimmed_srid = srid.split('::')[1]
@@ -202,10 +223,11 @@ def get_containing_boundary_for_point(x, y, srid, boundary_table, engine):
     # Get a GeoAlchemy WKBElement from the point.
     wkb_pt = from_shape(pt, trimmed_srid)
     # Run the query.
+
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
 
-def getutmsrid(latitude,longitude):
+def getutmsrid(longitude, latitude):
     """
 
     :param latitude: latitude to find the utm srid
@@ -230,15 +252,15 @@ def getutmsrid(latitude,longitude):
     return prefix + zone
 
 
-def _transform_circle(x, y, srid, radius, uom):
+def _transform_circle(long, lat, srid, radius, uom):
     """
     Takes the fundamental bits of a circle and converts it to a descritized circle (polygon)
     transformed to 4326.
 
-    :param x: The x coordinate of the center.
-    :type x: `float`
-    :param y: The y coordinate of the center.
-    :type y: `float`
+    :param long: The x coordinate of the center.
+    :type long: `float`
+    :param lat: The lat coordinate of the center.
+    :type lat: `float`
     :param srid: The spatial reference id of the center point.
     :type srid: `str`
     :param radius: The radius of the circle.
@@ -258,13 +280,14 @@ def _transform_circle(x, y, srid, radius, uom):
     # The target will depend on the value of uom, but we'll just assume
     # it's 9001/meters for now and project to 3857.
     target = osr.SpatialReference()
-    target.ImportFromEPSG(3857)
+    #target.ImportFromEPSG(3857)
+    target.ImportFromEPSG(getutmsrid(longitude=long, latitude=lat))
 
     # Set up the transform.
     transform = osr.CoordinateTransformation(source, target)
 
     # Create a geometry we can use with the transform.
-    center = ogr.CreateGeometryFromWkt('POINT({0} {1})'.format(x, y))
+    center = ogr.CreateGeometryFromWkt('POINT({0} {1})'.format(long, lat))
 
     # Transform it and apply the buffer.
     center.Transform(transform)
@@ -283,14 +306,14 @@ def _transform_circle(x, y, srid, radius, uom):
     return wkb_circle
 
 
-def get_containing_boundary_for_circle(x, y, srid, radius, uom, boundary_table, engine):
+def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_table, engine):
     """
     Executes a contains query for a circle.
 
-    :param x: The x coordinate of the center.
-    :type x: `float`
-    :param y: The y coordinate of the center.
-    :type y: `float`
+    :param long: The x coordinate of the center.
+    :type long: `float`
+    :param lat: The lat coordinate of the center.
+    :type lat: `float`
     :param srid: The spatial reference id of the center point.
     :type srid: `str`
     :param radius: The radius of the circle.
@@ -308,20 +331,20 @@ def get_containing_boundary_for_circle(x, y, srid, radius, uom, boundary_table, 
     trimmed_srid = srid.split('::')[1]
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(x, y, trimmed_srid, radius, uom)
+    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
 
     # Now execute the query.
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
 
 
-def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False ):
+def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
-    :param x: The x coordinate of the center.
-    :type x: `float`
-    :param y: The y coordinate of the center.
-    :type y: `float`
+    :param long: The long coordinate of the center.
+    :type long: `float`
+    :param lat: The y coordinate of the center.
+    :type lat: `float`
     :param srid: The spatial reference id of the center point.
     :type srid: `str`
     :param radius: The radius of the circle.
@@ -343,24 +366,31 @@ def get_intersecting_boundaries_for_circle(x, y, srid, radius, uom, boundary_tab
     trimmed_srid = int(srid.split('::')[1])
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(x, y, trimmed_srid, radius, uom)
+    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
 
     # Now execute the query.
     if return_shape == True:
-        # Call Overload to return the GML representation of the shape for ByReference
-        return _get_intersecting_boundaries_for_geom_reference(engine, boundary_table, wkb_circle, return_intersection_area)
+        if proximity_search == True:
+            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle, proximity_buffer, return_intersection_area)
+        else:
+            # Call Overload to return the GML representation of the shape for ByReference
+            return _get_intersecting_boundaries_for_geom_reference(engine, boundary_table, wkb_circle, return_intersection_area)
     else:
-        return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
+        if proximity_search == True:
+            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
+                                                           proximity_buffer, return_intersection_area)
+        else:
+            return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
 
 
-def get_containing_boundary_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table, engine):
+def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
     """
     Executes a contains query for a polygon.
 
-    :param lat: latitude value .
-    :type lat: `float`
     :param long: longitude value .
     :type long: `float`
+    :param lat: latitude value .
+    :type lat: `float`
     :param srid: The spatial reference Id of the ellipse.
     :type srid: `str`
     :param major: The majorAxis value.
@@ -383,14 +413,22 @@ def get_containing_boundary_for_ellipse(lat, long, srid, major, minor, orientati
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
-        utmsrid = getutmsrid(latitude=lat, longitude=long)
-        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(),
-                    the_table.c.wkb_geometry.ST_Area(
+        utmsrid = getutmsrid(longitude=long, latitude=lat)
+        s = select(
+            [
+                the_table,
+                func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                the_table.c.wkb_geometry.ST_Area(
                         the_table.c.wkb_geometry.ST_Intersects(
-                            func.createellipse(lat, long, major,minor,orientation,utmsrid))
-                    ).label('AREA_RET')],
-                   the_table.c.wkb_geometry.ST_Intersects(
-                       func.createellipse(lat, long, major,minor,orientation,utmsrid)))
+                            func.createellipse(lat, long, major, minor, orientation, utmsrid)
+                        )
+                    ).label('AREA_RET')
+            ],
+            the_table.c.wkb_geometry.ST_Intersects(
+                func.createellipse(lat, long, major, minor, orientation, utmsrid)
+            )
+        )
+
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -400,7 +438,7 @@ def get_containing_boundary_for_ellipse(lat, long, srid, major, minor, orientati
     return results
 
 
-def get_containing_boundary_for_polygon(points, srid, boundary_table, engine):
+def get_containing_boundary_for_polygon(points, srid, boundary_table, engine, proximity_search = False, proximity_buffer = 0 ):
     """
     Executes a contains query for a polygon.
 
@@ -419,10 +457,14 @@ def get_containing_boundary_for_polygon(points, srid, boundary_table, engine):
 
     ring = LinearRing(points)
     wkb_ring = from_shape(ring, trimmed_srid)
-    return _get_containing_boundary_for_geom(engine, boundary_table, wkb_ring)
+
+    if proximity_search == True:
+        get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_ring, proximity_buffer)
+    else:
+        return _get_containing_boundary_for_geom(engine, boundary_table, wkb_ring)
 
 
-def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine, return_intersection_area=False):
+def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine, return_intersection_area=False, proximity_search = False, proximity_buffer = 0 ):
     """
     Executes an intersection query for a polygon.
 
@@ -444,7 +486,11 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     ring = LinearRing(points)
     wkb_ring = from_shape(ring, trimmed_srid)
 
-    return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
+    if proximity_search == True:
+        return get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_ring,
+                                                proximity_buffer, return_intersection_area)
+    else:
+        return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
 
 
 def get_boundaries_for_previous_id(pid, engine, boundary_table):
@@ -475,3 +521,44 @@ def get_boundaries_for_previous_id(pid, engine, boundary_table):
         raise
 
     return results
+
+
+def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom, buffer_distance, return_intersection_area = False):
+    retval = None
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table(table_name, tbl_metadata, autoload=True)
+
+        # Construct the "contains" query and execute it.
+        utmsrid = getutmsrid(longitude=long, latitude=lat)
+
+        if return_intersection_area:
+        # include a calculation for the intersecting the area
+
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), func.ST_Area(
+            func.ST_Intersection(
+                func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance), the_table.c.wkb_geometry.ST_Transform(utmsrid))).label(
+            'AREA_RET')],
+                   func.ST_Intersects(
+                       func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance),
+                       the_table.c.wkb_geometry.ST_Transform(utmsrid)))
+
+
+        else:
+
+            s = select([the_table, the_table.c.wkb_geometry.ST_AsGML()],
+                   func.ST_Intersects(func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom,4326), utmsrid), buffer_distance),
+                                      the_table.c.wkb_geometry.ST_Transform(utmsrid)))
+
+
+
+        retval = _execute_query(engine, s)
+
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct contains query.', ex)
+    except SpatialQueryException:
+        raise
+
+    return retval

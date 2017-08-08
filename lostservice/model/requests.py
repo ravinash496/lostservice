@@ -24,7 +24,7 @@ class FindServiceRequest(Request):
     """
     findService request class.
     """
-    def __init__(self, location=None, service=None, serviceBoundary=None, path=[], nonlostdata=[]):
+    def __init__(self, location=None, service=None, serviceBoundary=None, path=None, nonlostdata=None):
         """
         Constructor
 
@@ -34,8 +34,9 @@ class FindServiceRequest(Request):
         self._location = location
         self._service = service
         self._serviceBoundary = serviceBoundary
-        self._path = path
-        self._nonlostdata = nonlostdata
+        self._path = path if path is not None else []
+        self._nonlostdata = nonlostdata if nonlostdata is not None else []
+
 
     @property
     def location(self):

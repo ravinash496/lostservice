@@ -10,10 +10,8 @@ Core handler implementation classes.
 
 import datetime
 import pytz
-
-
-from lostservice.db.utilities import get_urn_table_mappings
 from lostservice.db.utilities import apply_policy_settings
+from lostservice.db.utilities import case_insensitive_string_to_boolean_conversion
 from injector import inject
 from lostservice.configuration import Configuration
 from lostservice.db.gisdb import GisDbInterface
@@ -22,8 +20,10 @@ import lostservice.model.responses as responses
 from lostservice.model.location import Circle
 from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
+from lostservice.model.location import Arcband
 from lostservice.configuration import PolygonMultipleMatchPolicyEnum
 from lostservice.configuration import ServiceExpiresPolicyEnum
+import lostservice.geometry as geom
 
 
 class ListServicesHandler(Handler):
@@ -78,6 +78,7 @@ class FindServiceHandler(Handler):
     """
     Base findService request handler.
     """
+
     @inject
     def __init__(self, config: Configuration, db_wrapper: GisDbInterface):
         """
@@ -89,7 +90,6 @@ class FindServiceHandler(Handler):
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
         """
         super(FindServiceHandler, self).__init__(config, db_wrapper)
-
 
     def handle_request(self, request, context):
         """
@@ -109,50 +109,8 @@ class FindServiceHandler(Handler):
         # From the mappings, look up the table name from the incoming service urn.
         esb_table = mappings[request.service]
 
-        if type(request.location.location) is Circle:
-
-
-            polygon_multiple_match_policy = self._config.get('Policy', 'polygon_multiple_match_policy',
-                                                                      as_object=False, required=False)
-            return_area = False
-            if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority.name:
-                return_area = True
-
-            return_shape = False
-            if request.serviceBoundary == 'Value':
-                return_shape = True
-
-            results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                request.location.location.longitude,
-                request.location.location.latitude,
-                request.location.location.spatial_ref,
-                float(request.location.location.radius),
-                request.location.location.uom, esb_table, return_area, return_shape)
-
-        elif type(request.location.location) is Ellipse:
-
-            results = self._db_wrapper.get_containing_boundary_for_ellipse(
-                request.location.location.latitude,
-                request.location.location.longitude,
-                request.location.location.spatial_ref,
-                float(request.location.location.semiMajorAxis),
-                float(request.location.location.semiMinorAxis),
-                float(request.location.location.orientation),
-                esb_table)
-
-        elif type(request.location.location) is Point:
-            results = self._db_wrapper.get_containing_boundary_for_point(
-                request.location.location.longitude,
-                request.location.location.latitude,
-                request.location.location.spatial_ref,
-                esb_table)
-
-        else:
-            results = self._db_wrapper.get_containing_boundary_for_polygon(
-                request.location.location.get("vertices"),
-                request.location.location.get("spatial_ref"),
-                esb_table)
-
+        # Run spatial query for the specific geometry type
+        results = self._process_findservice_geometry(request, esb_table)
 
         service_boundary_profile = request.location.profile
 
@@ -160,9 +118,12 @@ class FindServiceHandler(Handler):
         # Create a list to contain mutiple response mappings
         response_mapping_list = []
 
+        if results is None:
+            return response_mapping_list
+
         for row in results:
 
-            response_mapping = {}   #TODO How to deal with None?
+            response_mapping = {}  # TODO How to deal with None?
 
             response_mapping['displayname'] = row['displayname']
             response_mapping['serviceurn'] = row['serviceurn']
@@ -173,7 +134,7 @@ class FindServiceHandler(Handler):
             response_mapping['profile'] = service_boundary_profile
 
             if 'ST_AsGML_1' in row:
-                response_mapping['non_lost_data'] = row['ST_AsGML_1']
+                response_mapping['service_gml'] = row['ST_AsGML_1']
 
             response_mapping['mapping_lastupdate'] = None
             lastupdatefield = 'updatedate'
@@ -181,9 +142,10 @@ class FindServiceHandler(Handler):
             if lastupdatefield is not None:
                 response_mapping['mapping_lastupdate'] = row[lastupdatefield]
 
-            response_mapping['mapping_source'] = self._config.get('Service', 'source_uri', as_object=False, required=False)
+            response_mapping['mapping_source'] = self._config.get('Service', 'source_uri', as_object=False,
+                                                                  required=False)
 
-            #Get the entire dictionary of settings for this service
+            # Get the entire dictionary of settings for this service
             service_settings_dict = self._config.get('Service', esb_table, as_object=True, required=False)
             if service_settings_dict == None:
                 # Config not set for specific table use default Service Values
@@ -196,13 +158,13 @@ class FindServiceHandler(Handler):
             # Based on setting Set Expires to: currentTime + TimeSpan setting or "NO-CACHE" or "NO-EXPIRATION"
             if mapping_service_expires_policy == ServiceExpiresPolicyEnum.TimeSpan.name:
                 # Expected to be in UTC format plus timespan (minutes) interval setting 2010-05-18T16:47:55.9620000-06:00
-                mapping_expires = datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(minutes=int(mapping_service_expires_timespan))
+                mapping_expires = datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(
+                    minutes=int(mapping_service_expires_timespan))
                 response_mapping['mapping_expires'] = mapping_expires.isoformat()
             elif mapping_service_expires_policy == ServiceExpiresPolicyEnum.NoCache.name:
                 response_mapping['mapping_expires'] = 'NO-CACHE'
             elif mapping_service_expires_policy == ServiceExpiresPolicyEnum.NoExpiration.name:
                 response_mapping['mapping_expires'] = 'NO-EXPIRATION'
-
 
             # The location used in the request (Optional). Get this from the request location's id.
             response_mapping['locationUsed'] = [request.location.id]
@@ -218,13 +180,157 @@ class FindServiceHandler(Handler):
             our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
 
             # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
-            request.path.append(our_path)
-            response_mapping_list[0]['path'] = request.path
+            response_mapping_list[0]['path'] = request.path + [our_path]
 
             # Add NonLoSTdata items
             response_mapping_list[0]['nonlostdata'] = request.nonlostdata
 
         return response_mapping_list
+
+
+
+    def _process_findservice_geometry(self, request, esb_table):
+        """
+        Identify and process each type of shape
+        :param request: 
+        :param esb_table: 
+        :return: 
+        """
+
+        proximity_search_policy_string = self._config.get('Policy',
+                                                                    'service_boundary_proximity_search_policy',
+                                                                    as_object=False, required=False)
+        service_boundary_proximity_search_policy = case_insensitive_string_to_boolean_conversion(proximity_search_policy_string)
+
+
+        if type(request.location.location) is Circle:
+
+            polygon_multiple_match_policy = self._config.get('Policy', 'polygon_multiple_match_policy',
+                                                             as_object=False, required=False)
+            return_area = False
+            if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority.name:
+                return_area = True
+
+            return_shape = False
+            if request.serviceBoundary == 'value':
+                return_shape = True
+
+            results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                request.location.location.longitude,
+                request.location.location.latitude,
+                request.location.location.spatial_ref,
+                float(request.location.location.radius),
+                request.location.location.uom, esb_table, return_area, return_shape)
+
+            if results is None and service_boundary_proximity_search_policy is True:
+                # No results and Policy says we should buffer and research
+                service_boundary_proximity_buffer = self._config.get('Policy',
+                                                                     'service_boundary_proximity_buffer',
+                                                                     as_object=False, required=False)
+
+                results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                    request.location.location.longitude,
+                    request.location.location.latitude,
+                    request.location.location.spatial_ref,
+                    float(request.location.location.radius),
+                    request.location.location.uom, esb_table, return_area, return_shape,
+                    service_boundary_proximity_search_policy, service_boundary_proximity_buffer)
+
+
+        elif type(request.location.location) is Ellipse:
+
+            results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
+                request.location.location.longitude,
+                request.location.location.latitude,
+                request.location.location.spatial_ref,
+                float(request.location.location.semiMajorAxis),
+                float(request.location.location.semiMinorAxis),
+                float(request.location.location.orientation),
+                esb_table)
+
+            if results is None and service_boundary_proximity_search_policy is True:
+                # No results and Policy says we should buffer and research
+                service_boundary_proximity_buffer = self._config.get('Policy',
+                                                                     'service_boundary_proximity_buffer',
+                                                                     as_object=False, required=False)
+                results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
+                    request.location.location.longitude,
+                    request.location.location.latitude,
+                    request.location.location.spatial_ref,
+                    float(request.location.location.semiMajorAxis) + int(service_boundary_proximity_buffer),
+                    float(request.location.location.semiMinorAxis) + int(service_boundary_proximity_buffer),
+                    float(request.location.location.orientation),
+                    esb_table)
+
+
+        elif type(request.location.location) is Point:
+            results = self._db_wrapper.get_containing_boundary_for_point(
+                request.location.location.longitude,
+                request.location.location.latitude,
+                request.location.location.spatial_ref,
+                esb_table)
+
+            if results is None and service_boundary_proximity_search_policy is True:
+                # No results and Policy says we should buffer and research
+                # Create a Circle
+                service_boundary_proximity_buffer = self._config.get('Policy',
+                                                                     'service_boundary_proximity_buffer',
+                                                                     as_object=False, required=False)
+                polygon_multiple_match_policy = self._config.get('Policy', 'polygon_multiple_match_policy',
+                                                                 as_object=False, required=False)
+                return_area = False
+                if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority.name:
+                    return_area = True
+
+                return_shape = False
+                if request.serviceBoundary == 'Value':
+                    return_shape = True
+
+                results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                    request.location.location.longitude,
+                    request.location.location.latitude,
+                    request.location.location.spatial_ref,
+                    float(service_boundary_proximity_buffer),
+                    None, esb_table, return_area, return_shape)
+
+        elif type(request.location.location) is Arcband:
+            geom_model = request.location.location
+            arcband = geom.generate_arcband(
+                geom_model.longitude,
+                geom_model.latitude,
+                geom_model.start_angle,
+                geom_model.opening_angle,
+                geom_model.inner_radius,
+                geom_model.outer_radius
+            )
+
+            points = geom.get_vertices_for_geom(arcband)[0]
+
+            results = self._db_wrapper.get_containing_boundary_for_polygon(
+                points,
+                geom_model.spatial_ref,
+                esb_table
+            )
+
+
+        else:
+            results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
+                request.location.location.get("vertices"),
+                request.location.location.get("spatial_ref"),
+                esb_table)
+
+            if results is None and service_boundary_proximity_search_policy is True:
+                # No results and Policy says we should buffer and research
+                service_boundary_proximity_buffer = self._config.get('Policy',
+                                                                     'service_boundary_proximity_buffer',
+                                                                     as_object=False, required=False)
+                results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
+                    request.location.location.get("vertices"),
+                    request.location.location.get("spatial_ref"),
+                    esb_table, service_boundary_proximity_search_policy, service_boundary_proximity_buffer)
+
+        return results
+
 
 
 class GetServiceBoundaryHandler(Handler):
