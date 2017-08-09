@@ -87,9 +87,14 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
+        #ST_AsGML(geometry geom, integer maxdecimaldigits=15, integer options=0);
+        #maxdecimaldigits = precision
+        #option 16 = swap the coordinates so order is lat lon instead of database lon lat
+
         # Construct the "contains" query and execute it.
-        s = select([the_table, func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)],
+        s = select([the_table, func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16)],
                    the_table.c.wkb_geometry.ST_Contains(geom))
+
 
         retval = _execute_query(engine, s)
 
@@ -132,7 +137,7 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
         else:
 
             s = select(
-                [the_table, func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)],
+                [the_table, func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16)],
                 the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
 
         results = _execute_query(engine, s)

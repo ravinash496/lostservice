@@ -107,6 +107,7 @@ class Configuration(object):
 
         # Finally, cache the connection string for later.
         self._db_connection_string = self._rebuild_db_connection_string()
+        self._logging_db_connection_string = self._rebuild_db_connection_string(section="Logging")
 
     @property
     def custom_config_file(self):
@@ -263,34 +264,38 @@ class Configuration(object):
         if source_uri is not None:
             self.set_option('Service', 'source_uri', source_uri)
 
-    def _rebuild_db_connection_string(self):
+    def _rebuild_db_connection_string(self, section="Database"):
         """
         Recreates the database connection string from configuration.
 
         :return: ``str``
         """
-        host = self.get('Database', 'host')
-        port = self.get('Database', 'port')
-        dbname = self.get('Database', 'dbname')
-        user = self.get('Database', 'username')
-        password = self.get('Database', 'password')
+        host = self.get(section, 'host')
+        port = self.get(section, 'port')
+        dbname = self.get(section, 'dbname')
+        user = self.get(section, 'username')
+        password = self.get(section, 'password')
 
         # postgresql://scott:tiger@localhost/mydatabase'
         conn_string_template = 'postgresql://{0}:{1}@{2}:{3}/{4}'
-        self._db_connection_string = conn_string_template.format(user, password, host, port, dbname)
+        db_connection_string = conn_string_template.format(user, password, host, port, dbname)
+        if section=="Database":
+            self._db_connection_string = db_connection_string
+        else:
+            self._logging_db_connection_string = db_connection_string
 
-    def get_db_connection_string(self):
+    def get_db_connection_string(self, section="Database"):
         """
         Gets a valid database connection string from configuration.
 
         :rtype: ``str``
         """
-        if self._db_connection_string is None:
-            self._rebuild_db_connection_string()
-
-        return self._db_connection_string
-
-
-
-
+        if section=="Logging":
+            if self._logging_db_connection_string is None:
+                self._rebuild_db_connection_string(section="Logging")
+            return self._logging_db_connection_string
+        else:
+            if self._db_connection_string is None:
+                self._rebuild_db_connection_string()
+            return self._db_connection_string
 

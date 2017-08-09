@@ -22,8 +22,10 @@ from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
 from lostservice.model.location import Arcband
 from lostservice.configuration import PolygonMultipleMatchPolicyEnum
+from lostservice.configuration import PolygonSearchModePolicyEnum
 from lostservice.configuration import ServiceExpiresPolicyEnum
 import lostservice.geometry as geom
+from shapely.geometry import Polygon
 
 
 class ListServicesHandler(Handler):
@@ -290,7 +292,7 @@ class FindServiceHandler(Handler):
                     return_area = True
 
                 return_shape = False
-                if request.serviceBoundary == 'Value':
+                if request.serviceBoundary == 'value':
                     return_shape = True
 
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
@@ -321,21 +323,64 @@ class FindServiceHandler(Handler):
 
 
         else:
-            results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
-                request.location.location.get("vertices"),
-                request.location.location.get("spatial_ref"),
-                esb_table)
+            # TODO remove, now in config wrapper
+            polygon_search_mode_policy = self._config.get('Policy', 'polygon_search_mode_policy',
+                                                    as_object=False, required=False)
+            if (polygon_search_mode_policy == PolygonSearchModePolicyEnum.SearchUsingCentroid.name):
+                #Search using polygon centroid
+                # Calculate the centroid using shapely
+                ref_polygon = Polygon(request.location.location.get("vertices"))
+                pt_array = ref_polygon.representative_point().coords        # TODO should this be centroid instead?
+                # Make sure we found a centroid
+                if pt_array is None:
+                    return None
 
-            if results is None and service_boundary_proximity_search_policy is True:
-                # TODO remove, now in config wrapper
-                # No results and Policy says we should buffer and research
-                service_boundary_proximity_buffer = self._config.get('Policy',
-                                                                     'service_boundary_proximity_buffer',
+                results = self._db_wrapper.get_containing_boundary_for_point(
+                    pt_array[0][0],
+                    pt_array[0][1],
+                    request.location.location.get("spatial_ref"),
+                    esb_table)
+
+                if results is None and service_boundary_proximity_search_policy is True:
+                    # No results and Policy says we should buffer and research
+                    # Create a Circle
+                    # TODO remove, now in config wrapper
+                    service_boundary_proximity_buffer = self._config.get('Policy',
+                                                                         'service_boundary_proximity_buffer',
+                                                                         as_object=False, required=False)
+                    # TODO remove, now in config wrapper
+                    polygon_multiple_match_policy = self._config.get('Policy', 'polygon_multiple_match_policy',
                                                                      as_object=False, required=False)
+                    return_area = False
+                    if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority.name:
+                        return_area = True
+
+                    return_shape = False
+                    if request.serviceBoundary == 'value':
+                        return_shape = True
+
+                    results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                        pt_array[0][0],
+                        pt_array[0][1],
+                        request.location.location.get("spatial_ref"),
+                        float(service_boundary_proximity_buffer),
+                        None, esb_table, return_area, return_shape)
+            else:
+                #Search using polygon
                 results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
                     request.location.location.get("vertices"),
                     request.location.location.get("spatial_ref"),
-                    esb_table, service_boundary_proximity_search_policy, service_boundary_proximity_buffer)
+                    esb_table)
+
+                if results is None and service_boundary_proximity_search_policy is True:
+                    # No results and Policy says we should buffer and research
+                    service_boundary_proximity_buffer = self._config.get('Policy',
+                                                                         'service_boundary_proximity_buffer',
+                                                                         as_object=False, required=False)
+                    results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
+                        request.location.location.get("vertices"),
+                        request.location.location.get("spatial_ref"),
+                        esb_table, service_boundary_proximity_search_policy, service_boundary_proximity_buffer)
 
         return results
 
