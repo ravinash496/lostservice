@@ -323,15 +323,15 @@ class FindServiceHandler(Handler):
                 #Search using polygon centroid
                 # Calculate the centroid using shapely
                 ref_polygon = Polygon(request.location.location.get("vertices"))
-                pt_array = ref_polygon.representative_point().coords        # TODO should this be centroid instead?
+                pt_array = ref_polygon.centroid       # TODO should this be representative_point() instead?
 
                 # Make sure we found a centroid
                 if pt_array is None:
                     return None
 
                 results = self._db_wrapper.get_containing_boundary_for_point(
-                    pt_array[0][0],
-                    pt_array[0][1],
+                    pt_array.x,
+                    pt_array.y,
                     request.location.location.get("spatial_ref"),
                     esb_table)
 
@@ -352,8 +352,8 @@ class FindServiceHandler(Handler):
                         return_shape = True
 
                     results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                        pt_array[0][0],
-                        pt_array[0][1],
+                        pt_array.x,
+                        pt_array.y,
                         request.location.location.get("spatial_ref"),
                         float(service_boundary_proximity_buffer),
                         None, esb_table, return_area, return_shape)
