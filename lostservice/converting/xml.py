@@ -596,6 +596,10 @@ class FindServiceXmlConverter(XmlConverter):
             services_element = lxml.etree.SubElement(mapping, 'displayName')
             services_element.text = item['displayname']
 
+            attr = services_element.attrib
+            attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
+
+
             services_element = lxml.etree.SubElement(mapping, 'service')
             services_element.text = item['serviceurn']
 
