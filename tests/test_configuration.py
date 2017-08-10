@@ -25,7 +25,7 @@ class ConfigurationTest(unittest.TestCase):
         self.assertEqual(self._default_ini_file, self._config.default_config_file)
 
     def test_get_sections(self):
-        expected = ['Database', 'SectionOne', 'Section Two', 'Section2', 'Section3', 'Section4']
+        expected = ['Database', 'SectionOne', 'Section Two', 'Section2', 'Section3', 'Section4', 'Logging']
         actual = self._config.get_sections()
         expected.sort()
         actual.sort()

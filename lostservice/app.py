@@ -252,7 +252,7 @@ if __name__ == "__main__":
     lost_app = LostApplication()
     context = {}
     response = lost_app.execute_query(request, context)
-    print(response)
+    print(response.decode("utf-8"))
 
 
 
