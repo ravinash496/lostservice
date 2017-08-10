@@ -22,6 +22,7 @@ import lostservice.queryrunner as queryrunner
 
 import lostservice.logger.nenalogging as nenalog
 from lostservice.logger import transactionlogging as translog
+from lostservice.logger.diagnostics import DiagnosticsEvent
 
 class LostBindingModule(Module):
     """
@@ -200,13 +201,35 @@ class LostApplication(object):
         # Send Logs to configured NENA Logging Services
         nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
-        translog.create_transaction_log_event("",
-                                              parsed_request,
-                                              query_name,
-                                              starttime,
-                                              parsed_response,
-                                              endtime,
-                                              conf)
+        try:
+            translog.create_transaction_log_event("",
+                                                  parsed_request,
+                                                  query_name,
+                                                  starttime,
+                                                  parsed_response,
+                                                  endtime,
+                                                  conf)
+            raise IndexError("Failed Due to exception")
+        except Exception as e:
+            server_id = parsed_response.getchildren()[0].attrib.get("source")
+            import uuid
+            diag = DiagnosticsEvent()
+            diag.conf = conf
+            diag.qpslogid = -1
+            diag.eventid = 1
+            diag.priority = 5
+            diag.severity = 2
+            diag.activityid = str(uuid.uuid4())
+            diag.categoryname = "Diagnostic"
+            diag.title = "Error"
+            diag.timestamputc = endtime
+            diag.machinename = ""
+            diag.serverid = server_id
+            diag.machineid = ""
+            diag.message = str(e)
+            diag.formattedmessage = str(e)
+            diag.log()
+
         self._logger.debug(response)
         self._logger.info('Finished LoST query execution . . .')
 
