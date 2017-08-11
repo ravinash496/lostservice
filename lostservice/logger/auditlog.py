@@ -34,14 +34,14 @@ class AuditListener(object):
         """
         super(AuditListener, self).__init__()
 
-        def record_event(self, event):
-            """
-            Abstract method for handling auditable events to be implemented by listeners.
+    def record_event(self, event):
+        """
+        Abstract method for handling auditable events to be implemented by listeners.
 
-            :param event: The event.
-            :type event: :py:class:`lostservice.logging.auditlog.AuditableEvent`
-            """
-            raise NotImplementedError('The record_event method must be implemented in a subclass.')
+         :param event: The event.
+         :type event: :py:class:`lostservice.logging.auditlog.AuditableEvent`
+        """
+        raise NotImplementedError('The record_event method must be implemented in a subclass.')
 
 
 class AuditLog(object):
@@ -67,7 +67,6 @@ class AuditLog(object):
         self._logger.info('recording event')
         self._logger.debug(event)
         for listener in self._listeners:
-            self._logger.debug('recording event to ' + listener)
             listener.record_event(event)
 
     def register_listener(self, listener):
