@@ -37,7 +37,7 @@ class GisDbInterface(object):
         :return: SQLAlchemy database engine.
         :rtype: :py:class:`sqlalchemy.engine.Engine`
         """
-        return create_engine(self._config.get_db_connection_string())
+        return create_engine(self._config.get_gis_db_connection_string())
 
     def get_urn_table_mappings(self):
         """
