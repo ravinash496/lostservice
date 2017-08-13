@@ -18,10 +18,10 @@ from injector import Module, provider, Injector, singleton
 import lostservice.configuration as config
 import lostservice.logger.auditlog as auditlog
 import lostservice.logger.transactionaudit as txnaudit
+import lostservice.logger.diagnosticsaudit as diagaudit
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 import lostservice.logger.nenalogging as nenalog
-git 
 
 class LostBindingModule(Module):
     """
@@ -104,6 +104,8 @@ class LostApplication(object):
         auditor = self._di_container.get(auditlog.AuditLog)
         # transaction_listener = txnaudit.TransactionAuditListener(conf)
         # auditor.register_listener(transaction_listener)
+        # diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
+        # auditor.register_listener(diagnostic_listener)
 
     def _get_class(self, classname):
         """
@@ -203,8 +205,10 @@ class LostApplication(object):
         nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
 
-
-        self._audit_transaction(parsed_request, starttime, parsed_response, endtime)
+        try:
+            self._audit_transaction(parsed_request, starttime, parsed_response, endtime)
+        except Exception as e:
+            self._audit_diagnostics(parsed_response, endtime, e)
 
 
         self._logger.debug(response)
@@ -246,6 +250,36 @@ class LostApplication(object):
         trans.requestloc = str(requestloc)
 
         auditor.record_event(trans)
+
+    def _audit_diagnostics(self, parsed_response, end_time, error):
+        """
+        Create and send the request and response to the transactionlogs
+        :param request:
+        :param start_time:
+        :param response_text:hv
+        :param end_time:
+        :return:
+        """
+        auditor = self._di_container.get(auditlog.AuditLog)
+
+        server_id = parsed_response.getchildren()[0].attrib.get("source")
+        import uuid
+        diag = diagaudit.DiagnosticEvent()
+        diag.qpslogid = -1
+        diag.eventid = 1
+        diag.priority = 5
+        diag.severity = 2
+        diag.activityid = str(uuid.uuid4())
+        diag.categoryname = "Diagnostic"
+        diag.title = "Error"
+        diag.timestamputc = end_time
+        diag.machinename = ""
+        diag.serverid = server_id
+        diag.machineid = ""
+        diag.message = str(error)
+        diag.formattedmessage = str(error)
+
+        auditor.record_event(diag)
 
 
 if __name__ == "__main__":
