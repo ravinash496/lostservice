@@ -104,8 +104,8 @@ class LostApplication(object):
         auditor = self._di_container.get(auditlog.AuditLog)
         # transaction_listener = txnaudit.TransactionAuditListener(conf)
         # auditor.register_listener(transaction_listener)
-        diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
-        auditor.register_listener(diagnostic_listener)
+        # diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
+        # auditor.register_listener(diagnostic_listener)
 
     def _get_class(self, classname):
         """
