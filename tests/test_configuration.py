@@ -86,7 +86,7 @@ class ConfigurationTest(unittest.TestCase):
         custom_ini_file = os.path.join(os.path.dirname(__file__), './config/test.ini')
         target = Configuration(custom_config=custom_ini_file)
         expected = 'postgresql://squidward:sandy@spongebob:1111/patrick'
-        actual = target.get_db_connection_string()
+        actual = target.get_gis_db_connection_string()
         self.assertEqual(expected, actual)
 
     def test_load_from_env_file(self):
@@ -94,7 +94,7 @@ class ConfigurationTest(unittest.TestCase):
         os.environ[config._CONFIGFILE] = custom_ini_file
         target = Configuration()
         expected = 'postgresql://squidward:sandy@spongebob:1111/patrick'
-        actual = target.get_db_connection_string()
+        actual = target.get_gis_db_connection_string()
         self.assertEqual(expected, actual)
         os.environ.pop(config._CONFIGFILE)
 
@@ -109,7 +109,7 @@ class ConfigurationTest(unittest.TestCase):
 
         target = Configuration()
         expected = 'postgresql://DBUSER:DBPASSWORD@DBHOSTNAME:DBPORT/DBNAME'
-        actual = target.get_db_connection_string()
+        actual = target.get_gis_db_connection_string()
         self.assertEqual(expected, actual)
 
         os.environ.pop(config._CONFIGFILE)
