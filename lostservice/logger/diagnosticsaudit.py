@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-.. currentmodule:: lostservice.logger.auditlog
-.. moduleauthor:: Tom Weitzel <tweitzel@geo-comm.com>
+.. currentmodule:: lostservice.logger.diagnosticaudit
+.. moduleauthor:: Arun koppala <akoppala@geo-comm.com>
 
-Transaction auditing.
+Diagnostic auditing.
 """
 from lostservice.configuration import Configuration
 from lostservice.logger.auditlog import AuditableEvent, AuditListener
@@ -17,7 +17,7 @@ from sqlalchemy import create_engine
 
 class DiagnosticEvent(AuditableEvent):
     """
-    Contains all of the fields included in the transaction log.
+    Contains all of the fields included in the Diagnostic log.
     """
     def __init__(self):
         """
@@ -63,7 +63,7 @@ class Diagnostic(Base):
 
 class DiagnosticAuditListener(AuditListener):
     """
-    Implementation for the transaction listener that saves transaction logs to the database.
+    Implementation for the diagnostic listener that saves diagnostic logs to the database.
 
     """
     def __init__(self, config: Configuration):
@@ -79,10 +79,10 @@ class DiagnosticAuditListener(AuditListener):
 
     def record_event(self, event: DiagnosticEvent):
         """
-        Abstract method for handling auditable events to be implemented by listeners.
+         method for handling auditable events to be implemented by listeners.
 
          :param event: The event.
-         :type event: :py:class:`lostservice.logging.transactionau.AuditableEvent`
+         :type event: :py:class:`lostservice.logging.diagnostic.AuditableEvent`
         """
         if type(event) is DiagnosticEvent:
             connection_string = self._config.get_logging_db_connection_string()

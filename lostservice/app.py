@@ -104,8 +104,8 @@ class LostApplication(object):
         auditor = self._di_container.get(auditlog.AuditLog)
         # transaction_listener = txnaudit.TransactionAuditListener(conf)
         # auditor.register_listener(transaction_listener)
-        # diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
-        # auditor.register_listener(diagnostic_listener)
+        diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
+        auditor.register_listener(diagnostic_listener)
 
     def _get_class(self, classname):
         """
@@ -189,23 +189,23 @@ class LostApplication(object):
         # 2. call _build_queryrunner to get the runner.
         runner = self._build_queryrunner(query_name)
 
-        # 3. call _execute_internal to process the request.
-        parsed_response = self._execute_internal(runner, parsed_request, context)
-
-        # 4. serialize the xml back out into a string and return it.
-        response = etree.tostring(parsed_response)
-
-        # Create End Time (response has been sent)
-        endtime = datetime.datetime.now(tz=pytz.utc)
-
-        conf = self._di_container.get(config.Configuration)
-
-        #TODO Identify Malformed Query Types
-        # Send Logs to configured NENA Logging Services
-        nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
-
-
         try:
+            # 3. call _execute_internal to process the request.
+            parsed_response = self._execute_internal(runner, parsed_request, context)
+
+            # 4. serialize the xml back out into a string and return it.
+            response = etree.tostring(parsed_response)
+
+            # Create End Time (response has been sent)
+            endtime = datetime.datetime.now(tz=pytz.utc)
+
+            conf = self._di_container.get(config.Configuration)
+
+            #TODO Identify Malformed Query Types
+            # Send Logs to configured NENA Logging Services
+            nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
+
+
             self._audit_transaction(parsed_request, starttime, parsed_response, endtime)
         except Exception as e:
             self._audit_diagnostics(parsed_response, endtime, e)
