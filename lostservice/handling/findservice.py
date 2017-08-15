@@ -192,17 +192,6 @@ class FindServiceInner(object):
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
 
-    def get_service_mapping(self, service_urn):
-        """
-        Helper that returns the service (table) mapping for a given URN
-
-        :param service_urn: The identifier for the service to look up.
-        :type service_urn: ``str``
-        :return: The table for the given urn.
-        :rtype: ``str``
-        """
-        return self._mappings[service_urn]
-
     def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
         """
         Find services for the given point.
@@ -245,6 +234,7 @@ class FindServiceInner(object):
                 return_shape)
 
         results = self._apply_point_multiple_match_policy(results)
+        results = self._apply_expiration_policy(results)
         return self._apply_service_boundary_policy(results, return_shape)
 
     def find_service_for_circle(self,
@@ -302,6 +292,7 @@ class FindServiceInner(object):
                 proximity_buffer)
 
         results = self._apply_polygon_multiple_match_policy(results)
+        results = self._apply_expiration_policy(results)
         return self._apply_service_boundary_policy(results, return_shape)
 
     def find_service_for_ellipse(self,
@@ -363,6 +354,7 @@ class FindServiceInner(object):
                 esb_table)
 
         results = self._apply_polygon_multiple_match_policy(results)
+        results = self._apply_expiration_policy(results)
         return self._apply_service_boundary_policy(results, return_shape)
 
     def find_service_for_arcband(self,
@@ -443,6 +435,7 @@ class FindServiceInner(object):
                     proximity_buffer)
 
             results = self._apply_polygon_multiple_match_policy(results)
+            results = self._apply_expiration_policy(results)
             return self._apply_service_boundary_policy(results, return_shape)
 
     def _apply_point_multiple_match_policy(self, mappings):
@@ -493,6 +486,21 @@ class FindServiceInner(object):
 
         return mappings
 
+    def _apply_expiration_policy(self, mappings):
+        """
+        Sets the expiration of each mapping according to configuration.
+
+        :param mappings: The mappings returned from a point search.
+        :type mappings ``list`` of ``dict``
+        :return: Mapping list adjusted according to the expiration policy.
+        :rtype: ``list`` of ``dict``
+        """
+        for mapping in mappings:
+            expiration = self._get_service_expiration_policy(mapping['serviceurn'])
+            mapping['expiration'] = expiration
+
+        return mappings
+
     def _apply_service_boundary_policy(self, mappings, return_shape):
         """
         Apply the service boundary policy to result mappings.
@@ -539,6 +547,35 @@ class FindServiceInner(object):
 
         return xml_element
 
+    def _get_service_expiration_policy(self, service_urn):
+        """
+        Gets the expiration policy for the given service.
+
+        :param service_urn: The identifier for the service to look up.
+        :type service_urn: ``str``
+        :return: The service boundary expiration string.
+        :rtype: ``str``
+        """
+        service = self._mappings[service_urn]
+        policy = self._find_service_config.settings_for_service(service)
+
+        expires_policy = policy['service_expire_policy']
+        expires_string = ''
+
+        # Based on setting Set Expires to: currentTime + TimeSpan setting or "NO-CACHE" or "NO-EXPIRATION"
+        if ServiceExpiresPolicyEnum[expires_policy] == ServiceExpiresPolicyEnum.TimeSpan:
+            # Expected to be in UTC format plus timespan (minutes) interval setting 2010-05-18T16:47:55.9620000-06:00
+            expires_timespan = policy['service_cache_timespan']
+            mapping_expires = datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(
+                minutes=int(expires_timespan))
+            expires_string = mapping_expires.isoformat()
+        elif ServiceExpiresPolicyEnum[expires_policy] == ServiceExpiresPolicyEnum.NoCache:
+            expires_string = 'NO-CACHE'
+        elif ServiceExpiresPolicyEnum[expires_policy] == ServiceExpiresPolicyEnum.NoExpiration:
+            expires_string = 'NO-EXPIRATION'
+
+        return expires_string
+
 
 class FindServiceOuter(object):
     """
@@ -575,7 +612,11 @@ class FindServiceOuter(object):
             request.location.location.spatial_ref,
             include_boundary_value
         )
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata, include_boundary_value)
+        return self._build_response(request.path,
+                                    request.location.id,
+                                    mappings,
+                                    request.nonlostdata,
+                                    include_boundary_value)
 
     def find_service_for_circle(self, request):
         """
@@ -596,7 +637,11 @@ class FindServiceOuter(object):
             request.location.location.uom,
             include_boundary_value
         )
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata, include_boundary_value)
+        return self._build_response(request.path,
+                                    request.location.id,
+                                    mappings,
+                                    request.nonlostdata,
+                                    include_boundary_value)
 
     def find_service_for_ellipse(self, request):
         """
@@ -618,7 +663,11 @@ class FindServiceOuter(object):
             float(request.location.location.orientation),
             include_boundary_value
         )
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata, include_boundary_value)
+        return self._build_response(request.path,
+                                    request.location.id,
+                                    mappings,
+                                    request.nonlostdata,
+                                    include_boundary_value)
 
     def find_service_for_arcband(self, request):
         """
@@ -641,7 +690,11 @@ class FindServiceOuter(object):
             float(request.location.location.outer_radius),
             include_boundary_value
         )
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata, include_boundary_value)
+        return self._build_response(request.path,
+                                    request.location.id,
+                                    mappings,
+                                    request.nonlostdata,
+                                    include_boundary_value)
 
     def find_service_for_polygon(self, request):
         """
@@ -659,7 +712,11 @@ class FindServiceOuter(object):
             request.location.location.spatial_ref,
             include_boundary_value
         )
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata, include_boundary_value)
+        return self._build_response(request.path,
+                                    request.location.id,
+                                    mappings,
+                                    request.nonlostdata,
+                                    include_boundary_value)
 
     def _build_response(self, path, location_used, mappings, nonlostdata, include_boundary_value=False):
         """
@@ -723,41 +780,14 @@ class FindServiceOuter(object):
         resp_mapping.source_id = mapping['gcunqid']
         resp_mapping.service_urn = mapping['serviceurn']
         resp_mapping.last_updated = mapping['updatedate']
-        resp_mapping.expires = self._get_service_expiration_policy(resp_mapping.service_urn)
+        resp_mapping.expires = mapping['expiration']
 
         if include_boundary_value and 'ST_AsGML_1' in mapping:
             resp_mapping.boundary_value = mapping['ST_AsGML_1']
 
         return resp_mapping
 
-    def _get_service_expiration_policy(self, service_urn):
-        """
-        Gets the expiration policy for the given service.
 
-        :param service_urn: The identifier for the service to look up.
-        :type service_urn: ``str``
-        :return: The service boundary expiration string.
-        :rtype: ``str``
-        """
-        service = self._inner.get_service_mapping(service_urn)
-        policy = self._find_service_config.settings_for_service(service)
-
-        expires_policy = policy['service_expire_policy']
-        expires_string = ''
-
-        # Based on setting Set Expires to: currentTime + TimeSpan setting or "NO-CACHE" or "NO-EXPIRATION"
-        if ServiceExpiresPolicyEnum[expires_policy] == ServiceExpiresPolicyEnum.TimeSpan:
-            # Expected to be in UTC format plus timespan (minutes) interval setting 2010-05-18T16:47:55.9620000-06:00
-            expires_timespan = policy['service_cache_timespan']
-            mapping_expires = datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(
-                minutes=int(expires_timespan))
-            expires_string = mapping_expires.isoformat()
-        elif ServiceExpiresPolicyEnum[expires_policy] == ServiceExpiresPolicyEnum.NoCache:
-            expires_string = 'NO-CACHE'
-        elif ServiceExpiresPolicyEnum[expires_policy] == ServiceExpiresPolicyEnum.NoExpiration:
-            expires_string = 'NO-EXPIRATION'
-
-        return expires_string
 
 
 
