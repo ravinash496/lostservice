@@ -17,7 +17,7 @@ class FindServiceTest(unittest.TestCase):
         """
 
         xml = """
-            <findService xmlns="urn:ietf:params:xml:ns:lost1">
+            <findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="reference">
                 <location id="ce152f4b-2ade-4e37-9741-b6649e2d87a6" profile="civic">
                     <civ:civicAddress xmlns:civ="urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr">
                         <civ:country>US</civ:country>

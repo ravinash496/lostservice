@@ -11,10 +11,7 @@ import lostservice.model.location
 
 class FindServiceTest(unittest.TestCase):
 
-    @patch('lostservice.configuration.Configuration')
-    @patch('lostservice.db.gisdb.GisDbInterface')
-    @patch('lostservice.db.utilities.apply_policy_settings')
-    def test_handle_point(self, mockconfig, mockdb, apply_policy_settings):
+    def test_handle_point(self):
 
         '''
         # Mock for apply_policy_settings.
