@@ -20,6 +20,7 @@ from shapely.wkt import loads
 from geoalchemy2.shape import from_shape
 from osgeo import osr
 from osgeo import ogr
+import math
 
 
 class SpatialQueryException(Exception):
@@ -422,7 +423,7 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
 
         utmsrid = getutmsrid(longitude=long, latitude=lat)
 
-        wkb_ellipse = _transform_ellipse(lat, long, major, minor, orientation, trimmed_srid)
+        wkb_ellipse = _transform_ellipse(long ,lat , major, minor, orientation, trimmed_srid)
 
         s = select(
             [
@@ -435,22 +436,6 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
 
-
-        # s = select(
-        #     [
-        #         the_table,
-        #         func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
-        #         the_table.c.wkb_geometry.ST_Area(
-        #                 the_table.c.wkb_geometry.ST_Intersects(
-        #                     func.createellipse(lat, long, major, minor, orientation, utmsrid)
-        #                 )
-        #             ).label('AREA_RET')
-        #     ],
-        #     the_table.c.wkb_geometry.ST_Intersects(
-        #         func.createellipse(lat, long, major, minor, orientation, utmsrid)
-        #     )
-        # )
-
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -459,7 +444,7 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
         raise
     return results
 
-def _transform_ellipse(lat, long, major, minor, orientation, srid):
+def _transform_ellipse(long ,lat , major, minor, orientation, srid):
 
     # Source spatial reference.
     source = osr.SpatialReference()
@@ -494,13 +479,18 @@ def _transform_ellipse(lat, long, major, minor, orientation, srid):
                             major,
                             minor)
 
-    # Let rotate the ellipse (clockwise, x axis pointing right):
-    ellr = affinity.rotate(ell, orientation)
+    # xml.py parse method has already converted GML degree's to radians
+    rotate_angle = calculate_orientation(orientation)
 
-    # If one need to rotate it clockwise along an upward pointing x axis:
-    #elrv = affinity.rotate(ell, 90 - orientation)
-    # According to the man, a positive value means a anti-clockwise angle,
-    # and a negative one a clockwise angle.
+
+    if rotate_angle >= 0:
+        # Let rotate the ellipse (clockwise, x axis pointing right):
+        ellr = affinity.rotate(ell, rotate_angle, use_radians=True)
+    else:
+        # If one need to rotate it clockwise along an upward pointing x axis:
+        ellr = affinity.rotate(ell, 90 - rotate_angle, use_radians=True)
+        # According to the man, a positive value means a anti-clockwise angle,
+        # and a negative one a clockwise angle.
 
     # Convert from shapely to org
     org_ellipse = ogr.CreateGeometryFromWkt(ellr.wkt)
@@ -517,6 +507,30 @@ def _transform_ellipse(lat, long, major, minor, orientation, srid):
 
     return wkb_ellipse
 
+
+def calculate_orientation(orientation):
+    # The angle input is assumed to be from North going clockwise in GML, but postgis will start at the x-axis going
+    # couterclockwise, so we need to adjust the angle of the original GML value to match postgis
+
+    # Mod the angle by 2pi to make sure it is within one revolution
+    rotate_angle = orientation % (2 * math.pi)
+    # Subtract angle from 2pi to get reverse angle, or if it is negative just negate it (to make it positive)
+    if rotate_angle < 0:
+        rotate_angle = -1 * rotate_angle
+    else:
+        rotate_angle = (2 * math.pi) - rotate_angle
+
+    # Offset by pi/2 to get angle from horizontal x-axis instead of y-axis(North)
+    rotate_angle = rotate_angle + (math.pi / 2)
+
+    # Re-mod the angle by 2pi as we could have gone beyond 2pi when we adjusted from y-axis to x-axis based angle
+    rotate_angle = rotate_angle % (2 * math.pi)
+
+    # Fix floating point errors
+    if rotate_angle - math.floor(rotate_angle) < 0.00000001:
+        rotate_angle = math.floor(rotate_angle)
+
+    return rotate_angle
 
 def get_containing_boundary_for_polygon(points, srid, boundary_table, engine, proximity_search = False, proximity_buffer = 0 ):
     """
