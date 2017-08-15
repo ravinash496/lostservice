@@ -593,34 +593,41 @@ class FindServiceXmlConverter(XmlConverter):
                                                     'source': item['mapping_source'], 'sourceId': item['mapping_sourceid']})
 
             # add the displayname, serviceurn, routeuri, servicenum to mapping
-            services_element = lxml.etree.SubElement(mapping, 'displayName')
-            services_element.text = item['displayname']
+            if item.get("displayname"):
+                services_element = lxml.etree.SubElement(mapping, 'displayName')
+                services_element.text = item['displayname']
 
-            attr = services_element.attrib
-            attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
+                attr = services_element.attrib
+                attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
 
 
             services_element = lxml.etree.SubElement(mapping, 'service')
             services_element.text = item['serviceurn']
+            if item.get("adddatauri"):
+                services_element = lxml.etree.SubElement(mapping, 'uri')
+                services_element.text = item['adddatauri']
 
-            if data[0]['value_or_reference'] == "reference" or data[0]['value_or_reference'] is None:
-                attr_element = collections.OrderedDict()
-                attr_element['source'] = data[0]['mapping_source']
-                attr_element['key'] = data[0]['mapping_sourceid']
-                lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
-            else:
-                services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile=item['profile'])
+            if not item.get("adddatauri"):
+                if data[0]['value_or_reference'] == "reference" or data[0]['value_or_reference'] is None:
+                    attr_element = collections.OrderedDict()
+                    attr_element['source'] = data[0]['mapping_source']
+                    attr_element['key'] = data[0]['mapping_sourceid']
+                    lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
+                else:
+                    services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile=item['profile'])
 
-                final_gml_as_xml = io.StringIO(
-                    '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['service_gml']))
-                final_gml = etree.parse(final_gml_as_xml).getroot()
-                services_element.extend(final_gml)
+                    final_gml_as_xml = io.StringIO(
+                        '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['service_gml']))
+                    final_gml = etree.parse(final_gml_as_xml).getroot()
+                    services_element.extend(final_gml)
 
-            services_element = lxml.etree.SubElement(mapping, 'uri')
-            services_element.text = item['routeuri']
+            if item.get("routeuri"):
+                services_element = lxml.etree.SubElement(mapping, 'uri')
+                services_element.text = item['routeuri']
 
-            services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
-            services_element.text = item['servicenum']
+            if item.get("servicenum"):
+                services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
+                services_element.text = item['servicenum']
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')

@@ -28,6 +28,9 @@ import lostservice.geometry as geom
 from shapely.geometry import Polygon
 
 
+ADD_DATAPOINT_SERVICE = "urn:nena:service:adddatauri"
+ADD_DATAPOINT_TABLE = "ssap"
+
 class ListServicesHandler(Handler):
     """
     Base listServices request handler.
@@ -109,7 +112,14 @@ class FindServiceHandler(Handler):
         mappings = self._db_wrapper.get_urn_table_mappings()
 
         # From the mappings, look up the table name from the incoming service urn.
-        esb_table = mappings[request.service]
+        self.add_data_requested = False
+        # From the mappings, look up the table name from the incoming service urn.
+        if request.service in mappings:
+            esb_table = mappings[request.service]
+        else:
+            if request.service == ADD_DATAPOINT_SERVICE:
+                esb_table = ADD_DATAPOINT_TABLE
+                self.add_data_requested = True
 
         # Run spatial query for the specific geometry type
         results = self._process_findservice_geometry(request, esb_table)
@@ -127,16 +137,22 @@ class FindServiceHandler(Handler):
 
             response_mapping = {}  # TODO How to deal with None?
 
-            response_mapping['displayname'] = row['displayname']
-            response_mapping['serviceurn'] = row['serviceurn']
-            response_mapping['routeuri'] = row['routeuri']
-            response_mapping['servicenum'] = row['servicenum']
-            response_mapping['mapping_sourceid'] = row['gcunqid']
+            if self.add_data_requested:
+                response_mapping['serviceurn'] = request.service
+                response_mapping['add_data_requested'] = True
+                response_mapping['adddatauri'] = row['adddatauri']
+                pass
+            else:
+                response_mapping['displayname'] = row['displayname']
+                response_mapping['serviceurn'] = row['serviceurn']
+                response_mapping['routeuri'] = row['routeuri']
+                response_mapping['servicenum'] = row['servicenum']
 
-            response_mapping['profile'] = service_boundary_profile
 
-            if 'ST_AsGML_1' in row:
-                response_mapping['service_gml'] = row['ST_AsGML_1']
+                response_mapping['profile'] = service_boundary_profile
+
+                if 'ST_AsGML_1' in row:
+                    response_mapping['service_gml'] = row['ST_AsGML_1']
 
             response_mapping['mapping_lastupdate'] = None
             lastupdatefield = 'updatedate'
@@ -144,6 +160,7 @@ class FindServiceHandler(Handler):
             if lastupdatefield is not None:
                 response_mapping['mapping_lastupdate'] = row[lastupdatefield]
 
+            response_mapping['mapping_sourceid'] = row['gcunqid']
             response_mapping['mapping_source'] = self._config.get('Service', 'source_uri', as_object=False,
                                                                   required=False)
 
@@ -270,7 +287,7 @@ class FindServiceHandler(Handler):
                 request.location.location.longitude,
                 request.location.location.latitude,
                 request.location.location.spatial_ref,
-                esb_table)
+                esb_table, self.add_data_requested)
 
             if results is None and service_boundary_proximity_search_policy is True:
                 # No results and Policy says we should buffer and research

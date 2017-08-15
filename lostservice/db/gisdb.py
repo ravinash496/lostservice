@@ -48,21 +48,21 @@ class GisDbInterface(object):
         """
         return dbutilities.get_urn_table_mappings(self._engine)
 
-    def get_containing_boundary_for_point(self, long, lat, srid, boundary_table):
+    def get_containing_boundary_for_point(self, x, y, srid, boundary_table, add_data_requested=False):
         """
         Executes a contains query for a point.
 
-        :param long: The x coordinate of the point.
-        :type long: `float`
-        :param lat: The y coordinate of the point.
-        :type lat: `float`
+        :param x: The x coordinate of the point.
+        :type x: `float`
+        :param y: The y coordinate of the point.
+        :type y: `float`
         :param srid: The spatial reference Id of the point.
         :type srid: `str`
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_containing_boundary_for_point(long, lat, srid, boundary_table, self._engine)
+        return spatialdb.get_containing_boundary_for_point(x, y, srid, boundary_table, self._engine, add_data_required=add_data_requested)
 
     def get_containing_boundary_for_circle(self, long, lat, srid, radius, uom, boundary_table):
         """
