@@ -23,6 +23,7 @@ import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 import lostservice.logger.nenalogging as nenalog
 
+
 class LostBindingModule(Module):
     """
     Binding specifications for the IOC container.
@@ -69,9 +70,7 @@ class LostApplication(object):
     def __init__(self):
         """
         Constructor
-        
-        :param context: Context information.
-        :type context: :py:class:`lostservice.context.LostContext`
+
         """
         super(LostApplication, self).__init__()
 
@@ -100,7 +99,6 @@ class LostApplication(object):
         self._converter_template = conf.get('ClassLookupTemplates', 'converter_template')
         self._handler_template = conf.get('ClassLookupTemplates', 'handler_template')
 
-        # TODO: Set up auditors
         auditor = self._di_container.get(auditlog.AuditLog)
         # transaction_listener = txnaudit.TransactionAuditListener(conf)
         # auditor.register_listener(transaction_listener)
@@ -209,7 +207,6 @@ class LostApplication(object):
             self._audit_transaction(parsed_request, starttime, parsed_response, endtime)
         except Exception as e:
             self._audit_diagnostics(parsed_response, endtime, e)
-
 
         self._logger.debug(response)
         self._logger.info('Finished LoST query execution . . .')
