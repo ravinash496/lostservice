@@ -445,6 +445,17 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
     return results
 
 def _transform_ellipse(long ,lat , major, minor, orientation, srid):
+    """
+    Takes the fundamental bits of a ellipse and converts it to a descritized ellipse (polygon)
+    transformed to 4326.
+    :param long: 
+    :param lat: 
+    :param major: 
+    :param minor: 
+    :param orientation: 
+    :param srid: 
+    :return: 
+    """
 
     # Source spatial reference.
     source = osr.SpatialReference()
