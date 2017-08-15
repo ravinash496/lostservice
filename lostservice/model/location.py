@@ -1034,5 +1034,34 @@ class Arcband(Geodetic2D):
         self._opening_angle_uom = value
 
 
+class Polygon(Geodetic2D):
+    """
+    A class for polygon geometries.
+    """
+    def __init__(self, spatial_ref=None, vertices=None):
+        """
+        Constructor.
+
+        :param spatial_ref: The spatial reference identifier for the given geometry.
+        :type spatial_ref: ``str``
+        :param vertices: The vertices that make up the polygon.
+        :type vertices: ``list``
+        """
+        super(Polygon, self).__init__(spatial_ref)
+        self._vertices = vertices if vertices is not None else []
+
+    @property
+    def vertices(self):
+        """
+        The vertices of the polygon.
+
+        :return: ``list``
+        """
+        return self._vertices
+
+    @vertices.setter
+    def vertices(self, value):
+        self._vertices = value
+
 
 

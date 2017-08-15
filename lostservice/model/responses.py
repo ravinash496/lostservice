@@ -20,32 +20,258 @@ class Response(object):
         super(Response, self).__init__()
 
 
+class ResponseMapping(object):
+    """
+    A container for a single response mapping.
+
+    <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
+        <displayName xml:lang="en">Lincoln Ambulance</displayName>
+        <service>urn:nena:service:sos.EMS</service>
+        <serviceBoundaryReference source="authoritative.example" key="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}"/>
+        <uri>SIP:+2075555883@lincolnambulance.ngesi.maine.gov</uri>
+        <serviceNumber>2075555883</serviceNumber>
+    </mapping>
+
+    Contains the following:
+    source (attribute) - the URI of the service that found the mapping (source_uri from config)
+    sourceID (attribute) - the unique id of the mapping (gcunqid)
+    lastUpdated (attribute) - time of last update for the mapping (updatedate)
+    expires (attribute) - policy based expiration (see core.py ~line 157)
+    displayName (element) - the human readable name (from displayname)
+    service (element) - the service URN of the request (see section 5.4 of RFC 5222 for special handling)
+    serviceBoundary (element) - full boundary information when asked for by value
+    - OR -
+    serviceBoundaryReference (element) - contains the source and key attributes
+    serviceNumber (element) - the phone number (servicenum)
+    uri (element) - the service uri (from routeuri)
+
+
+    """
+    def __init__(self,
+                 source=None,
+                 source_id=None,
+                 last_updated=None,
+                 expires=None,
+                 display_name=None,
+                 service_urn=None,
+                 service_number=None,
+                 route_uri=None,
+                 boundary_value=None):
+        """
+        Constructor.
+
+        :param source:
+        :param source_id:
+        :param last_updated:
+        :param expires:
+        :param display_name:
+        :param service_urn:
+        :param service_number:
+        :param route_uri:
+        :param boundary_value:
+        """
+        super(ResponseMapping, self).__init__()
+        self._source = source
+        self._source_id = source_id
+        self._last_updated = last_updated
+        self._expires = expires
+        self._display_name = display_name
+        self._service = service_urn
+        self._service_number = service_number
+        self._route_uri = route_uri
+        self._boundary_value = boundary_value
+
+    @property
+    def source(self):
+        """
+        The source of the mapping.
+
+        :return: ``str``
+        """
+        return self._source
+
+    @source.setter
+    def source(self, value):
+        self._source = value
+
+    @property
+    def source_id(self):
+        """
+        The id of the mapping from the associated source.
+
+        :return: ``str``
+        """
+        return self._source_id
+
+    @source_id.setter
+    def source_id(self, value):
+        self._source_id = value
+
+    @property
+    def last_updated(self):
+        """
+        The last update date of the mapping.
+
+        :return: ``str``
+        """
+        return self._last_updated
+
+    @last_updated.setter
+    def last_updated(self, value):
+        self._last_updated = value
+
+    @property
+    def expires(self):
+        """
+        The expiration of the mapping.
+
+        :return: ``str``
+        """
+        return self._expires
+
+    @expires.setter
+    def expires(self, value):
+        self._expires = value
+
+    @property
+    def display_name(self):
+        """
+        The display name for the mapping.
+
+        :return: ``str``
+        """
+        return self._display_name
+
+    @display_name.setter
+    def display_name(self, value):
+        self._display_name = value
+
+    @property
+    def service(self):
+        """
+        The service URN for the mapping (usually same as the URN in the request)
+
+        :return: ``str``
+        """
+        return self._service
+
+    @service.setter
+    def service(self, value):
+        self._service = value
+
+    @property
+    def service_number(self):
+        """
+        The service (phone) number for the mapping.
+
+        :return: ``str``
+        """
+        return self._service_number
+
+    @service_number.setter
+    def service_number(self, value):
+        self._service_number = value
+
+    @property
+    def route_uri(self):
+        """
+        The route URI for the mapping (from routeuri).
+
+        :return: ``str``
+        """
+        return self._route_uri
+
+    @route_uri.setter
+    def route_uri(self, value):
+        self._route_uri = value
+
+    @property
+    def boundary_value(self):
+        """
+        The service boundary GML.
+
+        :return: ``str`` or :py:class:`_ElementTree`
+        """
+        return self._boundary_value
+
+    @boundary_value.setter
+    def boundary_value(self, value):
+        self._boundary_value = value
+
+
 class FindServiceResponse(Response):
     """
     findService response class.
     """
 
-    def __init__(self, response_mapping_list = []):
+    def __init__(self, mappings=None, path=None, location_used=None, nonlostdata=None):
         """
- 
+        Constructor.
+
+        :param mappings: The list of response mappings.
+        :type mappings: ``list`` of :py:class:`lostservice.model.responses.ResponseMapping`
+        :param path: LoST service URIs that were used in creating this response.
+        :type path: ``list`` of ``str``
+        :param location_used: The unique id of the location used in this query.
+        :type location_used: ``str``
         """
         super(FindServiceResponse, self).__init__()
-
-
+        self._mappings = mappings if mappings is not None else []
+        self._path = path if path is not None else []
+        self._location_used = location_used
+        self._nonlostdata = nonlostdata if nonlostdata is not None else []
 
     @property
-    def response_mapping_list(self):
+    def mappings(self):
         """
         The mappings and values for the response.
 
-        :rtype: dict
+        :rtype: ``list`` of :py:class:`lostservice.model.responses.ResponseMapping`
         """
-        return self._response_mapping_list
+        return self._mappings
 
+    @mappings.setter
+    def mappings(self, value):
+        self._mappings = value
 
-    @response_mapping_list.setter
-    def response_mapping_list(self, value):
-        self._response_mapping_list = value
+    @property
+    def path(self):
+        """
+        The list of services that participated in the response.
+
+        :rtype: ``list`` of ``str``
+        """
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
+
+    @property
+    def location_used(self):
+        """
+        The location used in this query.
+
+        :return: ``str``
+        """
+        return self._location_used
+
+    @location_used.setter
+    def location_used(self, value):
+        self._location_used = value
+
+    @property
+    def nonlostdata(self):
+        """
+        The nonlostdata type
+
+        :rtype: ``str``
+        """
+        return self._nonlostdata
+
+    @nonlostdata.setter
+    def nonlostdata(self, value):
+        self._nonlostdata = value
 
 
 class ListServicesResponse(Response):
@@ -98,7 +324,6 @@ class ListServicesResponse(Response):
         :rtype: A list of ``str``
         """
         return self._nonlostdata
-
 
     @nonlostdata.setter
     def nonlostdata(self, value):

@@ -37,7 +37,6 @@ class FindServiceRequest(Request):
         self._path = path if path is not None else []
         self._nonlostdata = nonlostdata if nonlostdata is not None else []
 
-
     @property
     def location(self):
         """

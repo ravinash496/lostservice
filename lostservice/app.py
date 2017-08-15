@@ -17,11 +17,12 @@ from lxml import etree
 from injector import Module, provider, Injector, singleton
 import lostservice.configuration as config
 import lostservice.logger.auditlog as auditlog
+import lostservice.logger.transactionaudit as txnaudit
+import lostservice.logger.diagnosticsaudit as diagaudit
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
-
 import lostservice.logger.nenalogging as nenalog
-from lostservice.logger import transactionlogging as translog
+
 
 class LostBindingModule(Module):
     """
@@ -66,12 +67,10 @@ class LostApplication(object):
     The core LoST Application class.
     
     """
-    def __init__(self, ctx=None):
+    def __init__(self):
         """
         Constructor
-        
-        :param context: Context information.
-        :type context: :py:class:`lostservice.context.LostContext`
+
         """
         super(LostApplication, self).__init__()
 
@@ -100,8 +99,11 @@ class LostApplication(object):
         self._converter_template = conf.get('ClassLookupTemplates', 'converter_template')
         self._handler_template = conf.get('ClassLookupTemplates', 'handler_template')
 
-        # TODO: Set up auditors
         auditor = self._di_container.get(auditlog.AuditLog)
+        # transaction_listener = txnaudit.TransactionAuditListener(conf)
+        # auditor.register_listener(transaction_listener)
+        # diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
+        # auditor.register_listener(diagnostic_listener)
 
     def _get_class(self, classname):
         """
@@ -151,8 +153,8 @@ class LostApplication(object):
     def _execute_internal(self, queryrunner, data, context):
         """
         Executes a query by calling the query runner.
-        
-        :param queryrunner: A queryrunner set up for the given query. 
+
+        :param queryrunner: A queryrunner set up for the given query.
         :param data: The query as and element tree.
         :param context: The request context.
         :type context: ``dict``
@@ -184,33 +186,108 @@ class LostApplication(object):
 
         # 2. call _build_queryrunner to get the runner.
         runner = self._build_queryrunner(query_name)
+        response = None
+        try:
+            # 3. call _execute_internal to process the request.
+            parsed_response = self._execute_internal(runner, parsed_request, context)
 
-        # 3. call _execute_internal to process the request.
-        parsed_response = self._execute_internal(runner, parsed_request, context)
+            # 4. serialize the xml back out into a string and return it.
+            response = etree.tostring(parsed_response)
 
-        # 4. serialize the xml back out into a string and return it.
-        response = etree.tostring(parsed_response)
+            # Create End Time (response has been sent)
+            endtime = datetime.datetime.now(tz=pytz.utc)
 
-        # Create End Time (response has been sent)
-        endtime = datetime.datetime.now(tz=pytz.utc)
+            conf = self._di_container.get(config.Configuration)
 
-        conf = self._di_container.get(config.Configuration)
+            # TODO Identify Malformed Query Types
+            # Send Logs to configured NENA Logging Services
+            nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
-        #TODO Identify Malformed Query Types
-        # Send Logs to configured NENA Logging Services
-        nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
+            self._audit_transaction(parsed_request, starttime, parsed_response, endtime)
 
-        translog.create_transaction_log_event("",
-                                              parsed_request,
-                                              query_name,
-                                              starttime,
-                                              parsed_response,
-                                              endtime,
-                                              conf)
-        self._logger.debug(response)
-        self._logger.info('Finished LoST query execution . . .')
+            self._logger.debug(response)
+            self._logger.info('Finished LoST query execution . . .')
+
+        except Exception as e:
+            self._audit_diagnostics(e)
+            self._logger.error(e)
+            # TODO - handle exceptions
+            error_template = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <errors xmlns="urn:ietf:params:xml:ns:lost1"  source="{0}">
+                <internalError message="{1}" xml:lang="en"/>
+            </errors>
+            """
+            response = error_template.format('authoritative.example', str(e))
 
         return response
+
+    def _audit_transaction(self, parsed_request, start_time, parsed_response, end_time):
+        """
+        Create and send the request and response to the transactionlogs
+        :param request:
+        :param start_time:
+        :param response_text:
+        :param end_time:
+        :return:
+        """
+        auditor = self._di_container.get(auditlog.AuditLog)
+
+        trans = txnaudit.TransactionEvent()
+        trans.starttimeutc = start_time
+        trans.endtimeutc = end_time
+        trans.transactionms = int((start_time - end_time).microseconds)
+        trans.response = etree.tostring(parsed_response)
+        trans.request = etree.tostring(parsed_request)
+
+        server_id = parsed_response.getchildren()[0].attrib.get("source")
+        trans.serverid = str(server_id)
+
+        trans.requestsvcurn = str(parsed_request.findtext("service"))
+        qname = etree.QName(parsed_response)
+        response_type = "LoST" + str(qname.localname)
+        trans.responsetype = response_type
+
+        qname = etree.QName(parsed_request)
+        request_type = "LoST" + str(qname.localname)
+        trans.requesttype = request_type
+
+        requestloc = etree.tostring(parsed_request.getchildren()[0].getchildren()[0])
+        trans.requestloc = str(requestloc)
+
+        auditor.record_event(trans)
+
+    def _audit_diagnostics(self, error):
+        """
+        Create and send the request and response to the transactionlogs
+        :param request:
+        :param start_time:
+        :param response_text:hv
+        :param end_time:
+        :return:
+        """
+        auditor = self._di_container.get(auditlog.AuditLog)
+
+        conf = self._di_container.get(config.Configuration)
+        server_id = conf.get('Service', 'source_uri', as_object=False, required=False)
+
+        import uuid
+        diag = diagaudit.DiagnosticEvent()
+        diag.qpslogid = -1
+        diag.eventid = 1
+        diag.priority = 5
+        diag.severity = 2
+        diag.activityid = str(uuid.uuid4())
+        diag.categoryname = "Diagnostic"
+        diag.title = "Error"
+        diag.timestamputc = datetime.datetime.now(tz=pytz.utc)
+        diag.machinename = ""
+        diag.serverid = server_id
+        diag.machineid = ""
+        diag.message = str(error)
+        diag.formattedmessage = str(error)
+
+        auditor.record_event(diag)
 
 
 if __name__ == "__main__":
