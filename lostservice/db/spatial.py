@@ -20,6 +20,7 @@ from shapely.wkt import loads
 from geoalchemy2.shape import from_shape
 from osgeo import osr
 from osgeo import ogr
+import math
 
 
 class SpatialQueryException(Exception):
@@ -410,28 +411,29 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
     :type engine: :py:class:`sqlalchemy.engine.Engine`
     :return: A list of dictionaries containing the contents of returned rows.
     """
-    # Pull out just the number from the SRID
 
-    trimmed_srid = srid.split('::')[1]
+
+    # Pull out just the number from the SRID
+    trimmed_srid = int(srid.split('::')[1])
+
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
         utmsrid = getutmsrid(longitude=long, latitude=lat)
+
+        wkb_ellipse = _transform_ellipse(long ,lat , major, minor, orientation, trimmed_srid)
+
         s = select(
             [
                 the_table,
                 func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
                 the_table.c.wkb_geometry.ST_Area(
-                        the_table.c.wkb_geometry.ST_Intersects(
-                            func.createellipse(lat, long, major, minor, orientation, utmsrid)
-                        )
-                    ).label('AREA_RET')
+                    the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
+                ).label('AREA_RET')
             ],
-            the_table.c.wkb_geometry.ST_Intersects(
-                func.createellipse(lat, long, major, minor, orientation, utmsrid)
-            )
+            the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
 
         results = _execute_query(engine, s)
@@ -442,6 +444,104 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
         raise
     return results
 
+def _transform_ellipse(long ,lat , major, minor, orientation, srid):
+    """
+    Takes the fundamental bits of a ellipse and converts it to a descritized ellipse (polygon)
+    transformed to 4326.
+    :param long: 
+    :param lat: 
+    :param major: 
+    :param minor: 
+    :param orientation: 
+    :param srid: 
+    :return: 
+    """
+
+    # Source spatial reference.
+    source = osr.SpatialReference()
+    source.ImportFromEPSG(srid)
+
+    # TODO - Need to handle different values for the incoming UOM
+    # TODO - Must have a lookup table of some kind.
+    # The target will depend on the value of uom, but we'll just assume
+    # it's 9001/meters for now and project to 3857.
+    target = osr.SpatialReference()
+    # target.ImportFromEPSG(3857)
+    target.ImportFromEPSG(getutmsrid(longitude=long, latitude=lat))
+
+    # Set up the transform.
+    transform = osr.CoordinateTransformation(source, target)
+
+    # Create a geometry we can use with the transform.
+    center = ogr.CreateGeometryFromWkt('POINT({0} {1})'.format(long, lat))
+
+    # Transform it and apply the buffer.
+    center.Transform(transform)
+    cir = center.Buffer(1)
+
+    wkt_cir = cir.ExportToWkt()
+
+    # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
+    # that we can use to query.
+    circle = loads(wkt_cir)
+
+    # Let create the ellipse along x and y:
+    ell = affinity.scale(circle,
+                            major,
+                            minor)
+
+    # xml.py parse method has already converted GML degree's to radians
+    rotate_angle = calculate_orientation(orientation)
+
+
+    if rotate_angle >= 0:
+        # Let rotate the ellipse (clockwise, x axis pointing right):
+        ellr = affinity.rotate(ell, rotate_angle, use_radians=True)
+    else:
+        # If one need to rotate it clockwise along an upward pointing x axis:
+        ellr = affinity.rotate(ell, 90 - rotate_angle, use_radians=True)
+        # According to the man, a positive value means a anti-clockwise angle,
+        # and a negative one a clockwise angle.
+
+    # Convert from shapely to org
+    org_ellipse = ogr.CreateGeometryFromWkt(ellr.wkt)
+
+    # Now transform it back to 4326 and extract the wkt
+    reverse_transform = osr.CoordinateTransformation(target, source)
+    org_ellipse.Transform(reverse_transform)
+    wkt_ellipse = org_ellipse.ExportToWkt()
+
+    # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
+    # that we can use to query.
+    poly = loads(wkt_ellipse)
+    wkb_ellipse = from_shape(poly, srid)
+
+    return wkb_ellipse
+
+
+def calculate_orientation(orientation):
+    # The angle input is assumed to be from North going clockwise in GML, but postgis will start at the x-axis going
+    # couterclockwise, so we need to adjust the angle of the original GML value to match postgis
+
+    # Mod the angle by 2pi to make sure it is within one revolution
+    rotate_angle = orientation % (2 * math.pi)
+    # Subtract angle from 2pi to get reverse angle, or if it is negative just negate it (to make it positive)
+    if rotate_angle < 0:
+        rotate_angle = -1 * rotate_angle
+    else:
+        rotate_angle = (2 * math.pi) - rotate_angle
+
+    # Offset by pi/2 to get angle from horizontal x-axis instead of y-axis(North)
+    rotate_angle = rotate_angle + (math.pi / 2)
+
+    # Re-mod the angle by 2pi as we could have gone beyond 2pi when we adjusted from y-axis to x-axis based angle
+    rotate_angle = rotate_angle % (2 * math.pi)
+
+    # Fix floating point errors
+    if rotate_angle - math.floor(rotate_angle) < 0.00000001:
+        rotate_angle = math.floor(rotate_angle)
+
+    return rotate_angle
 
 def get_containing_boundary_for_polygon(points, srid, boundary_table, engine, proximity_search = False, proximity_buffer = 0 ):
     """
