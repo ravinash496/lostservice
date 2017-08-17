@@ -217,7 +217,9 @@ class FindServiceInner(object):
             spatial_ref,
             esb_table)
 
-        if results is None and self._find_service_config.do_expanded_search():
+        if results is not None and len(results) != 0:
+            results = self._apply_point_multiple_match_policy(results)
+        elif self._find_service_config.do_expanded_search():
 
             multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
             return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
@@ -233,9 +235,9 @@ class FindServiceInner(object):
                 return_area,
                 return_shape)
 
-        results = self._apply_point_multiple_match_policy(results)
-        results = self._apply_expiration_policy(results)
-        return self._apply_service_boundary_policy(results, return_shape)
+            results = self._apply_polygon_multiple_match_policy(results)
+
+        return self._apply_policies(results, return_shape)
 
     def find_service_for_circle(self,
                                 service_urn,
@@ -277,7 +279,7 @@ class FindServiceInner(object):
             radius,
             radius_uom, esb_table, return_area, return_shape)
 
-        if results is None and self._find_service_config.do_expanded_search():
+        if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
             proximity_buffer = self._find_service_config.expanded_search_buffer()
             results = self._db_wrapper.get_intersecting_boundaries_for_circle(
                 longitude,
@@ -292,8 +294,7 @@ class FindServiceInner(object):
                 proximity_buffer)
 
         results = self._apply_polygon_multiple_match_policy(results)
-        results = self._apply_expiration_policy(results)
-        return self._apply_service_boundary_policy(results, return_shape)
+        return self._apply_policies(results, return_shape)
 
     def find_service_for_ellipse(self,
                                  service_urn,
@@ -354,8 +355,7 @@ class FindServiceInner(object):
                 esb_table)
 
         results = self._apply_polygon_multiple_match_policy(results)
-        results = self._apply_expiration_policy(results)
-        return self._apply_service_boundary_policy(results, return_shape)
+        return self._apply_policies(results, return_shape)
 
     def find_service_for_arcband(self,
                                  service_urn,
@@ -435,8 +435,7 @@ class FindServiceInner(object):
                     proximity_buffer)
 
             results = self._apply_polygon_multiple_match_policy(results)
-            results = self._apply_expiration_policy(results)
-            return self._apply_service_boundary_policy(results, return_shape)
+            return self._apply_policies(results, return_shape)
 
     def _apply_point_multiple_match_policy(self, mappings):
         """
@@ -455,7 +454,7 @@ class FindServiceInner(object):
         elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnFirst:
             i = len(mappings)
             del mappings[1:i]  # removes items starting at 1 until the end of the list
-        elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError.name:
+        elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError:
             raise FindServiceException('Multiple results matched request location')
 
         return mappings
@@ -486,27 +485,29 @@ class FindServiceInner(object):
 
         return mappings
 
-    def _apply_expiration_policy(self, mappings):
+    def _apply_policies(self, mappings, return_shape):
         """
         Sets the expiration of each mapping according to configuration.
 
         :param mappings: The mappings returned from a point search.
         :type mappings ``list`` of ``dict``
+        :param return_shape: Whether or not to return the geometries of found mappings.
+        :type return_shape: ``bool``
         :return: Mapping list adjusted according to the expiration policy.
         :rtype: ``list`` of ``dict``
         """
         for mapping in mappings:
-            expiration = self._get_service_expiration_policy(mapping['serviceurn'])
-            mapping['expiration'] = expiration
+            mapping['expiration'] = self._get_service_expiration_policy(mapping['serviceurn'])
+            self._apply_service_boundary_policy(mapping, return_shape)
 
         return mappings
 
-    def _apply_service_boundary_policy(self, mappings, return_shape):
+    def _apply_service_boundary_policy(self, mapping, return_shape):
         """
         Apply the service boundary policy to result mappings.
 
-        :param mappings: The mappings returned from a point search.
-        :type mappings ``list`` of ``dict``
+        :param mapping: A mapping returned from a search.
+        :type mapping ``dict``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return:
@@ -519,19 +520,15 @@ class FindServiceInner(object):
         # ReturnAreaMajorityPolygon
         # ReturnAllAsSinglePolygons
 
-        if return_shape:
-            for row in mappings:
-                if 'ST_AsGML_1' in row:
-                    gml = row['ST_AsGML_1']
-                    gml = gml.replace('>', ' xmlns:gml="http://www.opengis.net/gml">', 1)
+        if return_shape and 'ST_AsGML_1' in mapping:
+            gml = mapping['ST_AsGML_1']
+            gml = gml.replace('>', ' xmlns:gml="http://www.opengis.net/gml">', 1)
 
-                    root = etree.XML(gml)
-                    root = self._clear_attributes(root)
+            root = etree.XML(gml)
+            root = self._clear_attributes(root)
 
-                    # Update value with new GML
-                    row['ST_AsGML_1'] = etree.tostring(root).decode("utf-8")
-
-        return mappings
+            # Update value with new GML
+            mapping['ST_AsGML_1'] = etree.tostring(root).decode("utf-8")
 
     def _clear_attributes(self, xml_element):
         """
