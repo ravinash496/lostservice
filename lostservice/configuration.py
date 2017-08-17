@@ -48,17 +48,14 @@ class PolygonSearchModePolicyEnum(Enum):
     SearchUsingCentroid = 2
 
 class PolygonMultipleMatchPolicyEnum(Enum):
-    ReturnAll = 1
-    ReturnAllLimit5 = 2
-    ReturnAreaMajority = 3
-    ReturnFirst = 4
-    ReturnError = 5
+    ReturnFirst = 1
+    ReturnAreaMajority = 2
+    ReturnLimitWarning = 3
 
 class PointMultipleMatchPolicyEnum(Enum):
-    ReturnAll = 1
-    ReturnAllLimit5 = 2
-    ReturnFirst = 3
-    ReturnError = 4
+    ReturnFirst = 1
+    ReturnLimitWarning = 2
+    ReturnError = 3
 
 
 class Configuration(object):

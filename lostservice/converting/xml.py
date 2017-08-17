@@ -539,7 +539,8 @@ class FindServiceXmlConverter(XmlConverter):
         root = self.get_root(data)
         request = FindServiceRequest()
 
-        request.serviceBoundary = root.attrib['serviceBoundary']
+        if 'serviceBoundary' in root.attrib:
+            request.serviceBoundary = root.attrib['serviceBoundary']
 
         for element in root.iter():
             if element.tag == '{urn:ietf:params:xml:ns:lost1}location':
