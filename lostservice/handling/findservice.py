@@ -18,6 +18,9 @@ from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
 
+ADD_DATAPOINT_SERVICE = "urn:nena:service:adddatauri"
+ADD_DATAPOINT_TABLE = "ssap"
+
 
 class ServiceExpiresPolicyEnum(Enum):
     NoCache = 1
@@ -209,13 +212,21 @@ class FindServiceInner(object):
         :return: The service mappings for the given point.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings[service_urn]
+        #esb_table = self._mappings[service_urn]
+        ADD_DATA_REQUESTED = False
+        if service_urn == ADD_DATAPOINT_SERVICE:
+            ADD_DATA_REQUESTED = True
+            esb_table = ADD_DATAPOINT_TABLE
+        else:
+            esb_table = self._mappings[service_urn]
+
 
         results = self._db_wrapper.get_containing_boundary_for_point(
             longitude,
             latitude,
             spatial_ref,
-            esb_table)
+            esb_table,
+            add_data_requested=ADD_DATA_REQUESTED)
 
         if results is None and self._find_service_config.do_expanded_search():
 
@@ -234,7 +245,8 @@ class FindServiceInner(object):
                 return_shape)
 
         results = self._apply_point_multiple_match_policy(results)
-        results = self._apply_expiration_policy(results)
+        if not ADD_DATA_REQUESTED:
+            results = self._apply_expiration_policy(results)
         return self._apply_service_boundary_policy(results, return_shape)
 
     def find_service_for_circle(self,
@@ -774,13 +786,22 @@ class FindServiceOuter(object):
         :rtype: :py:class:`lostservice.model.responses.ResponseMapping`
         """
         resp_mapping = ResponseMapping()
-        resp_mapping.display_name = mapping['displayname']
-        resp_mapping.route_uri = mapping['routeuri']
-        resp_mapping.service_number = mapping['servicenum']
-        resp_mapping.source_id = mapping['gcunqid']
-        resp_mapping.service_urn = mapping['serviceurn']
-        resp_mapping.last_updated = mapping['updatedate']
-        resp_mapping.expires = mapping['expiration']
+        if mapping.get('displayname'):
+            resp_mapping.display_name = mapping['displayname']
+        if mapping.get('routeuri'):
+            resp_mapping.route_uri = mapping['routeuri']
+        if mapping.get('servicenum'):
+            resp_mapping.service_number = mapping['servicenum']
+        if mapping.get('gcunqid'):
+            resp_mapping.source_id = mapping['gcunqid']
+        resp_mapping.service_urn = mapping.get('serviceurn','')
+        if mapping.get('updatedate'):
+            resp_mapping.last_updated = mapping['updatedate']
+        resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
+
+        if mapping.get('adddatauri'):
+            resp_mapping.adddatauri = mapping.get('adddatauri')
+            resp_mapping.service_urn = ADD_DATAPOINT_SERVICE
 
         if include_boundary_value and 'ST_AsGML_1' in mapping:
             resp_mapping.boundary_value = mapping['ST_AsGML_1']

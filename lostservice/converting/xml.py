@@ -18,6 +18,7 @@ from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
 from lostservice.model.location import Arcband
 from lostservice.model.location import Location
+from lostservice.model.location import Polygon
 from lostservice.model.requests import FindServiceRequest
 from lostservice.model.requests import ListServicesRequest
 from lostservice.model.requests import GetServiceBoundaryRequest
@@ -283,18 +284,20 @@ class PolygonXmlConverter(XmlConverter):
         :return: A Point instance.
         :rtype: :py:class:`Point`
         """
-        points={}
+        model = Polygon()
+
         sr_template = './@{0}'
-        point_template = './{0}:{1}/text()'
-        points['spatial_ref'] = self._run_xpath(data, sr_template.format('srsName'))
-        points['vertices']=[]
+        # point_template = './{0}:{1}/text()'
+
+        model.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
         for polygon in data.findall('{0}exterior'.format(GML_URN_COORDS)):
             for coord in polygon.findall("{0}LinearRing/".format(GML_URN_COORDS)):
-                position=coord.text
+                position = coord.text
                 lat, lon = position.split()
-                vertices=[float(lon),float(lat)]
-                points['vertices'].append(vertices)
-        return points
+                point = [float(lon), float(lat)]
+                model.vertices.append(point)
+
+        return model
 
     def format(self, data):
         """
@@ -483,6 +486,7 @@ class LocationXmlConverter(XmlConverter):
         """
         raise NotImplementedError('TODO: Implement formatting of locations.')
 
+
 class PathXmlConverter(XmlConverter):
     """
     Implementation class for converting LoST path elements.
@@ -511,6 +515,7 @@ class PathXmlConverter(XmlConverter):
 
         return source_list
 
+
 class FindServiceXmlConverter(XmlConverter):
     """
     Implementation class for converting findService requests and responses.
@@ -531,10 +536,10 @@ class FindServiceXmlConverter(XmlConverter):
         :return: A FindServiceRequest instance.
         :rtype: :py:class:`FindServiceRequest`
         """
-
-
         root = self.get_root(data)
         request = FindServiceRequest()
+
+        request.serviceBoundary = root.attrib['serviceBoundary']
 
         for element in root.iter():
             if element.tag == '{urn:ietf:params:xml:ns:lost1}location':
@@ -542,24 +547,18 @@ class FindServiceXmlConverter(XmlConverter):
                 request.location = location_parser.parse(element)
 
             elif element.tag == '{urn:ietf:params:xml:ns:lost1}service':
-                request.service = element.text
+                request.service = element.text.strip()
 
             elif element.tag == '{urn:ietf:params:xml:ns:lost1}path':
                 path_parser = PathXmlConverter()
                 request.path = path_parser.parse(element)
-
             else:
                 if (LOST_URN not in element.tag) and (
-                    PIDFLO_URN not in element.tag) and (
-                    GML_URN not in element.tag):
-
+                            PIDFLO_URN not in element.tag) and (
+                            GML_URN not in element.tag):
                     request.nonlostdata.append(element)
 
-
-        request.serviceBoundary = root.attrib.get('serviceBoundary')
-
         return request
-
 
     def format(self, data):
         """
@@ -570,14 +569,10 @@ class FindServiceXmlConverter(XmlConverter):
         :return: The formatted output.
         :rtype: :py:class:`_ElementTree`
         """
-
-        # create the root element of the xml response.
-        xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN, GML_PREFIX: GML_URN})
-
-        if data is None or len(data) == 0:
+        if data.mappings is None or len(data.mappings) == 0:
             # Create No Results Response
 
-            xml_error_response = lxml.etree.Element('errors', nsmap={None: LOST_URN}, attrib={'source': 'authoritative.example'})
+            xml_error_response = lxml.etree.Element('errors', nsmap={None: LOST_URN}, attrib={'source': data.path[-1]})
             errors_element = lxml.etree.SubElement(xml_error_response, 'notFound',
                                                      attrib={'message': 'Could not find an answer to the request'})
             attr = errors_element.attrib
@@ -585,67 +580,69 @@ class FindServiceXmlConverter(XmlConverter):
 
             return xml_error_response
 
-        for item in data:
-
+        # create the root element of the xml response.
+        xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN, GML_PREFIX: GML_URN})
+        for item in data.mappings:
             # Add mapping sub element
-            mapping = lxml.etree.SubElement(xml_response, 'mapping',
-                                            attrib={'expires': str(item['mapping_expires']), 'lastUpdated': str(item['mapping_lastupdate']),
-                                                    'source': item['mapping_source'], 'sourceId': item['mapping_sourceid']})
+            mapping = lxml.etree.SubElement(xml_response,
+                                            'mapping',
+                                            attrib={'expires': item.expires,
+                                                    'lastUpdated': str(item.last_updated),
+                                                    'source': item.source,
+                                                    'sourceId': item.source_id})
 
             # add the displayname, serviceurn, routeuri, servicenum to mapping
-            if item.get("displayname"):
+            if hasattr(item,"displayname"):
                 services_element = lxml.etree.SubElement(mapping, 'displayName')
-                services_element.text = item['displayname']
+                services_element.text = item.display_name
 
                 attr = services_element.attrib
                 attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
 
-
             services_element = lxml.etree.SubElement(mapping, 'service')
-            services_element.text = item['serviceurn']
-            if item.get("adddatauri"):
+            services_element.text = item.service_urn
+            if hasattr(item, "adddatauri"):
                 services_element = lxml.etree.SubElement(mapping, 'uri')
-                services_element.text = item['adddatauri']
+                services_element.text = item.adddatauri
 
-            if not item.get("adddatauri"):
-                if data[0]['value_or_reference'] == "reference" or data[0]['value_or_reference'] is None:
+            if not hasattr(item, "adddatauri"):
+                if item.boundary_value is None:
                     attr_element = collections.OrderedDict()
-                    attr_element['source'] = data[0]['mapping_source']
-                    attr_element['key'] = data[0]['mapping_sourceid']
+                    attr_element['source'] = item.source
+                    attr_element['key'] = item.source_id
                     lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
                 else:
-                    services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile=item['profile'])
+                    # TODO - fix the profile.
+                    services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile='geodetic-2d')
 
                     final_gml_as_xml = io.StringIO(
-                        '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['service_gml']))
+                        '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item.boundary_value))
                     final_gml = etree.parse(final_gml_as_xml).getroot()
                     services_element.extend(final_gml)
 
-            if item.get("routeuri"):
+            if hasattr(item, "route_uri"):
                 services_element = lxml.etree.SubElement(mapping, 'uri')
-                services_element.text = item['routeuri']
-
-            if item.get("servicenum"):
+                services_element.text = item.route_uri
+            if hasattr(item, "service_number"):
                 services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
-                services_element.text = item['servicenum']
+                services_element.text = item.service_number
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')
 
         # not generate a 'via' element for each source.
-        if data[0]['path'] is not None:
-            for a_path in data[0]['path']:
+        if data.path is not None:
+            for a_path in data.path:
                 via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
 
         lxml.etree.SubElement(
             xml_response,
             'locationUsed',
-            attrib={'id': data[0]['locationUsed'][0]}
+            attrib={'id': data.location_used}
         )
-        # services_element.text = ' '.join(data[0]['locationUsed'][0])
 
         # Add NonLoSTdata items into response (pass though items)
-        for nonlost_item in data[0]['nonlostdata']:
+        for nonlost_item in data.nonlostdata:
             xml_response.append(nonlost_item)
 
         return xml_response
