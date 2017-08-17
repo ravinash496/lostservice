@@ -4,7 +4,7 @@
 from lxml import etree
 import unittest
 from unittest.mock import patch
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 import lostservice.handling.core
 import lostservice.handling.findservice
 import lostservice.model.requests
@@ -511,6 +511,9 @@ class FindServiceInnerTest(unittest.TestCase):
         actual = target.find_service_for_point('urn1', 0.0, 1.1, 'something', False)
 
         self.assertListEqual(actual, test_data)
+        mock_config.do_expanded_search.assert_called_once()
+        mock_config.polygon_multiple_match_policy.assert_called_once()
+        mock_config.expanded_search_buffer.assert_called_once()
         mock_db.get_containing_boundary_for_point.assert_called_with(0.0, 1.1, 'something', 'service1')
         mock_db.get_containing_boundary_for_point.assert_called_once()
 
@@ -523,11 +526,273 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_policies.assert_called_with(test_data, False)
         target._apply_policies.assert_called_once()
 
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_circle(self, mock_config, mock_db):
+        test_data = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
 
+        mock_config.polygon_multiple_match_policy = MagicMock()
+        mock_config.polygon_multiple_match_policy.return_value = \
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
 
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+        mock_db.get_intersecting_boundaries_for_circle = MagicMock()
+        mock_db.get_intersecting_boundaries_for_circle.return_value = test_data
 
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        target._apply_polygon_multiple_match_policy = MagicMock()
+        target._apply_polygon_multiple_match_policy.return_value = test_data
+        target._apply_policies = MagicMock()
+        target._apply_policies.return_value = test_data
 
+        actual = target.find_service_for_circle('urn1', 0.0, 1.1, 'something', 10, 'something else', False)
 
+        self.assertListEqual(actual, test_data)
+        mock_config.polygon_multiple_match_policy.assert_called_once()
+        mock_db.get_intersecting_boundaries_for_circle.assert_called_with(0.0, 1.1, 'something', 10, 'something else', 'service1', True, False)
+        mock_db.get_intersecting_boundaries_for_circle.assert_called_once()
+        target._apply_polygon_multiple_match_policy.assert_called_with(test_data)
+        target._apply_polygon_multiple_match_policy.assert_called_once()
+        target._apply_policies.assert_called_with(test_data, False)
+        target._apply_policies.assert_called_once()
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_circle_expanded(self, mock_config, mock_db):
+        test_data = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
+
+        mock_config.polygon_multiple_match_policy = MagicMock()
+        mock_config.polygon_multiple_match_policy.return_value = \
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAll
+        mock_config.do_expanded_search = MagicMock()
+        mock_config.do_expanded_search.return_value = True
+        mock_config.expanded_search_buffer = MagicMock()
+        mock_config.expanded_search_buffer.return_value = 10
+
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+        mock_db.get_intersecting_boundaries_for_circle = MagicMock()
+        mock_db.get_intersecting_boundaries_for_circle.return_value = []
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        target._apply_polygon_multiple_match_policy = MagicMock()
+        target._apply_polygon_multiple_match_policy.return_value = test_data
+        target._apply_policies = MagicMock()
+        target._apply_policies.return_value = test_data
+
+        actual = target.find_service_for_circle('urn1', 0.0, 1.1, 'something', 10, 'something else', False)
+
+        self.assertListEqual(actual, test_data)
+        mock_config.polygon_multiple_match_policy.assert_called_once()
+        mock_config.do_expanded_search.assert_called_once()
+        mock_config.expanded_search_buffer.assert_called_once()
+
+        calls = [
+            call(0.0, 1.1, 'something', 10, 'something else', 'service1', False, False),
+            call(0.0, 1.1, 'something', 10, 'something else', 'service1', False, False, True, 10)
+        ]
+
+        mock_db.get_intersecting_boundaries_for_circle.assert_has_calls(calls, any_order=False)
+        mock_db.get_intersecting_boundaries_for_circle.assert_called()
+        target._apply_polygon_multiple_match_policy.assert_called_with([])
+        target._apply_polygon_multiple_match_policy.assert_called_once()
+        target._apply_policies.assert_called_with(test_data, False)
+        target._apply_policies.assert_called_once()
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_ellipse(self, mock_config, mock_db):
+        test_data = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
+
+        mock_config.polygon_multiple_match_policy = MagicMock()
+        mock_config.polygon_multiple_match_policy.return_value = \
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
+
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+        mock_db.get_intersecting_boundary_for_ellipse = MagicMock()
+        mock_db.get_intersecting_boundary_for_ellipse.return_value = test_data
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        target._apply_polygon_multiple_match_policy = MagicMock()
+        target._apply_polygon_multiple_match_policy.return_value = test_data
+        target._apply_policies = MagicMock()
+        target._apply_policies.return_value = test_data
+
+        actual = target.find_service_for_ellipse('urn1', 0.0, 1.1, 'something', 20.0, 10.0, 90.0, False)
+
+        self.assertListEqual(actual, test_data)
+        mock_config.polygon_multiple_match_policy.assert_not_called()
+        mock_db.get_intersecting_boundary_for_ellipse.assert_called_with(0.0, 1.1, 'something', 20, 10, 90,
+                                                                          'service1')
+        mock_db.get_intersecting_boundary_for_ellipse.assert_called_once()
+        target._apply_polygon_multiple_match_policy.assert_called_with(test_data)
+        target._apply_polygon_multiple_match_policy.assert_called_once()
+        target._apply_policies.assert_called_with(test_data, False)
+        target._apply_policies.assert_called_once()
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_ellipse_expanded(self, mock_config, mock_db):
+        test_data = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
+
+        mock_config.polygon_multiple_match_policy = MagicMock()
+        mock_config.polygon_multiple_match_policy.return_value = \
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAll
+        mock_config.do_expanded_search = MagicMock()
+        mock_config.do_expanded_search.return_value = True
+        mock_config.expanded_search_buffer = MagicMock()
+        mock_config.expanded_search_buffer.return_value = 10
+
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+        mock_db.get_intersecting_boundary_for_ellipse = MagicMock()
+        mock_db.get_intersecting_boundary_for_ellipse.return_value = []
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        target._apply_polygon_multiple_match_policy = MagicMock()
+        target._apply_polygon_multiple_match_policy.return_value = test_data
+        target._apply_policies = MagicMock()
+        target._apply_policies.return_value = test_data
+
+        actual = target.find_service_for_ellipse('urn1', 0.0, 1.1, 'something', 20.0, 10.0, 90.0, False)
+
+        self.assertListEqual(actual, test_data)
+        mock_config.polygon_multiple_match_policy.assert_not_called()
+        mock_config.do_expanded_search.assert_called_once()
+        mock_config.expanded_search_buffer.assert_called_once()
+
+        calls = [
+            call(0.0, 1.1, 'something', 20.0, 10.0, 90.0, 'service1'),
+            call(0.0, 1.1, 'something', 30.0, 20.0, 90.0, 'service1')
+        ]
+
+        mock_db.get_intersecting_boundary_for_ellipse.assert_has_calls(calls, any_order=False)
+        mock_db.get_intersecting_boundary_for_ellipse.assert_called()
+        target._apply_polygon_multiple_match_policy.assert_called_with([])
+        target._apply_polygon_multiple_match_policy.assert_called_once()
+        target._apply_policies.assert_called_with(test_data, False)
+        target._apply_policies.assert_called_once()
+
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_arcband(self, mock_db):
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+
+        expected = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
+
+        target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
+        target.find_service_for_polygon = MagicMock()
+        target.find_service_for_polygon.return_value = expected
+
+        actual = target.find_service_for_arcband('urn1', 0.0, 1.1, 'something', 20.0, 90.0, 10.0, 20.0, False)
+
+        self.assertListEqual(actual, expected)
+        target.find_service_for_polygon.assert_called_once()
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_polygon_centroid(self, mock_config, mock_db):
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+
+        mock_config.polygon_search_mode_policy = MagicMock()
+        mock_config.polygon_search_mode_policy.return_value = \
+            lostservice.handling.findservice.PolygonSearchModePolicyEnum.SearchUsingCentroid
+
+        expected = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        target.find_service_for_point = MagicMock()
+        target.find_service_for_point.return_value = expected
+
+        points = [[0, 0], [2, 0], [2, 2], [0, 2]]
+
+        actual = target.find_service_for_polygon('urn1', points, 'something', False)
+
+        self.assertListEqual(actual, expected)
+        mock_config.polygon_search_mode_policy.assert_called_once()
+        target.find_service_for_point.assert_called_once()
+        target.find_service_for_point.assert_called_with('urn1', 1.0, 1.0, 'something', False)
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_polygon(self, mock_config, mock_db):
+        expected = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
+
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+        mock_db.get_intersecting_boundaries_for_polygon = MagicMock()
+        mock_db.get_intersecting_boundaries_for_polygon.return_value = expected
+
+        mock_config.polygon_search_mode_policy = MagicMock()
+        mock_config.polygon_search_mode_policy.return_value = \
+            lostservice.handling.findservice.PolygonSearchModePolicyEnum.SearchUsingPolygon
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        target._apply_polygon_multiple_match_policy = MagicMock()
+        target._apply_polygon_multiple_match_policy.return_value = expected
+        target._apply_policies = MagicMock()
+        target._apply_policies.return_value = expected
+
+        points = [[0, 0], [2, 0], [2, 2], [0, 2]]
+
+        actual = target.find_service_for_polygon('urn1', points, 'something', False)
+
+        self.assertListEqual(actual, expected)
+        mock_config.polygon_search_mode_policy.assert_called_once()
+        mock_db.get_intersecting_boundaries_for_polygon.assert_called_once()
+        mock_db.get_intersecting_boundaries_for_polygon.assert_called_with(points, 'something', 'service1')
+        target._apply_polygon_multiple_match_policy.assert_called_once()
+        target._apply_polygon_multiple_match_policy.assert_called_with(expected)
+        target._apply_policies.assert_called_once()
+        target._apply_policies.assert_called_with(expected, False)
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_polygon_expanded(self, mock_config, mock_db):
+        expected = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
+
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+        mock_db.get_intersecting_boundaries_for_polygon = MagicMock()
+        mock_db.get_intersecting_boundaries_for_polygon.return_value = []
+
+        mock_config.polygon_search_mode_policy = MagicMock()
+        mock_config.polygon_search_mode_policy.return_value = \
+            lostservice.handling.findservice.PolygonSearchModePolicyEnum.SearchUsingPolygon
+        mock_config.do_expanded_search = MagicMock()
+        mock_config.do_expanded_search.return_value = True
+        mock_config.expanded_search_buffer = MagicMock()
+        mock_config.expanded_search_buffer.return_value = 10.0
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+
+        target._apply_polygon_multiple_match_policy = MagicMock()
+        target._apply_polygon_multiple_match_policy.return_value = expected
+        target._apply_policies = MagicMock()
+        target._apply_policies.return_value = expected
+
+        points = [[0, 0], [2, 0], [2, 2], [0, 2]]
+
+        actual = target.find_service_for_polygon('urn1', points, 'something', False)
+
+        self.assertListEqual(actual, expected)
+        mock_config.polygon_search_mode_policy.assert_called_once()
+        mock_config.do_expanded_search.assert_called_once()
+        mock_config.expanded_search_buffer.assert_called_once()
+
+        calls = [
+            call(points, 'something', 'service1'),
+            call(points, 'something', 'service1', True, 10.0)
+        ]
+
+        mock_db.get_intersecting_boundaries_for_polygon.assert_has_calls(calls)
+        target._apply_polygon_multiple_match_policy.assert_called_once()
+        target._apply_polygon_multiple_match_policy.assert_called_with([])
+        target._apply_policies.assert_called_once()
+        target._apply_policies.assert_called_with(expected, False)
 
 if __name__ == '__main__':
     unittest.main()

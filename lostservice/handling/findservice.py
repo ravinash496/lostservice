@@ -341,7 +341,7 @@ class FindServiceInner(object):
             orientation,
             esb_table)
 
-        if results is None and self._find_service_config.do_expanded_search():
+        if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
             # No results and Policy says we should buffer and research
             proximity_buffer = self._find_service_config.expanded_search_buffer()
 
@@ -423,7 +423,7 @@ class FindServiceInner(object):
             esb_table = self._mappings[service_urn]
             results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
 
-            if results is None and self._find_service_config.do_expanded_search():
+            if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
                 proximity_buffer = self._find_service_config.expanded_search_buffer()
                 # No results and Policy says we should buffer and research
 
