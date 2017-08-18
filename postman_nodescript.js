@@ -11,7 +11,7 @@ async.series([
   },
   function (next) {
     newman.run({
-      collection: './tests/postman/TestingPostman.postman_collection.json',
+      collection: './tests/postman/ECRF_Collection_Test.postman_collection.json',
       reporters: 'cli',
       bail: true
     }, next);
