@@ -806,10 +806,16 @@ class FindServiceOuter(object):
                 # tooManyMappings as subelement.  Place this in nonlostdata as another element to be added
                 # to the final response.
                 LOST_URN = 'urn:ietf:params:xml:ns:lost1'
-                xml_warning = etree.Element('warnings', nsmap={None: LOST_URN})
+                source_uri = self._find_service_config.source_uri()
+                xml_warning = etree.Element('warnings', nsmap={None: LOST_URN}, attrib={'source': source_uri})
 
                 # add to the warnings element
-                warnings_element = etree.SubElement(xml_warning, 'tooManyMappings')
+                warnings_element = etree.SubElement(xml_warning, 'tooManyMappings', attrib={'message':'Mapping limit exceeded, mappings returned have been truncated.'})
+
+                attr = warnings_element.attrib
+                attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
+
+
                 nonlostdata.append((xml_warning))
 
         return nonlostdata
