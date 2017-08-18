@@ -167,7 +167,7 @@ class GetServiceBoundaryHandler(Handler):
 
 class ListServicesByLocationHandler(Handler):
     """
-    Base findService request handler.
+    Base ListService request handler.
     """
 
     @inject
@@ -175,8 +175,8 @@ class ListServicesByLocationHandler(Handler):
         """
         Constructor
 
-        :param outer: An instance of the outer find service class.
-        :type config: :py:class:`lostservice.handling.findservice.FindServiceOuter`
+        :param outer: An instance of the outer List service class.
+        :type config: :py:class:`lostservice.handling.Listservice.ListServiceOuter`
         :param db_wrapper: The db wrapper class instance.
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
         """
@@ -190,11 +190,11 @@ class ListServicesByLocationHandler(Handler):
         Entry point for request handling.
 
         :param request: The request
-        :type request: A subclass of :py:class:`FindServiceRequest`
+        :type request: A subclass of :py:class:`ListServicesByLocationRequest`
         :param context: The request context.
         :type context: ``dict``
         :return: The response.
-        :rtype: :py:class:`FindServiceResponse`
+        :rtype: :py:class:`ListServicesByLocationResponse`
         """
         response = None
         if type(request.location.location) is Point:
