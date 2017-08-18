@@ -36,7 +36,6 @@ class PolygonMultipleMatchPolicyEnum(Enum):
     ReturnLimitWarning = 3
 
 
-
 class PointMultipleMatchPolicyEnum(Enum):
     ReturnFirst = 1
     ReturnLimitWarning = 2
@@ -113,7 +112,7 @@ class FindServiceConfigWrapper(object):
 
     def polygon_result_limit_policy(self):
         """
-        Gets the maximum number mappings to return. If results exceeds this value include a "toomanyMappings" warning. 
+        Gets the maximum number mappings to return. If results exceeds this value include a "toomanyMappings" warning.
 
         :return: ``int``
         """
@@ -157,7 +156,7 @@ class FindServiceConfigWrapper(object):
 
     def point_result_limit_policy(self):
         """
-        Gets the maximum number mappings to return. If results exceeds this value include a "toomanyMappings" warning. 
+        Gets the maximum number mappings to return. If results exceeds this value include a "toomanyMappings" warning.
 
         :return: ``int``
         """
@@ -239,7 +238,9 @@ class FindServiceInner(object):
             spatial_ref,
             esb_table)
 
-        if results is None and self._find_service_config.do_expanded_search():
+        if results is not None and len(results) != 0:
+            results = self._apply_point_multiple_match_policy(results)
+        elif self._find_service_config.do_expanded_search():
 
             multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
             return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
@@ -255,9 +256,9 @@ class FindServiceInner(object):
                 return_area,
                 return_shape)
 
-        results = self._apply_point_multiple_match_policy(results)
-        results = self._apply_expiration_policy(results)
-        return self._apply_service_boundary_policy(results, return_shape)
+            results = self._apply_polygon_multiple_match_policy(results)
+
+        return self._apply_policies(results, return_shape)
 
     def find_service_for_circle(self,
                                 service_urn,
@@ -299,7 +300,7 @@ class FindServiceInner(object):
             radius,
             radius_uom, esb_table, return_area, return_shape)
 
-        if results is None and self._find_service_config.do_expanded_search():
+        if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
             proximity_buffer = self._find_service_config.expanded_search_buffer()
             results = self._db_wrapper.get_intersecting_boundaries_for_circle(
                 longitude,
@@ -314,8 +315,7 @@ class FindServiceInner(object):
                 proximity_buffer)
 
         results = self._apply_polygon_multiple_match_policy(results)
-        results = self._apply_expiration_policy(results)
-        return self._apply_service_boundary_policy(results, return_shape)
+        return self._apply_policies(results, return_shape)
 
     def find_service_for_ellipse(self,
                                  service_urn,
@@ -362,7 +362,7 @@ class FindServiceInner(object):
             orientation,
             esb_table)
 
-        if results is None and self._find_service_config.do_expanded_search():
+        if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
             # No results and Policy says we should buffer and research
             proximity_buffer = self._find_service_config.expanded_search_buffer()
 
@@ -376,8 +376,7 @@ class FindServiceInner(object):
                 esb_table)
 
         results = self._apply_polygon_multiple_match_policy(results)
-        results = self._apply_expiration_policy(results)
-        return self._apply_service_boundary_policy(results, return_shape)
+        return self._apply_policies(results, return_shape)
 
     def find_service_for_arcband(self,
                                  service_urn,
@@ -445,7 +444,7 @@ class FindServiceInner(object):
             esb_table = self._mappings[service_urn]
             results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
 
-            if results is None and self._find_service_config.do_expanded_search():
+            if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
                 proximity_buffer = self._find_service_config.expanded_search_buffer()
                 # No results and Policy says we should buffer and research
 
@@ -457,8 +456,7 @@ class FindServiceInner(object):
                     proximity_buffer)
 
             results = self._apply_polygon_multiple_match_policy(results)
-            results = self._apply_expiration_policy(results)
-            return self._apply_service_boundary_policy(results, return_shape)
+            return self._apply_policies(results, return_shape)
 
     def _apply_point_multiple_match_policy(self, mappings):
         """
@@ -475,10 +473,11 @@ class FindServiceInner(object):
 
             if point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnLimitWarning:
                 i = len(mappings)
-                if i > self._find_service_config.point_result_limit_policy():
+                limit = self._find_service_config.point_result_limit_policy()
+                if i > limit:
                     # Results exceeds configurable setting - cut off results and apply warning
-                    del mappings[self._find_service_config.point_result_limit_policy():i]
-                    mappings = self._apply_tomanymappings_warning(mappings)
+                    del mappings[limit:i]
+                    [mapping.update({'tooManyMappings': True}) for mapping in mappings]
             elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnFirst:
                 i = len(mappings)
                 del mappings[1:i]  # removes items starting at 1 until the end of the list
@@ -500,10 +499,11 @@ class FindServiceInner(object):
 
         if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning:
             i = len(mappings)
-            if i > self._find_service_config.polygon_result_limit_policy():
+            limit = self._find_service_config.polygon_result_limit_policy()
+            if i > limit:
                 # Results exceeds configurable setting - cut off results and apply warning
-                del mappings[self._find_service_config.polygon_result_limit_policy():i]
-                mappings = self._apply_tomanymappings_warning(mappings)
+                del mappings[limit:i]
+                [mapping.update({'tooManyMappings': True}) for mapping in mappings]
 
         elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnFirst:
             i = len(mappings)
@@ -513,48 +513,36 @@ class FindServiceInner(object):
             max_area_item = max(mappings, key=lambda x: x['AREA_RET'])
             mappings = [max_area_item]
 
-
         return mappings
 
-    def _apply_expiration_policy(self, mappings):
+    def _apply_policies(self, mappings, return_shape):
         """
-        Sets the expiration of each mapping according to configuration.
+        Applies additional polices to the mappings, e.g. expiration, additional cleanup.
 
         :param mappings: The mappings returned from a point search.
         :type mappings ``list`` of ``dict``
+        :param return_shape: Whether or not to return the geometries of found mappings.
+        :type return_shape: ``bool``
         :return: Mapping list adjusted according to the expiration policy.
         :rtype: ``list`` of ``dict``
         """
 
         if mappings is not None:
             for mapping in mappings:
-                expiration = self._get_service_expiration_policy(mapping['serviceurn'])
-                mapping['expiration'] = expiration
+                mapping['expiration'] = self._get_service_expiration_policy(mapping['serviceurn'])
+                self._apply_service_boundary_policy(mapping, return_shape)
 
         return mappings
 
-    def _apply_tomanymappings_warning(self, mappings):
-        """
-        Set flag for tooManyMappings, representing that results where trimmed and xml tag "tooManyMappings" needs
-        to be added to response.
-        :param mappings: 
-        :return: 
-        """
-
-        for mapping in mappings:
-            mapping['tooManyMappings'] = True
-
-        return mappings
-
-    def _apply_service_boundary_policy(self, mappings, return_shape):
+    def _apply_service_boundary_policy(self, mapping, return_shape):
         """
         Apply the service boundary policy to result mappings.
 
-        :param mappings: The mappings returned from a point search.
-        :type mappings ``list`` of ``dict``
+        :param mapping: A mapping returned from a point search.
+        :type mapping: ``list`` of ``dict``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
-        :return:
+        :return: The mapping with fixed-up GML
         """
 
         # TODO -
@@ -564,19 +552,17 @@ class FindServiceInner(object):
         # ReturnAreaMajorityPolygon
         # ReturnAllAsSinglePolygons
 
-        if return_shape:
-            for row in mappings:
-                if 'ST_AsGML_1' in row:
-                    gml = row['ST_AsGML_1']
-                    gml = gml.replace('>', ' xmlns:gml="http://www.opengis.net/gml">', 1)
+        if return_shape and 'ST_AsGML_1' in mapping:
+            gml = mapping['ST_AsGML_1']
+            gml = gml.replace('>', ' xmlns:gml="http://www.opengis.net/gml">', 1)
 
-                    root = etree.XML(gml)
-                    root = self._clear_attributes(root)
+            root = etree.XML(gml)
+            root = self._clear_attributes(root)
 
-                    # Update value with new GML
-                    row['ST_AsGML_1'] = etree.tostring(root).decode("utf-8")
+            # Update value with new GML
+            mapping['ST_AsGML_1'] = etree.tostring(root).decode("utf-8")
 
-        return mappings
+        return mapping
 
     def _clear_attributes(self, xml_element):
         """
@@ -794,7 +780,7 @@ class FindServiceOuter(object):
         Builds warning element if needed.
         :param mappings: A list of all mappings returned by the query.
         :param nonlostdata: Passthrough elements from the request.
-        :return: 
+        :return:
         """
 
         if mappings is None:
@@ -817,8 +803,8 @@ class FindServiceOuter(object):
     def _check_too_many_mappings(self, mappings):
         """
         Check for tooManyMappings flag, which triggers building of a warning.
-        :param mappings: 
-        :return: 
+        :param mappings:
+        :return:
         """
         for mapping in mappings:
             if 'tooManyMappings' in mapping:
