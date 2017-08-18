@@ -422,7 +422,6 @@ class ListServiceBylocationOuter(object):
         response.path = path
         response.path.append(self._list_service_config.source_uri())
         response.location_id = location_id
-        #response.mappings = self._build_mapping_list(mappings)
         response.nonlostdata = nonlostdata
         return response
 
