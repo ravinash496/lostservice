@@ -162,8 +162,73 @@ class ListServicesByLocationRequest(Request):
     """
     listServicesByLocation request class.
     """
-    def __init__(self):
+    def __init__(self, service=None, location=None, path=[], nonlostdata=[], location_id=None):
         super(ListServicesByLocationRequest, self).__init__()
+        self._service = service
+        self._location = location
+        self._path = path
+        self._nonlostdata = nonlostdata
+        self._location_id = location_id
+
+    @property
+    def service(self):
+        """
+        The (optional) service type.
+
+        :rtype: ``str``
+        """
+        return self._service
+
+    @service.setter
+    def service(self, value):
+        self._service = value
+
+    @property
+    def location(self):
+        return self._location
+
+    @location.setter
+    def location(self, value):
+        self._location = value
+
+    @property
+    def path(self):
+        """
+        The path type
+
+        :rtype: ``str``
+        """
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
+
+    @property
+    def nonlostdata(self):
+        """
+        The nonlostdata type
+
+        :rtype: ``str``
+        """
+        return self._nonlostdata
+
+    @nonlostdata.setter
+    def nonlostdata(self, value):
+        self._nonlostdata = value
+
+    @property
+    def location_id(self):
+        """
+        The location_id type
+
+        :rtype: ``str``
+        """
+        return self._location_id
+
+    @location_id.setter
+    def location_id(self, value):
+        self._location_id = value
 
 
 class GetServiceBoundaryRequest(Request):
