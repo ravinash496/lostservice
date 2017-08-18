@@ -38,29 +38,6 @@ class ConfigurationException(Exception):
         super(ConfigurationException, self).__init__(message)
 
 
-class ServiceExpiresPolicyEnum(Enum):
-    NoCache = 1
-    NoExpiration = 2
-    TimeSpan = 3
-
-class PolygonSearchModePolicyEnum(Enum):
-    SearchUsingPolygon = 1
-    SearchUsingCentroid = 2
-
-class PolygonMultipleMatchPolicyEnum(Enum):
-    ReturnAll = 1
-    ReturnAllLimit5 = 2
-    ReturnAreaMajority = 3
-    ReturnFirst = 4
-    ReturnError = 5
-
-class PointMultipleMatchPolicyEnum(Enum):
-    ReturnAll = 1
-    ReturnAllLimit5 = 2
-    ReturnFirst = 3
-    ReturnError = 4
-
-
 class Configuration(object):
     """
     A wrapper for reading from and writing to a configuration file.

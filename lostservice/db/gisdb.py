@@ -132,7 +132,7 @@ class GisDbInterface(object):
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_boundaries_for_polygon(points, srid, boundary_table, self._engine, False, proximity_search, proximity_buffer)
+        return spatialdb.get_intersecting_boundaries_for_polygon(points, srid, boundary_table, self._engine, True, proximity_search, proximity_buffer)
 
     def get_boundaries_for_previous_id(self, pid, boundary_table):
         return spatialdb.get_boundaries_for_previous_id(pid, self._engine, boundary_table)

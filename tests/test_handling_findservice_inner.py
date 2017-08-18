@@ -245,60 +245,62 @@ class FindServiceInnerTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_polygon_policy_all(self, mock_config, mock_db):
+    def test_apply_polygon_policy_limit(self, mock_config, mock_db):
         mock_config.polygon_multiple_match_policy = MagicMock()
         mock_config.polygon_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAll
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnLimitWarning
+        mock_config.polygon_result_limit_policy = MagicMock()
+        mock_config.polygon_result_limit_policy.return_value = 3
 
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
-        input = [1, 2, 3, 4, 5, 6, 7, 8]
-        expected = [1, 2, 3, 4, 5, 6, 7, 8]
+        input = [
+            {'id': 1, 'AREA_RET': 2},
+            {'id': 2, 'AREA_RET': 10},
+            {'id': 3, 'AREA_RET': 5},
+            {'id': 4, 'AREA_RET': 5}
+        ]
+        expected = [
+            {'id': 1, 'AREA_RET': 2, 'tooManyMappings': True},
+            {'id': 2, 'AREA_RET': 10, 'tooManyMappings': True},
+            {'id': 3, 'AREA_RET': 5, 'tooManyMappings': True}
+        ]
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
         actual = target._apply_polygon_multiple_match_policy(input)
 
         self.assertListEqual(actual, expected)
         mock_config.polygon_multiple_match_policy.assert_called_once()
+        mock_config.polygon_result_limit_policy.assert_called_once()
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_polygon_policy_five(self, mock_config, mock_db):
+    def test_apply_polygon_policy_limit_only_two(self, mock_config, mock_db):
         mock_config.polygon_multiple_match_policy = MagicMock()
         mock_config.polygon_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAllLimit5
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnLimitWarning
+        mock_config.polygon_result_limit_policy = MagicMock()
+        mock_config.polygon_result_limit_policy.return_value = 3
 
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
-        input = [1, 2, 3, 4, 5, 6, 7, 8]
-        expected = [1, 2, 3, 4, 5]
+        input = [
+            {'id': 1, 'AREA_RET': 2},
+            {'id': 2, 'AREA_RET': 10}
+        ]
+        expected = [
+            {'id': 1, 'AREA_RET': 2},
+            {'id': 2, 'AREA_RET': 10}
+        ]
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
         actual = target._apply_polygon_multiple_match_policy(input)
 
         self.assertListEqual(actual, expected)
         mock_config.polygon_multiple_match_policy.assert_called_once()
-
-    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
-    @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_polygon_policy_five_only_two(self, mock_config, mock_db):
-        mock_config.polygon_multiple_match_policy = MagicMock()
-        mock_config.polygon_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAllLimit5
-
-        mock_db.get_urn_table_mappings = MagicMock()
-        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
-
-        input = [1, 2]
-        expected = [1, 2]
-
-        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
-        actual = target._apply_polygon_multiple_match_policy(input)
-
-        self.assertListEqual(actual, expected)
-        mock_config.polygon_multiple_match_policy.assert_called_once()
+        mock_config.polygon_result_limit_policy.assert_called_once()
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -338,81 +340,65 @@ class FindServiceInnerTest(unittest.TestCase):
         self.assertListEqual(actual, expected)
         mock_config.polygon_multiple_match_policy.assert_called_once()
 
-    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
-    @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_polygon_policy_exception(self, mock_config, mock_db):
-        mock_config.polygon_multiple_match_policy = MagicMock()
-        mock_config.polygon_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnError
-
-        mock_db.get_urn_table_mappings = MagicMock()
-        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
-
-        input = [{'id': 1, 'AREA_RET': 2}, {'id': 2, 'AREA_RET': 10}, {'id': 1, 'AREA_RET': 5}]
-
-        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
-
-        with self.assertRaises(lostservice.handling.findservice.FindServiceException):
-            actual = target._apply_polygon_multiple_match_policy(input)
-
-    ###########
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_point_policy_all(self, mock_config, mock_db):
+    def test_apply_point_policy_limit(self, mock_config, mock_db):
         mock_config.point_multiple_match_policy = MagicMock()
         mock_config.point_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PointMultipleMatchPolicyEnum.ReturnAll
+            lostservice.handling.findservice.PointMultipleMatchPolicyEnum.ReturnLimitWarning
+        mock_config.point_result_limit_policy = MagicMock()
+        mock_config.point_result_limit_policy.return_value = 3
 
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
-        input = [1, 2, 3, 4, 5, 6, 7, 8]
-        expected = [1, 2, 3, 4, 5, 6, 7, 8]
+        input = [
+            {'id': 1, 'AREA_RET': 2},
+            {'id': 2, 'AREA_RET': 10},
+            {'id': 3, 'AREA_RET': 5},
+            {'id': 4, 'AREA_RET': 5}
+        ]
+        expected = [
+            {'id': 1, 'AREA_RET': 2, 'tooManyMappings': True},
+            {'id': 2, 'AREA_RET': 10, 'tooManyMappings': True},
+            {'id': 3, 'AREA_RET': 5, 'tooManyMappings': True}
+        ]
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
         actual = target._apply_point_multiple_match_policy(input)
 
         self.assertListEqual(actual, expected)
         mock_config.point_multiple_match_policy.assert_called_once()
+        mock_config.point_result_limit_policy.assert_called_once()
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_point_policy_five(self, mock_config, mock_db):
+    def test_apply_point_policy_limit_only_two(self, mock_config, mock_db):
         mock_config.point_multiple_match_policy = MagicMock()
         mock_config.point_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PointMultipleMatchPolicyEnum.ReturnAllLimit5
+            lostservice.handling.findservice.PointMultipleMatchPolicyEnum.ReturnLimitWarning
+        mock_config.point_result_limit_policy = MagicMock()
+        mock_config.point_result_limit_policy.return_value = 5
 
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
-        input = [1, 2, 3, 4, 5, 6, 7, 8]
-        expected = [1, 2, 3, 4, 5]
+        input = [
+            {'id': 1, 'AREA_RET': 2},
+            {'id': 2, 'AREA_RET': 10}
+        ]
+        expected = [
+            {'id': 1, 'AREA_RET': 2},
+            {'id': 2, 'AREA_RET': 10}
+        ]
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
         actual = target._apply_point_multiple_match_policy(input)
 
         self.assertListEqual(actual, expected)
         mock_config.point_multiple_match_policy.assert_called_once()
-
-    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
-    @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_point_policy_five_only_two(self, mock_config, mock_db):
-        mock_config.point_multiple_match_policy = MagicMock()
-        mock_config.point_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PointMultipleMatchPolicyEnum.ReturnAllLimit5
-
-        mock_db.get_urn_table_mappings = MagicMock()
-        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
-
-        input = [1, 2]
-        expected = [1, 2]
-
-        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
-        actual = target._apply_point_multiple_match_policy(input)
-
-        self.assertListEqual(actual, expected)
-        mock_config.point_multiple_match_policy.assert_called_once()
+        mock_config.point_result_limit_policy.assert_called_once()
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -564,7 +550,7 @@ class FindServiceInnerTest(unittest.TestCase):
 
         mock_config.polygon_multiple_match_policy = MagicMock()
         mock_config.polygon_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAll
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnFirst
         mock_config.do_expanded_search = MagicMock()
         mock_config.do_expanded_search.return_value = True
         mock_config.expanded_search_buffer = MagicMock()
@@ -639,7 +625,7 @@ class FindServiceInnerTest(unittest.TestCase):
 
         mock_config.polygon_multiple_match_policy = MagicMock()
         mock_config.polygon_multiple_match_policy.return_value = \
-            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAll
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnFirst
         mock_config.do_expanded_search = MagicMock()
         mock_config.do_expanded_search.return_value = True
         mock_config.expanded_search_buffer = MagicMock()
