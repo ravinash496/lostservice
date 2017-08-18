@@ -495,23 +495,25 @@ class FindServiceInner(object):
         :return: Mapping list adjusted according to the polygon multiple match policy.
         :rtype: ``list`` of ``dict``
         """
-        polygon_multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
 
-        if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning:
-            i = len(mappings)
-            limit = self._find_service_config.polygon_result_limit_policy()
-            if i > limit:
-                # Results exceeds configurable setting - cut off results and apply warning
-                del mappings[limit:i]
-                [mapping.update({'tooManyMappings': True}) for mapping in mappings]
+        if mappings is not None:
+            polygon_multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
 
-        elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnFirst:
-            i = len(mappings)
-            del mappings[1:i]  # removes items starting at 1 until the end of the list
-        elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority:
-            # Find and return Max area
-            max_area_item = max(mappings, key=lambda x: x['AREA_RET'])
-            mappings = [max_area_item]
+            if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning:
+                i = len(mappings)
+                limit = self._find_service_config.polygon_result_limit_policy()
+                if i > limit:
+                    # Results exceeds configurable setting - cut off results and apply warning
+                    del mappings[limit:i]
+                    [mapping.update({'tooManyMappings': True}) for mapping in mappings]
+
+            elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnFirst:
+                i = len(mappings)
+                del mappings[1:i]  # removes items starting at 1 until the end of the list
+            elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority:
+                # Find and return Max area
+                max_area_item = max(mappings, key=lambda x: x['AREA_RET'])
+                mappings = [max_area_item]
 
         return mappings
 
