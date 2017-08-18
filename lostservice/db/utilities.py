@@ -8,13 +8,9 @@ General database utility functions
 """
 
 from sqlalchemy import MetaData, Table
-from sqlalchemy.sql import select, or_
 from sqlalchemy.exc import SQLAlchemyError
-from lostservice.model.location import Point
-from lostservice.configuration import PointMultipleMatchPolicyEnum
-from lostservice.configuration import PolygonSearchModePolicyEnum
-from lostservice.configuration import PolygonMultipleMatchPolicyEnum
-from lxml import etree
+from sqlalchemy.sql import select, or_
+
 
 class MappingDiscoveryException(Exception):
     """
