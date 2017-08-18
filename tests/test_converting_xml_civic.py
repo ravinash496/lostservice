@@ -33,14 +33,14 @@ class CivicTest(unittest.TestCase):
 
         target = CivicXmlConverter()
         result = target.parse(root)
-        self.assertEquals(result.country, 'US')
-        self.assertEquals(result.a1, 'ME')
-        self.assertEquals(result.a2, 'Piscataquis')
-        self.assertEquals(result.a3, 'T3 R11 Wels')
-        self.assertEquals(result.rd, 'Golden')
-        self.assertEquals(result.sts, 'Rd')
-        self.assertEquals(result.hno, '5833')
-        self.assertEquals(result.pc, '00135')
+        self.assertEqual(result.country, 'US')
+        self.assertEqual(result.a1, 'ME')
+        self.assertEqual(result.a2, 'Piscataquis')
+        self.assertEqual(result.a3, 'T3 R11 Wels')
+        self.assertEqual(result.rd, 'Golden')
+        self.assertEqual(result.sts, 'Rd')
+        self.assertEqual(result.hno, '5833')
+        self.assertEqual(result.pc, '00135')
 
 
 if __name__ == '__main__':

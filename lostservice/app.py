@@ -306,6 +306,10 @@ if __name__ == "__main__":
     lost_app = LostApplication()
     context = {}
     response = lost_app.execute_query(request, context)
-    print(response.decode("utf-8"))
+
+    if type(response) is str:
+        print(response)
+    else:
+        print(response.decode("utf-8"))
 
 

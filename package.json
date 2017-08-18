@@ -1,0 +1,32 @@
+{
+  "name": "lostservice",
+  "version": "1.0.0",
+  "description": "Node packages needed to run lostservice tests",
+  "main": "null",
+  "directories": {
+    "doc": "docs",
+    "test": "postman/tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geo-comm/lostservice.git"
+  },
+  "keywords": [
+    "ECRF",
+    "Geo-Comm",
+    "LOSTService"
+  ],
+  "author": "Geo-Comm, Inc",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/geo-comm/lostservice/issues"
+  },
+  "homepage": "https://github.com/geo-comm/lostservice#readme",
+  "dependencies": {
+    "async": "^2.5.0",
+    "newman": "^3.8.0"
+  }
+}
