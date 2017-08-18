@@ -6,6 +6,7 @@ async.series([
     newman.run({
       collection: './tests/postman/TestingPostman.postman_collection.json',
       reporters: 'cli',
+      timeoutRequest: 10000,
       bail: true
     }, next);
   },
@@ -13,6 +14,7 @@ async.series([
     newman.run({
       collection: './tests/postman/ECRF_Collection_Test.postman_collection.json',
       reporters: 'cli',
+      timeoutRequest: 10000,
       bail: true
     }, next);
   }
