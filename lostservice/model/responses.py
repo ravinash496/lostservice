@@ -334,8 +334,64 @@ class ListServicesByLocationResponse(Response):
     """
     listServicesByLocation response class.
     """
-    def __init__(self):
+    def __init__(self, services=None, path=None, nonlostdata=[], location_id=None):
         super(ListServicesByLocationResponse, self).__init__()
+        self._services = services
+        self._path = path
+        self._nonlostdata = nonlostdata
+        self._location_id = location_id
+
+    @property
+    def services(self):
+        """
+        The list of supported services.
+
+        :rtype: A list of ``str``
+        """
+        return self._services
+
+    @services.setter
+    def services(self, value):
+        self._services = value
+
+    @property
+    def path(self):
+        """
+        The mapping resolution path.
+
+        :rtype: A list of ``str``
+        """
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
+
+    @property
+    def nonlostdata(self):
+        """
+        The mapping resolution path.
+
+        :rtype: A list of ``str``
+        """
+        return self._nonlostdata
+
+    @nonlostdata.setter
+    def nonlostdata(self, value):
+        self._nonlostdata = value
+
+    @property
+    def location_id(self):
+        """
+        The location_id type
+
+        :rtype: ``str``
+        """
+        return self._location_id
+
+    @location_id.setter
+    def location_id(self, value):
+        self._location_id = value
 
 
 class GetServiceBoundaryResponse(Response):

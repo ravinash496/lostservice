@@ -140,3 +140,75 @@ class GisDbInterface(object):
     def get_intersecting_boundary_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table):
         return spatialdb.get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, self._engine)
 
+    def get_list_services_for_point(self, x, y, srid, boundary_table):
+        """
+        Executes a contains query for a point.
+
+        :param x: The x coordinate of the point.
+        :type x: `float`
+        :param y: The y coordinate of the point.
+        :type y: `float`
+        :param srid: The spatial reference Id of the point.
+        :type srid: `str`
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str`
+        :return: A list of dictionaries containing the contents of returned rows.
+        """
+        return spatialdb.get_list_service_for_point(x, y, srid, boundary_table, self._engine)
+
+    def get_intersecting_list_service_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area=False,
+                                                 return_shape=False, proximity_search=False, proximity_buffer=0):
+        """
+        Executes an intersection query for a circle.
+
+        :param long: The long coordinate of the center.
+        :type long: `float`
+        :param lat: The y coordinate of the center.
+        :type y: `float`
+        :param srid: The spatial reference id of the center point.
+        :type srid: `str`
+        :param radius: The radius of the circle.
+        :type radius: `float`
+        :param uom: The unit of measure of the radius.
+        :type uom: `str`
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str`
+        :param return_area: Flag which triggers an area calculation on the Intersecting polygons
+        :type boundary_table: `bool`
+        :return: A list of dictionaries containing the contents of returned rows.
+        """
+        return spatialdb.get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boundary_table,
+                                                                   self._engine, return_area, return_shape,
+                                                                   proximity_search, proximity_buffer)
+
+    def get_list_services_for_ellipse(self, lat, long, srid, major, minor, orientation, boundary_table):
+        """
+
+        :param lat: 
+        :param long: 
+        :param srid: 
+        :param major: 
+        :param minor: 
+        :param orientation: 
+        :param boundary_table: 
+        :return: 
+        """
+        return spatialdb.get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table,
+                                                       self._engine, )
+
+    def get_intersecting_list_service_for_polygon(self, points, srid, boundary_table, proximity_search=False,
+                                                  proximity_buffer=0):
+        """
+        Executes an intersection query for a polygon.
+
+        :param points: A list of vertices in (x,y) format.
+        :type points: `list`
+        :param srid: The spatial reference Id of the vertices.
+        :type srid: `str`
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str`
+        :return: A list of dictionaries containing the contents of returned rows.
+        """
+
+        return spatialdb.get_intersecting_list_service_for_polygon(points, srid, boundary_table, self._engine, False,
+                                                                   proximity_search, proximity_buffer)
