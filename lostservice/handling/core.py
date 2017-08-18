@@ -13,6 +13,7 @@ from lostservice.configuration import Configuration
 from lostservice.db.gisdb import GisDbInterface
 from lostservice.handler import Handler
 from lostservice.handling.findservice import FindServiceOuter, FindServiceException
+from lostservice.handling.listServicesByLocation import ListServiceBylocationOuter, ListServiceBYLocationException
 from lostservice.model.location import Arcband
 from lostservice.model.location import Circle
 from lostservice.model.location import Ellipse
@@ -166,21 +167,25 @@ class GetServiceBoundaryHandler(Handler):
 
 class ListServicesByLocationHandler(Handler):
     """
-    Base listServicesByLocation request handler.
+    Base ListService request handler.
     """
+
     @inject
-    def __init__(self, config: Configuration, db_wrapper: GisDbInterface):
+    def __init__(self, outer: ListServiceBylocationOuter):
         """
         Constructor
 
-        :param config: The configuration
-        :type config: :py:class:`lostservice.configuration.Configuration`
+        :param outer: An instance of the outer List service class.
+        :type config: :py:class:`lostservice.handling.Listservice.ListServiceOuter`
         :param db_wrapper: The db wrapper class instance.
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
         """
-        super(ListServicesByLocationHandler, self).__init__(config, db_wrapper)
+        # TODO - clean this up since handlers shouldn't have direct references to config or the db any more.
+        super(ListServicesByLocationHandler, self).__init__(None, None)
+        self._outer = outer
 
     def handle_request(self, request, context):
+
         """
         Entry point for request handling.
 
@@ -191,4 +196,18 @@ class ListServicesByLocationHandler(Handler):
         :return: The response.
         :rtype: :py:class:`ListServicesByLocationResponse`
         """
-        raise NotImplementedError("Can't handle getServicesByLocation requests just yet, come back later.")
+        response = None
+        if type(request.location.location) is Point:
+            response = self._outer.List_ServiceBylocation_for_point(request)
+        elif type(request.location.location) is Circle:
+            response = self._outer.List_serviceBylocation_for_circle(request)
+        elif type(request.location.location) is Ellipse:
+            response = self._outer.List_serviceBylocation_for_ellipse(request)
+        elif type(request.location.location) is Arcband:
+            response = self._outer.List_serviceBylocation_for_ellipse(request)
+        elif type(request.location.location) is Polygon:
+            response = self._outer.List_serviceBylocation_for_polygon(request)
+        else:
+            raise ListServiceBYLocationException('Invalid location type.')
+
+        return response
