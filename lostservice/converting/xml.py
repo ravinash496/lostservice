@@ -22,6 +22,7 @@ from lostservice.model.location import Polygon
 from lostservice.model.requests import FindServiceRequest
 from lostservice.model.requests import ListServicesRequest
 from lostservice.model.requests import GetServiceBoundaryRequest
+from lostservice.model.requests import ListServicesByLocationRequest
 import io
 
 LOST_PREFIX = 'lost'
@@ -539,7 +540,8 @@ class FindServiceXmlConverter(XmlConverter):
         root = self.get_root(data)
         request = FindServiceRequest()
 
-        request.serviceBoundary = root.attrib['serviceBoundary']
+        if 'serviceBoundary' in root.attrib:
+            request.serviceBoundary = root.attrib['serviceBoundary']
 
         for element in root.iter():
             if element.tag == '{urn:ietf:params:xml:ns:lost1}location':
@@ -736,7 +738,27 @@ class ListServicesByLocationXmlConverter(XmlConverter):
         :return: A ListServicesByLocationRequest instance.
         :rtype: :py:class:`ListServicesByLocationRequest`
         """
-        raise NotImplementedError("Can't parse listServicesByLocation requests just yet, come back later.")
+
+        root = self.get_root(data)
+        request = ListServicesByLocationRequest()
+
+        for element in root.iter():
+            if element.tag == '{urn:ietf:params:xml:ns:lost1}location':
+                location_parser = LocationXmlConverter()
+                request.location = location_parser.parse(element)
+            if element.tag == '{urn:ietf:params:xml:ns:lost1}service':
+                request.service = element.text
+            elif element.tag == '{urn:ietf:params:xml:ns:lost1}path':
+                path_parser = PathXmlConverter()
+                request.path = path_parser.parse(element)
+            elif element.tag == '{urn:ietf:params:xml:ns:lost1}location':
+                request.location_id = element.attrib.get('id')
+            else:
+                if (LOST_URN not in element.tag) and (
+                            PIDFLO_URN not in element.tag) and (
+                            GML_URN not in element.tag):
+                    request.nonlostdata.append(element)
+        return request
 
     def format(self, data):
         """
@@ -747,7 +769,29 @@ class ListServicesByLocationXmlConverter(XmlConverter):
         :return: The formatted output.
         :rtype: :py:class:`_ElementTree`
         """
-        raise NotImplementedError('TODO: Implement formatting of ListServicesByLocationResponses.')
+        # create the root element of the xml response.
+        xml_response = lxml.etree.Element('listServicesByLocationResponse', nsmap={None: LOST_URN})
+        # add the services element, filling in with the list of services in the response.
+        services_element = lxml.etree.SubElement(xml_response, 'serviceList')
+        services_element.text = ' '.join(data.services)
+
+        # add the path element
+        path_element = lxml.etree.SubElement(xml_response, 'path')
+
+        # services_element = lxml.etree.SubElement(xml_response, 'locationUsed')
+        # services_element.text = data.location_id
+
+        # not generate a 'via' element for each source.
+        if data.path is not None:
+            for a_path in data.path:
+                via_element = lxml.etree.SubElement(path_element, 'via', attrib={'source': a_path})
+
+        lxml.etree.SubElement(xml_response, 'locationUsed', attrib={'id': data.location_id})
+        # Add NonLoSTdata items into response (pass though items)
+        for nonlost_item in data.nonlostdata:
+            xml_response.append(nonlost_item)
+
+        return xml_response
 
 
 class GetServiceBoundaryXmlConverter(XmlConverter):

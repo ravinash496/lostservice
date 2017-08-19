@@ -39,7 +39,7 @@ class FindServiceTest(unittest.TestCase):
         target = FindServiceXmlConverter()
         result = target.parse(root)
 
-        self.assertEquals(result.location.id, 'ce152f4b-2ade-4e37-9741-b6649e2d87a6')
+        self.assertEqual(result.location.id, 'ce152f4b-2ade-4e37-9741-b6649e2d87a6')
 
 
 if __name__ == '__main__':

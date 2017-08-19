@@ -27,11 +27,11 @@ class CircleTest(unittest.TestCase):
         root = etree.fromstring(xml)
         target = CircleXmlConverter()
         result = target.parse(root)
-        self.assertEquals(result.spatial_ref, 'urn:ogc:def:crs:EPSG::4326')
-        self.assertEquals(result.latitude, 45.4430670070877)
-        self.assertEquals(result.longitude, -68.4977255651657)
-        self.assertEquals(result.uom, 'urn:ogc:def:uom:EPSG::9001')
-        self.assertEquals(result.radius, '6105.41237061098')
+        self.assertEqual(result.spatial_ref, 'urn:ogc:def:crs:EPSG::4326')
+        self.assertEqual(result.latitude, 45.4430670070877)
+        self.assertEqual(result.longitude, -68.4977255651657)
+        self.assertEqual(result.uom, 'urn:ogc:def:uom:EPSG::9001')
+        self.assertEqual(result.radius, '6105.41237061098')
 
 
 if __name__ == '__main__':
