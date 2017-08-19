@@ -108,7 +108,7 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
     return retval
 
 
-def _get_nearest_boundary_for_geom(engine, table_name, geom):
+def _get_nearest_point(engine, table_name, geom):
     """
     Queries the given table for the nearest boundary
 
@@ -263,7 +263,7 @@ def get_containing_boundary_for_point(x, y, srid, boundary_table, engine, add_da
     wkb_pt = from_shape(pt, trimmed_srid)
     # Run the query.
     if add_data_required:
-        return _get_nearest_boundary_for_geom(engine, boundary_table, wkb_pt)
+        return _get_nearest_point(engine, boundary_table, wkb_pt)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
 
