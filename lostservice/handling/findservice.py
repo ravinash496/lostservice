@@ -12,11 +12,14 @@ import pytz
 from enum import Enum
 from injector import inject
 from lostservice.configuration import Configuration
-from lostservice.model.responses import FindServiceResponse, ResponseMapping
+from lostservice.model.responses import FindServiceResponse, ResponseMapping, AdditionalDataResponseMapping
 import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
+
+ADD_DATAPOINT_SERVICE = "urn:nena:service:adddatauri"
+ADD_DATAPOINT_TABLE = "ssap"
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -230,17 +233,21 @@ class FindServiceInner(object):
         :return: The service mappings for the given point.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings[service_urn]
+        ADD_DATA_REQUESTED = False
+        if service_urn == ADD_DATAPOINT_SERVICE:
+            ADD_DATA_REQUESTED = True
+            esb_table = ADD_DATAPOINT_TABLE
+        else:
+            esb_table = self._mappings[service_urn]
 
         results = self._db_wrapper.get_containing_boundary_for_point(
             longitude,
             latitude,
             spatial_ref,
-            esb_table)
+            esb_table,
+            add_data_requested=ADD_DATA_REQUESTED)
 
-        if results is not None and len(results) != 0:
-            results = self._apply_point_multiple_match_policy(results)
-        elif self._find_service_config.do_expanded_search():
+        if results is None and self._find_service_config.do_expanded_search():
 
             multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
             return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
@@ -531,7 +538,8 @@ class FindServiceInner(object):
 
         if mappings is not None:
             for mapping in mappings:
-                mapping['expiration'] = self._get_service_expiration_policy(mapping['serviceurn'])
+                if mapping.get('serviceurn'):
+                    mapping['expiration'] = self._get_service_expiration_policy(mapping['serviceurn'])
                 self._apply_service_boundary_policy(mapping, return_shape)
 
         return mappings
@@ -853,17 +861,21 @@ class FindServiceOuter(object):
         :return: A ResponseMapping instance.
         :rtype: :py:class:`lostservice.model.responses.ResponseMapping`
         """
-        resp_mapping = ResponseMapping()
-        resp_mapping.display_name = mapping['displayname']
-        resp_mapping.route_uri = mapping['routeuri']
-        resp_mapping.service_number = mapping['servicenum']
-        resp_mapping.source_id = mapping['gcunqid']
-        resp_mapping.service_urn = mapping['serviceurn']
+        if mapping.get('adddatauri'):
+            resp_mapping = AdditionalDataResponseMapping()
+            resp_mapping.adddatauri = mapping.get('adddatauri')
+            resp_mapping.service_urn = ADD_DATAPOINT_SERVICE
+        else:
+            resp_mapping = ResponseMapping()
+            resp_mapping.display_name = mapping['displayname']
+            resp_mapping.route_uri = mapping['routeuri']
+            resp_mapping.service_number = mapping['servicenum']
+            resp_mapping.service_urn = mapping.get('service_urn')
+            if include_boundary_value and 'ST_AsGML_1' in mapping:
+                resp_mapping.boundary_value = mapping['ST_AsGML_1']
         resp_mapping.last_updated = mapping['updatedate']
-        resp_mapping.expires = mapping['expiration']
-
-        if include_boundary_value and 'ST_AsGML_1' in mapping:
-            resp_mapping.boundary_value = mapping['ST_AsGML_1']
+        resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
+        resp_mapping.source_id = mapping['gcunqid']
 
         return resp_mapping
 

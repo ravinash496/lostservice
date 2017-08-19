@@ -23,6 +23,7 @@ from lostservice.model.requests import FindServiceRequest
 from lostservice.model.requests import ListServicesRequest
 from lostservice.model.requests import GetServiceBoundaryRequest
 from lostservice.model.requests import ListServicesByLocationRequest
+from lostservice.model.responses import AdditionalDataResponseMapping, ResponseMapping
 import io
 
 LOST_PREFIX = 'lost'
@@ -594,20 +595,21 @@ class FindServiceXmlConverter(XmlConverter):
                                                     'sourceId': item.source_id})
 
             # add the displayname, serviceurn, routeuri, servicenum to mapping
-            if hasattr(item,"displayname"):
+            services_element = lxml.etree.SubElement(mapping, 'service')
+            services_element.text = item.service_urn
+            if type(item) is ResponseMapping:
                 services_element = lxml.etree.SubElement(mapping, 'displayName')
                 services_element.text = item.display_name
 
                 attr = services_element.attrib
                 attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
 
-            services_element = lxml.etree.SubElement(mapping, 'service')
-            services_element.text = item.service_urn
-            if hasattr(item, "adddatauri"):
                 services_element = lxml.etree.SubElement(mapping, 'uri')
-                services_element.text = item.adddatauri
+                services_element.text = item.route_uri
 
-            if not hasattr(item, "adddatauri"):
+                services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
+                services_element.text = item.service_number
+
                 if item.boundary_value is None:
                     attr_element = collections.OrderedDict()
                     attr_element['source'] = item.source
@@ -622,12 +624,9 @@ class FindServiceXmlConverter(XmlConverter):
                     final_gml = etree.parse(final_gml_as_xml).getroot()
                     services_element.extend(final_gml)
 
-            if hasattr(item, "route_uri"):
+            elif type(item) is AdditionalDataResponseMapping:
                 services_element = lxml.etree.SubElement(mapping, 'uri')
-                services_element.text = item.route_uri
-            if hasattr(item, "service_number"):
-                services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
-                services_element.text = item.service_number
+                services_element.text = item.adddatauri
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')
