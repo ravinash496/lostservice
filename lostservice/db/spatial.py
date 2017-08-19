@@ -444,6 +444,60 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
         raise
     return results
 
+def _get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table, engine):
+    """
+    Executes a contains query for a polygon.
+
+    :param lat: latitude value .
+    :type lat: `float`
+    :param long: longitude value .
+    :type long: `float`
+    :param srid: The spatial reference Id of the ellipse.
+    :type srid: `str`
+    :param major: The majorAxis value.
+    :type major: `int`
+    :param minor: The minorAxis value.
+    :type minor: `int`
+    :param orientation: The orientation of ellipse.
+    :type orientation: `float`
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+    # Pull out just the number from the SRID
+
+    trimmed_srid = int(srid.split('::')[1])
+
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table(boundary_table, tbl_metadata, autoload=True)
+
+        utmsrid = getutmsrid(longitude=long, latitude=lat)
+
+        wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, trimmed_srid)
+
+        s = select(
+            [
+                the_table.c.serviceurn,
+                func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                the_table.c.wkb_geometry.ST_Area(
+                    the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
+                ).label('AREA_RET')
+            ],
+            the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
+        )
+
+        results = _execute_query(engine, s)
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct ellipse intersection query.', ex)
+    except SpatialQueryException:
+        raise
+    return results
+
 def _transform_ellipse(long ,lat , major, minor, orientation, srid):
     """
     Takes the fundamental bits of a ellipse and converts it to a descritized ellipse (polygon)
@@ -757,60 +811,6 @@ def get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, bo
 
     return (_get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, i, engine) for i in boundary_table)
 
-
-def _get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table, engine):
-    """
-    Executes a contains query for a polygon.
-
-    :param lat: latitude value .
-    :type lat: `float`
-    :param long: longitude value .
-    :type long: `float`
-    :param srid: The spatial reference Id of the ellipse.
-    :type srid: `str`
-    :param major: The majorAxis value.
-    :type major: `int`
-    :param minor: The minorAxis value.
-    :type minor: `int`
-    :param orientation: The orientation of ellipse.
-    :type orientation: `float`
-    :param boundary_table: The name of the service boundary table.
-    :type boundary_table: `str`
-    :param engine: SQLAlchemy database engine.
-    :type engine: :py:class:`sqlalchemy.engine.Engine`
-    :return: A list of dictionaries containing the contents of returned rows.
-    """
-    # Pull out just the number from the SRID
-
-    trimmed_srid = int(srid.split('::')[1])
-
-    try:
-        # Get a reference to the table we're going to look in.
-        tbl_metadata = MetaData(bind=engine)
-        the_table = Table(boundary_table, tbl_metadata, autoload=True)
-
-        utmsrid = getutmsrid(longitude=long, latitude=lat)
-
-        wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, trimmed_srid)
-
-        s = select(
-            [
-                the_table.c.serviceurn,
-                func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
-                the_table.c.wkb_geometry.ST_Area(
-                    the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
-                ).label('AREA_RET')
-            ],
-            the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
-        )
-
-        results = _execute_query(engine, s)
-    except SQLAlchemyError as ex:
-        raise SpatialQueryException(
-            'Unable to construct ellipse intersection query.', ex)
-    except SpatialQueryException:
-        raise
-    return results
 
 
 def get_intersecting_list_service_with_buffer(long, lat, engine, table_name, geom, buffer_distance, return_intersection_area = False):

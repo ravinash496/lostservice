@@ -204,7 +204,7 @@ class ListServicesByLocationHandler(Handler):
         elif type(request.location.location) is Ellipse:
             response = self._outer.List_serviceBylocation_for_ellipse(request)
         elif type(request.location.location) is Arcband:
-            response = self._outer.List_serviceBylocation_for_ellipse(request)
+            response = self._outer.List_serviceBylocation_for_arcband(request)
         elif type(request.location.location) is Polygon:
             response = self._outer.List_serviceBylocation_for_polygon(request)
         else:

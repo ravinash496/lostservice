@@ -19,6 +19,21 @@ from lxml import etree
 from shapely.geometry import Polygon
 
 
+PARENT_SERVICE = 'parent'
+LIST_SERVICE = 'Yes'
+NO_SERVICE = 'No'
+
+
+# def modify_service(fun):
+#     """ for modifying the server service data"""
+#     def service_data(*args):
+#         if args[1] == 'urn:nena:service:sos':
+#             return fun(args[0], args[1], args[2], args[3], args[4], LIST_SERVICE)
+#         elif args[1] is None:
+#             return fun(args[0], args[1], args[2], args[3], args[4], PARENT_SERVICE)
+#         elif args[1].find('.'):
+#             return fun(args[0], args[1], args[2], args[3], args[4], NO_SERVICE)
+#     return service_data
 
 
 class ListServiceBYLocationException(Exception):
@@ -114,12 +129,17 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given point.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings.values()
-        results = self._db_wrapper.get_list_services_for_point(longitude,
-            latitude,
-            spatial_ref,
-            esb_table)
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
+        if service_urn == 'urn:nena:service:sos':
+            esb_table = self._mappings.values()
+            results = self._db_wrapper.get_list_services_for_point(longitude,
+                latitude,
+                spatial_ref,
+                esb_table)
+            return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
+        elif service_urn is None:
+            return ['urn:nena:service:sos']
+        elif service_urn.find('.'):
+            return
 
     def List_service_BYLocation_for_circle(self,
                                 service_urn,
@@ -148,16 +168,19 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given circle.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings.values()
-
-        results = self._db_wrapper.get_intersecting_list_service_for_circle(
-            longitude,
-            latitude,
-            spatial_ref,
-            radius,
-            radius_uom, esb_table)
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
-
+        if service_urn == 'urn:nena:service:sos':
+            esb_table = self._mappings.values()
+            results = self._db_wrapper.get_intersecting_list_service_for_circle(
+                longitude,
+                latitude,
+                spatial_ref,
+                radius,
+                radius_uom, esb_table)
+            return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
+        elif service_urn is None:
+            return ['urn:nena:service:sos']
+        elif service_urn.find('.'):
+            return
 
 
     def List_service_ByLocation_for_ellipse(self,
@@ -203,7 +226,6 @@ class ListServiceByLocationInner(object):
             float(orientation),
             esb_table)
         return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
-
 
     def list_service_ByLocation_for_arcband(self,
                                  service_urn,
@@ -258,11 +280,15 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given polygon.
         :rtype: ``list`` of ``dict``
         """
+        if service_urn == 'urn:nena:service:sos':
+            esb_table = self._mappings.values()
+            results = self._db_wrapper.get_intersecting_list_service_for_polygon(points, spatial_ref, esb_table)
+            return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
+        elif service_urn is None:
+            return ['urn:nena:service:sos']
+        elif service_urn.find('.'):
+            return
 
-        esb_table = self._mappings.values()
-        results = self._db_wrapper.get_intersecting_list_service_for_polygon(points, spatial_ref, esb_table)
-
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
 
 
 
@@ -464,6 +490,4 @@ class ListServiceBylocationOuter(object):
         resp_mapping.source_id = mapping['gcunqid']
         resp_mapping.service_urn = mapping['serviceurn']
         resp_mapping.last_updated = mapping['updatedate']
-
-
         return resp_mapping
