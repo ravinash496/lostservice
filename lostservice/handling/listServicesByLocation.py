@@ -24,18 +24,6 @@ LIST_SERVICE = 'Yes'
 NO_SERVICE = 'No'
 
 
-# def modify_service(fun):
-#     """ for modifying the server service data"""
-#     def service_data(*args):
-#         if args[1] == 'urn:nena:service:sos':
-#             return fun(args[0], args[1], args[2], args[3], args[4], LIST_SERVICE)
-#         elif args[1] is None:
-#             return fun(args[0], args[1], args[2], args[3], args[4], PARENT_SERVICE)
-#         elif args[1].find('.'):
-#             return fun(args[0], args[1], args[2], args[3], args[4], NO_SERVICE)
-#     return service_data
-
-
 class ListServiceBYLocationException(Exception):
     """
     Raised when something goes wrong in the process of a ListService request.
@@ -90,6 +78,7 @@ class ListServiceBYLocationConfigWrapper(object):
             # Config not set for specific table use default Service Values
             settings = self._config.get('Service', 'default', as_object=True, required=False)
         return settings
+
 
 
 class ListServiceByLocationInner(object):
@@ -184,6 +173,7 @@ class ListServiceByLocationInner(object):
 
 
     def List_service_ByLocation_for_ellipse(self,
+                                            service_urn,
                                  longitude,
                                  latitude,
                                  spatial_ref,
@@ -214,18 +204,22 @@ class ListServiceByLocationInner(object):
         """
         # TODO: does there need to be an orientation UOM?
         # TODO: Why do the ellipse queries always return the intersection areas but others don't?
-
-        esb_table = self._mappings.values()
-
-        results = self._db_wrapper.get_list_services_for_ellipse(
+        if service_urn == 'urn:nena:service:sos':
+            esb_table = self._mappings.values()
+            results = self._db_wrapper.get_list_services_for_ellipse(
             longitude,
             latitude,
             spatial_ref,
-            float(semi_major_axis),
-            float(semi_minor_axis),
-            float(orientation),
+            semi_major_axis,
+            semi_minor_axis,
+            orientation,
             esb_table)
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
+            return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
+        elif service_urn is None:
+            return ['urn:nena:service:sos']
+        elif service_urn.find('.'):
+            return
+
 
     def list_service_ByLocation_for_arcband(self,
                                  service_urn,
@@ -375,8 +369,9 @@ class ListServiceBylocationOuter(object):
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
         mappings = self._inner.List_service_ByLocation_for_ellipse(
-            request.location.location.longitude,
+            request.service,
             request.location.location.latitude,
+            request.location.location.longitude,
             request.location.location.spatial_ref,
             float(request.location.location.semiMajorAxis),
             float(request.location.location.semiMinorAxis),

@@ -7,6 +7,6 @@
              <gml:pos>45.4524048105657 -68.5452615106889</gml:pos>
           </gml:Point>
       </location>
-      <service>urn:nena:service:sos.EMS</service>
+      <service>urn:nena:service:sos</service>
       <slb:serviceListBoundaryRequest type="value"/>
 </listServicesByLocation>

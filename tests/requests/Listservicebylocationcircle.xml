@@ -8,4 +8,6 @@
    <gs:radius uom="urn:ogc:def:uom:EPSG::9001">7707.99711086547</gs:radius>
 </gs:Circle>
    </location>
+      <service>urn:nena:service:sos</service>
+      <slb:serviceListBoundaryRequest type="value"/>
 </listServicesByLocation>
