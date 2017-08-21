@@ -48,7 +48,7 @@ class GisDbInterface(object):
         """
         return dbutilities.get_urn_table_mappings(self._engine)
 
-    def get_containing_boundary_for_point(self, x, y, srid, boundary_table, add_data_requested=False):
+    def get_containing_boundary_for_point(self, x, y, srid, boundary_table, add_data_requested=False, buffer_distance=None):
         """
         Executes a contains query for a point.
 
@@ -62,7 +62,7 @@ class GisDbInterface(object):
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_containing_boundary_for_point(x, y, srid, boundary_table, self._engine, add_data_required=add_data_requested)
+        return spatialdb.get_containing_boundary_for_point(x, y, srid, boundary_table, self._engine, add_data_required=add_data_requested, buffer_distance=buffer_distance)
 
     def get_containing_boundary_for_circle(self, long, lat, srid, radius, uom, boundary_table):
         """

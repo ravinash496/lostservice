@@ -108,7 +108,7 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
     return retval
 
 
-def _get_nearest_point(engine, table_name, geom):
+def _get_nearest_point(x, y, engine, table_name, geom, buffer_distance=None):
     """
     Queries the given table for the nearest boundary
 
@@ -125,11 +125,19 @@ def _get_nearest_point(engine, table_name, geom):
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(table_name, tbl_metadata, autoload=True)
-
         # Construct the "contains" query and execute it.
+        utmsrid = getutmsrid(x, y)
         s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(),
                     the_table.c.wkb_geometry.ST_Distance(geom).label('DISTANCE')],
+                   the_table.c.wkb_geometry.ST_Intersects(
+                       func.ST_Transform(
+                           func.ST_Buffer(
+                           func.ST_Transform(
+                               func.st_centroid(geom),
+                               utmsrid
+                           ),buffer_distance, 32), 4326))
                    ).order_by('DISTANCE').limit(1)
+
         retval = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -237,7 +245,7 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
     return results
 
 
-def get_containing_boundary_for_point(x, y, srid, boundary_table, engine, add_data_required=False):
+def get_containing_boundary_for_point(x, y, srid, boundary_table, engine, add_data_required=False, buffer_distance=None):
     """
     Executes a contains query for a point.
 
@@ -263,7 +271,7 @@ def get_containing_boundary_for_point(x, y, srid, boundary_table, engine, add_da
     wkb_pt = from_shape(pt, trimmed_srid)
     # Run the query.
     if add_data_required:
-        return _get_nearest_point(engine, boundary_table, wkb_pt)
+        return _get_nearest_point(x, y, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
 

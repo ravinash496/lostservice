@@ -18,9 +18,6 @@ from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
 
-ADD_DATAPOINT_SERVICE = "urn:nena:service:adddatauri"
-ADD_DATAPOINT_TABLE = "ssap"
-
 
 class ServiceExpiresPolicyEnum(Enum):
     NoCache = 1
@@ -195,6 +192,17 @@ class FindServiceConfigWrapper(object):
             settings = self._config.get('Service', 'default', as_object=True, required=False)
         return settings
 
+    def settings_for_additionaldata(self, param):
+        """
+        Get the addtional data settings.
+        :param param: name of the parameter to get the setting
+        :type param: ``str``
+        :return: ``str``
+        """
+        settings = self._config.get('AddtionalData', param, as_object=False, required=False)
+        if settings is None:
+            return ""
+        return settings
 
 class FindServiceInner(object):
     """
@@ -234,18 +242,22 @@ class FindServiceInner(object):
         :rtype: ``list`` of ``dict``
         """
         ADD_DATA_REQUESTED = False
-        if service_urn == ADD_DATAPOINT_SERVICE:
-            ADD_DATA_REQUESTED = True
-            esb_table = ADD_DATAPOINT_TABLE
-        else:
+        buffer_distance = self._find_service_config.settings_for_additionaldata("buffer_meters")
+        if self._mappings.get(service_urn):
             esb_table = self._mappings[service_urn]
+        else:
+            ADD_DATA_SERVICE = self._find_service_config.settings_for_additionaldata("service_urn")
+            if service_urn == ADD_DATA_SERVICE:
+                ADD_DATA_REQUESTED = True
+                esb_table = self._find_service_config.settings_for_additionaldata("data_table")
 
         results = self._db_wrapper.get_containing_boundary_for_point(
             longitude,
             latitude,
             spatial_ref,
             esb_table,
-            add_data_requested=ADD_DATA_REQUESTED)
+            add_data_requested=ADD_DATA_REQUESTED,
+            buffer_distance=buffer_distance)
 
         if results is None and self._find_service_config.do_expanded_search():
 
@@ -864,7 +876,7 @@ class FindServiceOuter(object):
         if mapping.get('adddatauri'):
             resp_mapping = AdditionalDataResponseMapping()
             resp_mapping.adddatauri = mapping.get('adddatauri')
-            resp_mapping.service_urn = ADD_DATAPOINT_SERVICE
+            resp_mapping.service_urn = self._find_service_config.settings_for_additionaldata("service_urn")
         else:
             resp_mapping = ResponseMapping()
             resp_mapping.display_name = mapping['displayname']
