@@ -142,7 +142,7 @@ class FindServiceTest(unittest.TestCase):
         model.location = lostservice.model.location.Location()
         model.location.location = None
 
-        with self.assertRaises(lostservice.handling.findservice.FindServiceException):
+        with self.assertRaises(lostservice.exception.BadRequestException):
             target.handle_request(model, {})
 
 
