@@ -21,9 +21,10 @@ from geoalchemy2.shape import from_shape
 from osgeo import osr
 from osgeo import ogr
 import math
+from lostservice.exception import InternalErrorException
 
 
-class SpatialQueryException(Exception):
+class SpatialQueryException(InternalErrorException):
     """
     Raised when something goes wrong in the process of executing a spatial query.
 
@@ -33,8 +34,7 @@ class SpatialQueryException(Exception):
     :type nested:
     """
     def __init__(self, message, nested=None):
-        super().__init__(message)
-        self._nested = nested
+        super(SpatialQueryException, self).__init__(message, nested)
 
 
 def _execute_query(engine, query):

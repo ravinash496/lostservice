@@ -12,7 +12,9 @@ import pytz
 from enum import Enum
 from injector import inject
 from lostservice.configuration import Configuration
+from lostservice.exception import InternalErrorException
 from lostservice.model.responses import FindServiceResponse, ResponseMapping
+from lostservice.exception import ServiceNotImplementedException
 import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
@@ -40,20 +42,6 @@ class PointMultipleMatchPolicyEnum(Enum):
     ReturnFirst = 1
     ReturnLimitWarning = 2
     ReturnError = 3
-
-
-class FindServiceException(Exception):
-    """
-    Raised when something goes wrong in the process of a findService request.
-
-    :param message: The exception message
-    :type message:  ``str``
-    :param nested: Nested exception, if any.
-    :type nested:
-    """
-    def __init__(self, message, nested=None):
-        super().__init__(message)
-        self._nested = nested
 
 
 class FindServiceConfigWrapper(object):
@@ -213,6 +201,20 @@ class FindServiceInner(object):
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
 
+    def _get_esb_table(self, service_urn):
+        """
+        Get the service boundary table for the given URN.
+
+        :param service_urn: The service URN.
+        :type service_urn: ``str``
+        :return: The table name.
+        :rtype: ``str``
+        """
+        if service_urn in self._mappings:
+            return self._mappings[service_urn]
+        else:
+            raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
+
     def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
         """
         Find services for the given point.
@@ -230,7 +232,7 @@ class FindServiceInner(object):
         :return: The service mappings for the given point.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings[service_urn]
+        esb_table = self._get_esb_table(service_urn)
 
         results = self._db_wrapper.get_containing_boundary_for_point(
             longitude,
@@ -288,7 +290,7 @@ class FindServiceInner(object):
         :return: The service mappings for the given circle.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings[service_urn]
+        esb_table = self._get_esb_table(service_urn)
 
         multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
         return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
@@ -351,7 +353,7 @@ class FindServiceInner(object):
         # TODO: does there need to be an orientation UOM?
         # TODO: Why do the ellipse queries always return the intersection areas but others don't?
 
-        esb_table = self._mappings[service_urn]
+        esb_table = self._get_esb_table(service_urn)
 
         results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
             longitude,
@@ -441,7 +443,7 @@ class FindServiceInner(object):
 
             return self.find_service_for_point(service_urn, pt_array.x, pt_array.y, spatial_ref, return_shape)
         else:
-            esb_table = self._mappings[service_urn]
+            esb_table = self._get_esb_table(service_urn)
             results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
 
             if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
@@ -482,7 +484,7 @@ class FindServiceInner(object):
                 i = len(mappings)
                 del mappings[1:i]  # removes items starting at 1 until the end of the list
             elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError:
-                raise FindServiceException('Multiple results matched request location')
+                raise InternalErrorException('Multiple results matched request location.')
 
         return mappings
 
@@ -587,7 +589,7 @@ class FindServiceInner(object):
         :return: The service boundary expiration string.
         :rtype: ``str``
         """
-        service = self._mappings[service_urn]
+        service = self._get_esb_table(service_urn)
         policy = self._find_service_config.settings_for_service(service)
 
         expires_policy = policy['service_expire_policy']
