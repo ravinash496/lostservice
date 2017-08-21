@@ -181,7 +181,7 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
             s = select(
                 [
                     the_table,
-                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                    func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16),
                     func.ST_Area(
                         the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))
                     ).label('AREA_RET')
@@ -192,11 +192,10 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
             s = select(
                 [
                     the_table,
-                    func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16)
+                    func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16)
                 ],
                 the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
 
-        print (s)
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -382,7 +381,7 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
         if proximity_search == True:
             return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle, proximity_buffer, return_intersection_area)
         else:
-            # Call Overload to return the GML representation of the shape for ByReference
+            # Call Overload to return the GML representation of the shape
             return _get_intersecting_boundaries_for_geom_reference(engine, boundary_table, wkb_circle, return_intersection_area)
     else:
         if proximity_search == True:
