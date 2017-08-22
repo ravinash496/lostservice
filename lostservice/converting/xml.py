@@ -12,6 +12,8 @@ from lxml import etree
 import lxml
 import collections
 from lostservice.converter import Converter
+from lostservice.exception import LocationProfileException, InvalidLocationException, BadRequestException
+from lostservice.exception import NotFoundException
 from lostservice.model.location import CivicAddress
 from lostservice.model.location import Circle
 from lostservice.model.location import Ellipse
@@ -69,7 +71,7 @@ class XmlConverter(Converter):
         """
         retval = None
         if node is None or xpath is None:
-            raise ValueError('Invalid parameter')
+            raise BadRequestException('Invalid xpath request.')
 
         child = node.xpath(xpath, namespaces=_namespace_map)
 
@@ -193,11 +195,14 @@ class PointXmlConverter(XmlConverter):
         sr_template = './@{0}'
         point_template = './{0}:{1}/text()'
         point = Point()
-        point.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
-        position = self._run_xpath(data, point_template.format(GML_PREFIX, 'pos'))
-        lat, lon = position.split()
-        point.latitude = float(lat)
-        point.longitude = float(lon)
+        try:
+            point.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
+            position = self._run_xpath(data, point_template.format(GML_PREFIX, 'pos'))
+            lat, lon = position.split()
+            point.latitude = float(lat)
+            point.longitude = float(lon)
+        except (Exception, TypeError):
+            raise BadRequestException('Invalid point input.')
 
         return point
 
@@ -239,15 +244,18 @@ class CircleXmlConverter(XmlConverter):
         uom_template = './{0}:{1}/@{2}'
 
         circle = Circle()
-        circle.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
+        try:
+            circle.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
 
-        position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
-        lat, lon = position.split()
-        circle.latitude = float(lat)
-        circle.longitude = float(lon)
+            position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
+            lat, lon = position.split()
+            circle.latitude = float(lat)
+            circle.longitude = float(lon)
 
-        circle.radius = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'radius'))
-        circle.uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'radius', 'uom'))
+            circle.radius = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'radius'))
+            circle.uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'radius', 'uom'))
+        except (Exception, TypeError):
+            raise BadRequestException('Invalid circle input.')
 
         return circle
 
@@ -278,25 +286,30 @@ class PolygonXmlConverter(XmlConverter):
 
     def parse(self, data):
         """
-        Parse a node containing a point.
+        Parse a node containing a polygon.
 
-        :param data: The point node.
+        :param data: The polygon node.
         :type data: :py:class:`_ElementTree`
-        :return: A Point instance.
-        :rtype: :py:class:`Point`
+        :return: A Polygon instance.
+        :rtype: :py:class:`Polygon`
         """
         model = Polygon()
+        try:
+            sr_template = './@{0}'
+            # point_template = './{0}:{1}/text()'
 
-        sr_template = './@{0}'
-        # point_template = './{0}:{1}/text()'
+            model.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
+            for polygon in data.findall('{0}exterior'.format(GML_URN_COORDS)):
+                for coord in polygon.findall("{0}LinearRing/".format(GML_URN_COORDS)):
+                    position = coord.text
+                    lat, lon = position.split()
+                    point = [float(lon), float(lat)]
+                    model.vertices.append(point)
+        except (Exception, IndexError, TypeError):
+            raise BadRequestException('Invalid polygon input.')
 
-        model.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
-        for polygon in data.findall('{0}exterior'.format(GML_URN_COORDS)):
-            for coord in polygon.findall("{0}LinearRing/".format(GML_URN_COORDS)):
-                position = coord.text
-                lat, lon = position.split()
-                point = [float(lon), float(lat)]
-                model.vertices.append(point)
+        if not model.vertices:
+            raise BadRequestException('Invalid polygon input.')
 
         return model
 
@@ -339,20 +352,23 @@ class EllipseXmlConverter(XmlConverter):
         uom_template = './{0}:{1}/@{2}'
 
         ellipse = Ellipse()
-        ellipse.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
+        try:
+            ellipse.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
 
-        position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
-        lat, lon = position.split()
-        ellipse.latitude = float(lat)
-        ellipse.longitude = float(lon)
+            position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
+            lat, lon = position.split()
+            ellipse.latitude = float(lat)
+            ellipse.longitude = float(lon)
 
-        ellipse.semiMajorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis'))
-        ellipse.semiMinorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis'))
-        ellipse.orientation = float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
-        #ellipse.orientation = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
-        ellipse.semiMajorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
-        ellipse.semiMinorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
-        ellipse.orientationuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'orientation', 'uom'))
+            ellipse.semiMajorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis'))
+            ellipse.semiMinorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis'))
+            ellipse.orientation = float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
+            #ellipse.orientation = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
+            ellipse.semiMajorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
+            ellipse.semiMinorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
+            ellipse.orientationuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'orientation', 'uom'))
+        except (Exception, TypeError):
+            raise BadRequestException('Invalid ellipse input.')
 
         return ellipse
 
@@ -389,21 +405,24 @@ class ArcbandXmlConverter(XmlConverter):
         uom_template = './{0}:{1}/@{2}'
 
         arcband = Arcband()
-        arcband.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
+        try:
+            arcband.spatial_ref = self._run_xpath(data, sr_template.format('srsName'))
 
-        position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
-        lat, lon = position.split()
-        arcband.latitude = float(lat)
-        arcband.longitude = float(lon)
+            position = self._run_xpath(data, node_template.format(GML_PREFIX, 'pos'))
+            lat, lon = position.split()
+            arcband.latitude = float(lat)
+            arcband.longitude = float(lon)
 
-        arcband.inner_radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'innerRadius')))
-        arcband.inner_radius_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'innerRadius', 'uom'))
-        arcband.outer_radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'outerRadius')))
-        arcband.outer_radius_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'outerRadius', 'uom'))
-        arcband.start_angle = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'startAngle')))
-        arcband.start_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'startAngle', 'uom'))
-        arcband.opening_angle = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'openingAngle')))
-        arcband.opening_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'openingAngle', 'uom'))
+            arcband.inner_radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'innerRadius')))
+            arcband.inner_radius_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'innerRadius', 'uom'))
+            arcband.outer_radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'outerRadius')))
+            arcband.outer_radius_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'outerRadius', 'uom'))
+            arcband.start_angle = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'startAngle')))
+            arcband.start_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'startAngle', 'uom'))
+            arcband.opening_angle = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'openingAngle')))
+            arcband.opening_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'openingAngle', 'uom'))
+        except (Exception, TypeError):
+            raise BadRequestException('Invalid arcband input.')
 
         return arcband
 
@@ -451,6 +470,8 @@ class LocationXmlConverter(XmlConverter):
             parser = CircleXmlConverter()
         elif 'ArcBand' == qname.localname:
             parser = ArcbandXmlConverter()
+        else:
+            raise BadRequestException('Invalid geometry: {0}'.format(qname))
 
         retval = parser.parse(data)
         return retval
@@ -465,14 +486,19 @@ class LocationXmlConverter(XmlConverter):
         :rtype: :py:class:`Location`
         """
         location = Location()
-        location.id = data.attrib['id']
-        location.profile = data.attrib['profile']
+        try:
+            location.id = data.attrib['id']
+            location.profile = data.attrib['profile']
+        except Exception as ex:
+            raise BadRequestException('Invalid location input.')
 
         if 'geodetic-2d' == location.profile:
             location.location = self._parse_geodetic(data[0])
-        else:
+        elif 'civic' == location.profile:
             civic_parser = CivicXmlConverter()
             location.location = civic_parser.parse(data[0])
+        else:
+            raise LocationProfileException('{0} is not a valid location profile.'.format(location.profile), None)
 
         return location
 
@@ -540,25 +566,30 @@ class FindServiceXmlConverter(XmlConverter):
         root = self.get_root(data)
         request = FindServiceRequest()
 
-        if 'serviceBoundary' in root.attrib:
-            request.serviceBoundary = root.attrib['serviceBoundary']
+        try:
+            if 'serviceBoundary' in root.attrib:
+                request.serviceBoundary = root.attrib['serviceBoundary']
 
-        for element in root.iter():
-            if element.tag == '{urn:ietf:params:xml:ns:lost1}location':
-                location_parser = LocationXmlConverter()
-                request.location = location_parser.parse(element)
+            for element in root.iter():
+                if element.tag == '{urn:ietf:params:xml:ns:lost1}location':
+                    location_parser = LocationXmlConverter()
+                    request.location = location_parser.parse(element)
 
-            elif element.tag == '{urn:ietf:params:xml:ns:lost1}service':
-                request.service = element.text.strip()
+                elif element.tag == '{urn:ietf:params:xml:ns:lost1}service':
+                    request.service = element.text.strip()
 
-            elif element.tag == '{urn:ietf:params:xml:ns:lost1}path':
-                path_parser = PathXmlConverter()
-                request.path = path_parser.parse(element)
-            else:
-                if (LOST_URN not in element.tag) and (
-                            PIDFLO_URN not in element.tag) and (
-                            GML_URN not in element.tag):
-                    request.nonlostdata.append(element)
+                elif element.tag == '{urn:ietf:params:xml:ns:lost1}path':
+                    path_parser = PathXmlConverter()
+                    request.path = path_parser.parse(element)
+                else:
+                    if (LOST_URN not in element.tag) and (
+                                PIDFLO_URN not in element.tag) and (
+                                GML_URN not in element.tag):
+                        request.nonlostdata.append(element)
+        except (BadRequestException, LocationProfileException):
+            raise
+        except Exception:
+            raise BadRequestException('Invalid request.')
 
         return request
 
@@ -572,15 +603,7 @@ class FindServiceXmlConverter(XmlConverter):
         :rtype: :py:class:`_ElementTree`
         """
         if data.mappings is None or len(data.mappings) == 0:
-            # Create No Results Response
-
-            xml_error_response = lxml.etree.Element('errors', nsmap={None: LOST_URN}, attrib={'source': data.path[-1]})
-            errors_element = lxml.etree.SubElement(xml_error_response, 'notFound',
-                                                     attrib={'message': 'Could not find an answer to the request'})
-            attr = errors_element.attrib
-            attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
-
-            return xml_error_response
+            raise NotFoundException('Could not find an answer to the request.', None)
 
         # create the root element of the xml response.
         xml_response = lxml.etree.Element('findServiceResponse', nsmap={None: LOST_URN, GML_PREFIX: GML_URN})
