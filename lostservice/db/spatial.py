@@ -14,6 +14,7 @@ from sqlalchemy.sql import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.functions import func
 from shapely.geometry import Point
+from shapely.geometry import Polygon
 from shapely import affinity
 from shapely.geometry.polygon import LinearRing
 from shapely.wkt import loads
@@ -560,7 +561,7 @@ def get_containing_boundary_for_polygon(points, srid, boundary_table, engine, pr
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
+    trimmed_srid = int(srid.split('::')[1])
 
     ring = LinearRing(points)
     wkb_ring = from_shape(ring, trimmed_srid)
@@ -588,16 +589,21 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
+    trimmed_srid = int(srid.split('::')[1])
 
     ring = LinearRing(points)
-    wkb_ring = from_shape(ring, trimmed_srid)
+    shapely_polygon = Polygon(ring)
+
+    # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
+    # that we can use to query.
+    poly = loads(shapely_polygon.wkt)
+    wkb_poly = from_shape(poly, trimmed_srid)
 
     if proximity_search == True:
-        return get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_ring,
+        return get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_poly,
                                                 proximity_buffer, return_intersection_area)
     else:
-        return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
+        return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_poly, return_intersection_area)
 
 
 def get_boundaries_for_previous_id(pid, engine, boundary_table):
