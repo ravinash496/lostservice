@@ -250,9 +250,12 @@ class LostApplication(object):
         request_type = "LoST" + str(qname.localname)
         trans.requesttype = request_type
 
-        if len(parsed_request.getchildren())>0:
+
+        try:
             requestloc = etree.tostring(parsed_request.getchildren()[0].getchildren()[0])
             trans.requestloc = str(requestloc)
+        except:
+            pass
 
         auditor.record_event(trans)
 
