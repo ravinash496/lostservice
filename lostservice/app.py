@@ -13,6 +13,8 @@ import argparse
 import logging
 import datetime
 import pytz
+import socket
+import uuid
 from lxml import etree
 from injector import Module, provider, Injector, singleton
 import lostservice.configuration as config
@@ -62,6 +64,34 @@ class LostBindingModule(Module):
         return gisdb.GisDbInterface(config)
 
 
+class WebRequestContext(object):
+    """
+    Container for web request information from the web server.
+
+    """
+    def __init__(self, client_ip=None):
+        """
+        Constructor.
+
+        """
+        super(WebRequestContext, self).__init__()
+        self._client_ip = client_ip
+
+    @property
+    def client_ip(self):
+        """
+        Property for the client IP address.
+
+        :return: The IP address of the client that initiated the web service request.
+        :rtype: ``str``
+        """
+        return self._client_ip
+
+    @client_ip.setter
+    def client_ip(self, value):
+        self._client_ip = value
+
+
 class LostApplication(object):
     """
     The core LoST Application class.
@@ -100,10 +130,11 @@ class LostApplication(object):
         self._handler_template = conf.get('ClassLookupTemplates', 'handler_template')
 
         auditor = self._di_container.get(auditlog.AuditLog)
-        # transaction_listener = txnaudit.TransactionAuditListener(conf)
-        # auditor.register_listener(transaction_listener)
-        # diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
-        # auditor.register_listener(diagnostic_listener)
+        if conf.get_logging_db_connection_string():
+            transaction_listener = txnaudit.TransactionAuditListener(conf)
+            auditor.register_listener(transaction_listener)
+            diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
+            auditor.register_listener(diagnostic_listener)
 
     def _get_class(self, classname):
         """
@@ -176,6 +207,7 @@ class LostApplication(object):
         self._logger.info('Starting LoST query execution . . .')
         self._logger.debug(data)
 
+        activity_id = str(uuid.uuid4())
         starttime = datetime.datetime.now(tz=pytz.utc)
 
         # Here's what's gonna happen . . .
@@ -187,6 +219,8 @@ class LostApplication(object):
         # 2. call _build_queryrunner to get the runner.
         runner = self._build_queryrunner(query_name)
         response = None
+        parsed_response = None
+        endtime = None
         try:
             # 3. call _execute_internal to process the request.
             parsed_response = self._execute_internal(runner, parsed_request, context)
@@ -203,26 +237,30 @@ class LostApplication(object):
             # Send Logs to configured NENA Logging Services
             nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
-            self._audit_transaction(parsed_request, starttime, parsed_response, endtime)
+            # self._audit_transaction(activity_id, parsed_request, starttime, parsed_response, endtime, context)
 
             self._logger.debug(response)
             self._logger.info('Finished LoST query execution . . .')
 
         except Exception as e:
-            self._audit_diagnostics(e)
+            endtime = datetime.datetime.now(tz=pytz.utc)
+            self._audit_diagnostics(activity_id, e)
             self._logger.error(e)
             # TODO - handle exceptions
-            error_template = """
-            <?xml version="1.0" encoding="UTF-8"?>
+            error_template = """<?xml version="1.0" encoding="UTF-8"?>
             <errors xmlns="urn:ietf:params:xml:ns:lost1"  source="{0}">
                 <internalError message="{1}" xml:lang="en"/>
             </errors>
             """
-            response = error_template.format('authoritative.example', str(e))
+            response = error_template.format('authoritative.example', str(e)).encode()
+        finally:
+            if parsed_response is None:
+                parsed_response = etree.fromstring(response)
+            self._audit_transaction(activity_id, parsed_request, starttime, parsed_response, endtime, context)
 
         return response
 
-    def _audit_transaction(self, parsed_request, start_time, parsed_response, end_time):
+    def _audit_transaction(self, activity_id, parsed_request, start_time, parsed_response, end_time, context):
         """
         Create and send the request and response to the transactionlogs
         :param request:
@@ -231,19 +269,24 @@ class LostApplication(object):
         :param end_time:
         :return:
         """
+        nslookup = {'ls':'urn:ietf:params:xml:ns:lost1'}
+
         auditor = self._di_container.get(auditlog.AuditLog)
+        conf = self._di_container.get(config.Configuration)
+        server_id = conf.get('Service', 'source_uri', as_object=False, required=False)
 
         trans = txnaudit.TransactionEvent()
+        trans.activityid = activity_id
         trans.starttimeutc = start_time
         trans.endtimeutc = end_time
-        trans.transactionms = int((start_time - end_time).microseconds)
-        trans.response = etree.tostring(parsed_response)
-        trans.request = etree.tostring(parsed_request)
+        trans.transactionms = int((start_time - end_time).microseconds * .001)
+        trans.response = etree.tostring(parsed_response, encoding='unicode')
+        trans.request = etree.tostring(parsed_request, encoding='unicode')
 
-        server_id = parsed_response.getchildren()[0].attrib.get("source")
-        trans.serverid = str(server_id)
+        trans.serverid = server_id
 
-        trans.requestsvcurn = str(parsed_request.findtext("service"))
+        trans.requestsvcurn = parsed_request.xpath('//ls:service/text()', namespaces=nslookup)[0]
+
         qname = etree.QName(parsed_response)
         response_type = "LoST" + str(qname.localname)
         trans.responsetype = response_type
@@ -252,12 +295,26 @@ class LostApplication(object):
         request_type = "LoST" + str(qname.localname)
         trans.requesttype = request_type
 
-        requestloc = etree.tostring(parsed_request.getchildren()[0].getchildren()[0])
-        trans.requestloc = str(requestloc)
+        loc_type = parsed_request.xpath('//ls:location/@profile', namespaces=nslookup)
+        trans.requestloctype = loc_type[0] if loc_type else ''
+
+        requestloc = parsed_request.xpath('//ls:location', namespaces=nslookup)
+        trans.requestloc = etree.tostring(requestloc[0][0], encoding='unicode') \
+            if len(requestloc) > 0 and len(requestloc[0]) > 0 else ''
+
+        trans.machineid = socket.gethostname()
+        trans.clientid = context['web_ctx'].client_ip if 'web_ctx' in context else ''
+
+        error_type = parsed_response.xpath('//ls:errors', namespaces=nslookup)
+        trans.responseerrortype = etree.QName(error_type[0][0]).localname \
+            if len(error_type) > 0 and  len(error_type[0]) > 0 else ''
+
+        # TODO: need to update this when we get to recursion.
+        trans.responsesrctype = 'Local'
 
         auditor.record_event(trans)
 
-    def _audit_diagnostics(self, error):
+    def _audit_diagnostics(self, activity_id, error):
         """
         Create and send the request and response to the transactionlogs
         :param request:
@@ -271,21 +328,20 @@ class LostApplication(object):
         conf = self._di_container.get(config.Configuration)
         server_id = conf.get('Service', 'source_uri', as_object=False, required=False)
 
-        import uuid
         diag = diagaudit.DiagnosticEvent()
         diag.qpslogid = -1
         diag.eventid = 1
         diag.priority = 5
         diag.severity = 2
-        diag.activityid = str(uuid.uuid4())
+        diag.activityid = activity_id
         diag.categoryname = "Diagnostic"
         diag.title = "Error"
-        diag.timestamputc = datetime.datetime.now(tz=pytz.utc)
-        diag.machinename = ""
+        diag.timestamputc = datetime.datetime.now(tz=pytz.utc).strftime('%m/%d/%Y %H:%M:%S %Z%z')
+        diag.machinename = socket.gethostname()
         diag.serverid = server_id
-        diag.machineid = ""
+        diag.machineid = diag.machinename
         diag.message = str(error)
-        diag.formattedmessage = str(error)
+        diag.formattedmessage = 'Timestamp: {0} Message: {1}'.format(diag.timestamputc, error)
 
         auditor.record_event(diag)
 

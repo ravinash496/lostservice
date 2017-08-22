@@ -89,7 +89,7 @@ class Configuration(object):
 
         # Finally, cache the connection string for later.
         self._db_connection_string = self._rebuild_db_connection_string('Database')
-        self._logging_db_connection_string = self._rebuild_db_connection_string('Logging')
+        self._logging_db_connection_string = self._rebuild_db_connection_string('LoggingDB')
 
     @property
     def custom_config_file(self):
@@ -272,14 +272,16 @@ class Configuration(object):
 
         :return: ``str``
         """
-        host = self.get(section, 'host')
-        port = self.get(section, 'port')
-        dbname = self.get(section, 'dbname')
-        user = self.get(section, 'username')
-        password = self.get(section, 'password')
+        db_connection_string = None
+        if section in self.get_sections():
+            host = self.get(section, 'host')
+            port = self.get(section, 'port')
+            dbname = self.get(section, 'dbname')
+            user = self.get(section, 'username')
+            password = self.get(section, 'password')
+            conn_string_template = 'postgresql://{0}:{1}@{2}:{3}/{4}'
+            db_connection_string = conn_string_template.format(user, password, host, port, dbname)
 
-        conn_string_template = 'postgresql://{0}:{1}@{2}:{3}/{4}'
-        db_connection_string = conn_string_template.format(user, password, host, port, dbname)
         return db_connection_string
 
     def get_gis_db_connection_string(self):
@@ -299,6 +301,6 @@ class Configuration(object):
         :return: ``str``
         """
         if self._logging_db_connection_string is None:
-            self._logging_db_connection_string = self._rebuild_db_connection_string('Logging')
+            self._logging_db_connection_string = self._rebuild_db_connection_string('LoggingDB')
         return self._logging_db_connection_string
 
