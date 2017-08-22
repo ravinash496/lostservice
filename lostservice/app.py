@@ -209,6 +209,7 @@ class LostApplication(object):
         self._logger.debug(data)
 
         conf = self._di_container.get(config.Configuration)
+        parsed_request = None
         response = None
         parsed_response = None
         endtime = None
@@ -257,12 +258,12 @@ class LostApplication(object):
             self._logger.error(e)
             source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
             if isinstance(e, etree.LxmlError):
-                response = exp.build_error_response(exp.BadRequestException(str(e), None), source_uri)
+                response = exp.build_error_response(exp.BadRequestException('Malformed request xml.', None), source_uri)
             else:
                 response = exp.build_error_response(e, source_uri)
         finally:
             if parsed_response is None:
-                parsed_response = etree.fromstring(response)
+                parsed_response = etree.fromstring(response.encode())
             self._audit_transaction(activity_id, parsed_request, starttime, parsed_response, endtime, context)
 
         return response
@@ -287,34 +288,33 @@ class LostApplication(object):
         trans.starttimeutc = start_time
         trans.endtimeutc = end_time
         trans.transactionms = int((start_time - end_time).microseconds * .001)
-        trans.response = etree.tostring(parsed_response, encoding='unicode')
-        trans.request = etree.tostring(parsed_request, encoding='unicode')
-
         trans.serverid = server_id
-
-        trans.requestsvcurn = parsed_request.xpath('//ls:service/text()', namespaces=nslookup)[0]
-
-        qname = etree.QName(parsed_response)
-        response_type = "LoST" + str(qname.localname)
-        trans.responsetype = response_type
-
-        qname = etree.QName(parsed_request)
-        request_type = "LoST" + str(qname.localname)
-        trans.requesttype = request_type
-
-        loc_type = parsed_request.xpath('//ls:location/@profile', namespaces=nslookup)
-        trans.requestloctype = loc_type[0] if loc_type else ''
-
-        requestloc = parsed_request.xpath('//ls:location', namespaces=nslookup)
-        trans.requestloc = etree.tostring(requestloc[0][0], encoding='unicode') \
-            if len(requestloc) > 0 and len(requestloc[0]) > 0 else ''
-
         trans.machineid = socket.gethostname()
         trans.clientid = context['web_ctx'].client_ip if 'web_ctx' in context else ''
 
-        error_type = parsed_response.xpath('//ls:errors', namespaces=nslookup)
-        trans.responseerrortype = etree.QName(error_type[0][0]).localname \
-            if len(error_type) > 0 and  len(error_type[0]) > 0 else ''
+        if parsed_request is not None:
+            trans.request = etree.tostring(parsed_request, encoding='unicode')
+            trans.requestsvcurn = parsed_request.xpath('//ls:service/text()', namespaces=nslookup)[0]
+
+            qname = etree.QName(parsed_request)
+            request_type = "LoST" + str(qname.localname)
+            trans.requesttype = request_type
+
+            loc_type = parsed_request.xpath('//ls:location/@profile', namespaces=nslookup)
+            trans.requestloctype = loc_type[0] if loc_type else ''
+
+            requestloc = parsed_request.xpath('//ls:location', namespaces=nslookup)
+            trans.requestloc = etree.tostring(requestloc[0][0], encoding='unicode') \
+                if len(requestloc) > 0 and len(requestloc[0]) > 0 else ''
+
+        if parsed_response is not None:
+            trans.response = etree.tostring(parsed_response, encoding='unicode')
+            qname = etree.QName(parsed_response)
+            trans.responsetype = "LoST" + str(qname)
+
+            error_type = parsed_response.xpath('//ls:errors', namespaces=nslookup)
+            trans.responseerrortype = etree.QName(error_type[0][0]).localname \
+                if len(error_type) > 0 and len(error_type[0]) > 0 else ''
 
         # TODO: need to update this when we get to recursion.
         trans.responsesrctype = 'Local'
