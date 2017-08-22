@@ -248,23 +248,23 @@ class Configuration(object):
 
         env_log_dbhostname = os.getenv(_LOGDBHOSTNAME)
         if env_log_dbhostname is not None:
-            self.set_option('Logging', 'host', env_log_dbhostname)
+            self.set_option('LoggingDB', 'host', env_log_dbhostname)
 
         env_log_dbport = os.getenv(_LOGDBPORT)
         if env_log_dbport is not None:
-            self.set_option('Logging', 'port', env_log_dbport)
+            self.set_option('LoggingDB', 'port', env_log_dbport)
 
         env_log_dbname = os.getenv(_LOGDBNAME)
         if env_log_dbname is not None:
-            self.set_option('Logging', 'dbname', env_log_dbname)
+            self.set_option('LoggingDB', 'dbname', env_log_dbname)
 
         env_log_dbusername = os.getenv(_LOGDBUSER)
         if env_log_dbusername is not None:
-            self.set_option('Logging', 'username', env_log_dbusername)
+            self.set_option('LoggingDB', 'username', env_log_dbusername)
 
         env_log_dbpassword = os.getenv(_LOGDBPASSWORD)
         if env_log_dbpassword is not None:
-            self.set_option('Logging', 'password', env_log_dbpassword)
+            self.set_option('LoggingDB', 'password', env_log_dbpassword)
 
     def _rebuild_db_connection_string(self, section):
         """
