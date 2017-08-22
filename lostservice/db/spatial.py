@@ -154,7 +154,7 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
     return results
 
 
-def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, return_intersection_area):
+def _get_intersecting_boundaries_for_geom_value(engine, table_name, geom, return_intersection_area):
     """
     Queries the given table for any boundaries that intersect the given geometry and returns the shape.
 
@@ -382,7 +382,7 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
             return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle, proximity_buffer, return_intersection_area)
         else:
             # Call Overload to return the GML representation of the shape
-            return _get_intersecting_boundaries_for_geom_reference(engine, boundary_table, wkb_circle, return_intersection_area)
+            return _get_intersecting_boundaries_for_geom_value(engine, boundary_table, wkb_circle, return_intersection_area)
     else:
         if proximity_search == True:
             return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
@@ -430,7 +430,7 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
         s = select(
             [
                 the_table,
-                func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16),
                 the_table.c.wkb_geometry.ST_Area(
                     the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
                 ).label('AREA_RET')
