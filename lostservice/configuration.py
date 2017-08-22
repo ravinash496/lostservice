@@ -10,7 +10,7 @@ Configuration related classes and functions.
 
 import os
 import configparser
-from enum import Enum
+from lostservice.exception import InternalErrorException
 
 _DBHOSTNAME = 'DBHOSTNAME'
 _DBPORT = 'DBPORT'
@@ -27,15 +27,15 @@ _LOGDBUSER = 'LOGDBUSER'
 _LOGDBPASSWORD = 'LOGDBPASSWORD'
 
 
-class ConfigurationException(Exception):
+class ConfigurationException(InternalErrorException):
     """
     Something went wrong while loading, retrieving, or setting configuration
     values.
 
     """
-    def __init__(self, message):
+    def __init__(self, message, nested=None):
         # Call the base class constructor with the parameters it needs
-        super(ConfigurationException, self).__init__(message)
+        super(ConfigurationException, self).__init__(message, nested)
 
 
 class Configuration(object):
@@ -76,8 +76,8 @@ class Configuration(object):
         if not os.path.isfile(self._custom_config) \
                 or not os.path.isfile(self._default_config):
             raise ConfigurationException(
-                'One of custom ({0}) or default({1}) '
-                'configuration files missing.'.format(self._custom_config, self._default_config))
+                'One of custom ({0}) or default({1}) configuration files missing.'
+                .format(self._custom_config, self._default_config))
 
         self._custom_config_parser = configparser.ConfigParser()
         self._custom_config_parser.read(self._custom_config)

@@ -22,6 +22,7 @@ import lostservice.logger.diagnosticsaudit as diagaudit
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 import lostservice.logger.nenalogging as nenalog
+import lostservice.exception as exp
 
 
 class LostBindingModule(Module):
@@ -176,18 +177,20 @@ class LostApplication(object):
         self._logger.info('Starting LoST query execution . . .')
         self._logger.debug(data)
 
-        starttime = datetime.datetime.now(tz=pytz.utc)
-
-        # Here's what's gonna happen . . .
-        # 1. Parse the request and pull out the root element.
-        parsed_request = etree.fromstring(data)
-        qname = etree.QName(parsed_request)
-        query_name = qname.localname
-
-        # 2. call _build_queryrunner to get the runner.
-        runner = self._build_queryrunner(query_name)
+        conf = self._di_container.get(config.Configuration)
         response = None
         try:
+            starttime = datetime.datetime.now(tz=pytz.utc)
+
+            # Here's what's gonna happen . . .
+            # 1. Parse the request and pull out the root element.
+            parsed_request = etree.fromstring(data)
+            qname = etree.QName(parsed_request)
+            query_name = qname.localname
+
+            # 2. call _build_queryrunner to get the runner.
+            runner = self._build_queryrunner(query_name)
+
             # 3. call _execute_internal to process the request.
             parsed_response = self._execute_internal(runner, parsed_request, context)
 
@@ -196,8 +199,6 @@ class LostApplication(object):
 
             # Create End Time (response has been sent)
             endtime = datetime.datetime.now(tz=pytz.utc)
-
-            conf = self._di_container.get(config.Configuration)
 
             # TODO Identify Malformed Query Types
             # Send Logs to configured NENA Logging Services
@@ -211,14 +212,11 @@ class LostApplication(object):
         except Exception as e:
             self._audit_diagnostics(e)
             self._logger.error(e)
-            # TODO - handle exceptions
-            error_template = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <errors xmlns="urn:ietf:params:xml:ns:lost1"  source="{0}">
-                <internalError message="{1}" xml:lang="en"/>
-            </errors>
-            """
-            response = error_template.format('authoritative.example', str(e))
+            source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
+            if isinstance(e, etree.LxmlError):
+                response = exp.build_error_response(exp.BadRequestException(str(e), None), source_uri)
+            else:
+                response = exp.build_error_response(e, source_uri)
 
         return response
 

@@ -433,7 +433,7 @@ class FindServiceInnerTest(unittest.TestCase):
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
 
-        with self.assertRaises(lostservice.handling.findservice.FindServiceException):
+        with self.assertRaises(lostservice.exception.InternalErrorException):
             actual = target._apply_point_multiple_match_policy(input)
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
@@ -779,6 +779,27 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_polygon_multiple_match_policy.assert_called_with([])
         target._apply_policies.assert_called_once()
         target._apply_policies.assert_called_with(expected, False)
+
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_get_esb_table(self, mock_db):
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+
+        target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
+
+        actual = target._get_esb_table('urn2');
+        self.assertEqual(actual, 'service2')
+
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_get_esb_table_exception(self, mock_db):
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+
+        target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
+
+        with self.assertRaises(lostservice.exception.ServiceNotImplementedException):
+            actual = target._get_esb_table('whatever');
+
 
 if __name__ == '__main__':
     unittest.main()
