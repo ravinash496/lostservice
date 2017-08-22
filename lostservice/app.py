@@ -24,6 +24,7 @@ import lostservice.logger.diagnosticsaudit as diagaudit
 import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 import lostservice.logger.nenalogging as nenalog
+import lostservice.exception as exp
 
 
 class LostBindingModule(Module):
@@ -207,21 +208,33 @@ class LostApplication(object):
         self._logger.info('Starting LoST query execution . . .')
         self._logger.debug(data)
 
-        activity_id = str(uuid.uuid4())
-        starttime = datetime.datetime.now(tz=pytz.utc)
-
-        # Here's what's gonna happen . . .
-        # 1. Parse the request and pull out the root element.
-        parsed_request = etree.fromstring(data)
-        qname = etree.QName(parsed_request)
-        query_name = qname.localname
-
-        # 2. call _build_queryrunner to get the runner.
-        runner = self._build_queryrunner(query_name)
+        conf = self._di_container.get(config.Configuration)
         response = None
         parsed_response = None
         endtime = None
+
+        activity_id = str(uuid.uuid4())
+        starttime = datetime.datetime.now(tz=pytz.utc)
+
         try:
+            # Here's what's gonna happen . . .
+            # 1. Parse the request and pull out the root element.
+            parsed_request = etree.fromstring(data)
+            qname = etree.QName(parsed_request)
+            query_name = qname.localname
+
+            # 2. call _build_queryrunner to get the runner.
+            runner = self._build_queryrunner(query_name)
+
+            # Here's what's gonna happen . . .
+            # 1. Parse the request and pull out the root element.
+            parsed_request = etree.fromstring(data)
+            qname = etree.QName(parsed_request)
+            query_name = qname.localname
+
+            # 2. call _build_queryrunner to get the runner.
+            runner = self._build_queryrunner(query_name)
+
             # 3. call _execute_internal to process the request.
             parsed_response = self._execute_internal(runner, parsed_request, context)
 
@@ -231,13 +244,9 @@ class LostApplication(object):
             # Create End Time (response has been sent)
             endtime = datetime.datetime.now(tz=pytz.utc)
 
-            conf = self._di_container.get(config.Configuration)
-
             # TODO Identify Malformed Query Types
             # Send Logs to configured NENA Logging Services
             nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
-
-            # self._audit_transaction(activity_id, parsed_request, starttime, parsed_response, endtime, context)
 
             self._logger.debug(response)
             self._logger.info('Finished LoST query execution . . .')
@@ -246,13 +255,11 @@ class LostApplication(object):
             endtime = datetime.datetime.now(tz=pytz.utc)
             self._audit_diagnostics(activity_id, e)
             self._logger.error(e)
-            # TODO - handle exceptions
-            error_template = """<?xml version="1.0" encoding="UTF-8"?>
-            <errors xmlns="urn:ietf:params:xml:ns:lost1"  source="{0}">
-                <internalError message="{1}" xml:lang="en"/>
-            </errors>
-            """
-            response = error_template.format('authoritative.example', str(e)).encode()
+            source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
+            if isinstance(e, etree.LxmlError):
+                response = exp.build_error_response(exp.BadRequestException(str(e), None), source_uri)
+            else:
+                response = exp.build_error_response(e, source_uri)
         finally:
             if parsed_response is None:
                 parsed_response = etree.fromstring(response)
