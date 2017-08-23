@@ -227,15 +227,6 @@ class LostApplication(object):
             # 2. call _build_queryrunner to get the runner.
             runner = self._build_queryrunner(query_name)
 
-            # Here's what's gonna happen . . .
-            # 1. Parse the request and pull out the root element.
-            parsed_request = etree.fromstring(data)
-            qname = etree.QName(parsed_request)
-            query_name = qname.localname
-
-            # 2. call _build_queryrunner to get the runner.
-            runner = self._build_queryrunner(query_name)
-
             # 3. call _execute_internal to process the request.
             parsed_response = self._execute_internal(runner, parsed_request, context)
 
