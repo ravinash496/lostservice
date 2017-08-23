@@ -18,7 +18,7 @@ from shapely.geometry import Polygon
 from shapely import affinity
 from shapely.geometry.polygon import LinearRing
 from shapely.wkt import loads
-from geoalchemy2.shape import from_shape, to_shape
+from geoalchemy2.shape import from_shape
 from osgeo import osr
 from osgeo import ogr
 import math
@@ -151,11 +151,6 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
             'Unable to construct intersection query.', ex)
     except SpatialQueryException:
         raise
-
-    for result in results:
-        if 'INT_AREA' in result:
-            shp = ogr.CreateGeometryFromWkt(result['INT_AREA'])
-            # result['AREA_RET'] = shp.GetArea()
 
     return results
 
