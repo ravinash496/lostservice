@@ -192,6 +192,29 @@ class FindServiceConfigWrapper(object):
             return ""
         return settings
 
+    def additional_data_uri(self):
+        """
+        Gets the additional data URI.
+
+        :return: The configured additional data URI.
+        :rtype: ``str``
+        """
+        uri = self._config.get('AddtionalData', 'service_urn', as_object=False, required=False)
+        if uri is None:
+            uri = ''
+        return uri
+
+    def additional_data_buffer(self):
+        """
+        Gets the additional data buffer.
+
+        :return: The configured additional data buffer.
+        :rtype: ``float``
+        """
+        buffer = self._config.get('AddtionalData', 'buffer_meters', as_object=False, required=False)
+        if buffer is None:
+            buffer = 0.0
+        return float(buffer)
 
 class FindServiceInner(object):
     """
@@ -245,8 +268,8 @@ class FindServiceInner(object):
         :rtype: ``list`` of ``dict``
         """
         ADD_DATA_REQUESTED = False
-        ADD_DATA_SERVICE = self._find_service_config.settings_for_additionaldata("service_urn")
-        buffer_distance = self._find_service_config.settings_for_additionaldata("buffer_meters")
+        ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
+        buffer_distance = self._find_service_config.additional_data_buffer()
         if service_urn == ADD_DATA_SERVICE:
             ADD_DATA_REQUESTED = True
             esb_table = self._find_service_config.settings_for_additionaldata("data_table")
@@ -887,7 +910,7 @@ class FindServiceOuter(object):
             resp_mapping.display_name = mapping['displayname']
             resp_mapping.route_uri = mapping['routeuri']
             resp_mapping.service_number = mapping['servicenum']
-            resp_mapping.service_urn = mapping.get('service_urn')
+            resp_mapping.service_urn = mapping.get('serviceurn')
             if include_boundary_value and 'ST_AsGML_1' in mapping:
                 resp_mapping.boundary_value = mapping['ST_AsGML_1']
         resp_mapping.last_updated = mapping['updatedate']
