@@ -138,12 +138,6 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
                  func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))).label('AREA_RET')
                  ],
                 the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
-            # s = select(
-            #     [the_table,
-            #      func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16),
-            #      func.ST_Intersection(the_table.c.wkb_geometry, func.ST_SetSRID(geom, 4326)).ST_AsEWKT().label('INT_AREA')
-            #      ],
-            #    the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
         else:
 
             s = select(
