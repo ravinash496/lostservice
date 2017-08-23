@@ -10,6 +10,7 @@ Functions for manipulating geometries.
 from osgeo import ogr, osr
 import numpy as np
 import shapely.geometry as geom
+from lostservice.db.spatial import getutmsrid
 
 
 def reproject_point(x, y, source_srid, target_srid):
@@ -77,13 +78,13 @@ def calculate_arc(centerx, centery, radius, start_angle, end_angle):
     return arc
 
 
-def generate_arcband(x, y, band_start, band_sweep, inner_radius, outer_radius):
+def generate_arcband(long, lat, band_start, band_sweep, inner_radius, outer_radius):
     """
     Generate a new arcband with the given parameters.  Assumes the center coordinates are
-    in EPSG 4326, the radii are 3857 and the angles are in degrees.
+    in EPSG 4326, the radii are converted to UTM and the angles are in degrees.
 
-    :param x:
-    :param y:
+    :param long:
+    :param lat:
     :param band_start:
     :param band_sweep:
     :param inner_radius:
@@ -91,8 +92,10 @@ def generate_arcband(x, y, band_start, band_sweep, inner_radius, outer_radius):
     :return: :py:class:'osgeo.ogr.Geometry`
     """
 
+    utmsrid = getutmsrid(longitude=long, latitude=lat)
+
     # project the center since the radii are in meters
-    center_x, center_y = reproject_point(x, y, 4326, 3857)
+    center_x, center_y = reproject_point(long, lat, 4326, utmsrid)
 
     # adjust for the fact that we're not doing standard geometry - back up 90 degress
     # to start from north.
@@ -129,7 +132,7 @@ def generate_arcband(x, y, band_start, band_sweep, inner_radius, outer_radius):
     arcband = ogr.CreateGeometryFromWkb(arc_band_polygon.wkb)
 
     # project back to WGS84
-    reproject_geom(arcband, 3857, 4326)
+    reproject_geom(arcband, utmsrid, 4326)
 
     return arcband
 
