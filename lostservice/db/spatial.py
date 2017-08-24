@@ -472,9 +472,7 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
             [
                 the_table,
                 func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16),
-                the_table.c.wkb_geometry.ST_Area(
-                    the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
-                ).label('AREA_RET')
+                func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(wkb_ellipse, 4326))).label('AREA_RET')
             ],
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
@@ -845,9 +843,8 @@ def _get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, b
             [
                 the_table.c.serviceurn,
                 func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
-                the_table.c.wkb_geometry.ST_Area(
-                    the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
-                ).label('AREA_RET')
+                func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(wkb_ellipse, 4326))).label(
+                    'AREA_RET')
             ],
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
