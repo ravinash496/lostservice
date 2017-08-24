@@ -10,5 +10,3 @@
       <service>urn:nena:service:sos</service>
       <slb:serviceListBoundaryRequest type="value"/>
 </listServicesByLocation>
-
-

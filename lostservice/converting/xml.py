@@ -795,7 +795,8 @@ class ListServicesByLocationXmlConverter(XmlConverter):
         xml_response = lxml.etree.Element('listServicesByLocationResponse', nsmap={None: LOST_URN})
         # add the services element, filling in with the list of services in the response.
         services_element = lxml.etree.SubElement(xml_response, 'serviceList')
-        services_element.text = ' '.join(data.services)
+        if data.services:
+            services_element.text = ' '.join(data.services)
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')

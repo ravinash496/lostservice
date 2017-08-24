@@ -53,7 +53,6 @@ def _execute_query(engine, query):
         with engine.connect() as conn:
             result = conn.execute(query)
             for row in result:
-                # print(row)
                 row_copy = dict(zip(row.keys(), row))
                 retval.append(row_copy)
             result.close()
@@ -476,7 +475,6 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
             ],
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
-
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -484,6 +482,7 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
     except SpatialQueryException:
         raise
     return results
+
 
 def _transform_ellipse(long ,lat , major, minor, orientation, srid):
     """
@@ -583,6 +582,7 @@ def calculate_orientation(orientation):
         rotate_angle = math.floor(rotate_angle)
 
     return rotate_angle
+
 
 def get_containing_boundary_for_polygon(points, srid, boundary_table, engine, proximity_search = False, proximity_buffer = 0 ):
     """
@@ -715,18 +715,18 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
     return retval
 
 
-def get_list_service_for_point(x, y, srid, boundary_table, engine):
+def get_list_service_for_point(long, lat, srid, boundary_table, engine):
     """
 
-    :param x: 
-    :param y: 
+    :param long: 
+    :param lat: 
     :param srid: 
     :param boundary_table: 
     :param engine: 
     :return: 
     """
     # Create a Shapely Point
-    pt = Point(x, y)
+    pt = Point(long, lat)
 
     # Pull out just the number from the SRID
     trimmed_srid = srid.split('::')[1]
@@ -799,12 +799,12 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
             boundary_table)
 
 
-def get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table, engine):
+def get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
 
-    return (_get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, i, engine) for i in boundary_table)
+    return (_get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, i, engine) for i in boundary_table)
 
 
-def _get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table, engine):
+def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
     """
     Executes a contains query for a polygon.
 
@@ -841,14 +841,13 @@ def _get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, b
 
         s = select(
             [
-                the_table.c.serviceurn,
+                the_table,
                 func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
                 func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(wkb_ellipse, 4326))).label(
                     'AREA_RET')
             ],
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
-
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -885,8 +884,6 @@ def get_intersecting_list_service_with_buffer(long, lat, engine, table_name, geo
             s = select([the_table.c.serviceurn, the_table.c.wkb_geometry.ST_AsGML()],
                    func.ST_Intersects(func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom,4326), utmsrid), buffer_distance),
                                       the_table.c.wkb_geometry.ST_Transform(utmsrid)))
-
-
 
         retval = _execute_query(engine, s)
 

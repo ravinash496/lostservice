@@ -1,0 +1,16 @@
+<listServicesByLocation
+      xmlns="urn:ietf:params:xml:ns:lost1"
+      xmlns:gml="http://www.opengis.net/gml"
+      xmlns:slb="urn:ietf:params:xml:ns:lost1:slb" recursive="true">
+   <location id="4dbaf2b4-88f2-44db-be7e-5d9955b6bfcc" profile="geodetic-2d">
+      <gs:ArcBand xmlns:gs="http://www.opengis.net/pidflo/1.0" xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
+         <gml:pos>43.2779918075767 -68.4348807330539</gml:pos>
+         <gs:innerRadius uom="urn:ogc:def:uom:EPSG::9001">0</gs:innerRadius>
+         <gs:outerRadius uom="urn:ogc:def:uom:EPSG::9001">3.35317014711469</gs:outerRadius>
+         <gs:startAngle uom="urn:ogc:def:uom:EPSG::9102">136.023030370015</gs:startAngle>
+         <gs:openingAngle uom="urn:ogc:def:uom:EPSG::9102">269.999999769566</gs:openingAngle>
+      </gs:ArcBand>
+   </location>
+      <service>urn:nena:service:sos</service>
+      <slb:serviceListBoundaryRequest type="value"/>
+</listServicesByLocation>

@@ -19,22 +19,6 @@ from lxml import etree
 from shapely.geometry import Polygon
 
 
-
-
-class ListServiceBYLocationException(Exception):
-    """
-    Raised when something goes wrong in the process of a ListService request.
-
-    :param message: The exception message
-    :type message:  ``str``
-    :param nested: Nested exception, if any.
-    :type nested:
-    """
-    def __init__(self, message, nested=None):
-        super().__init__(message)
-        self._nested = nested
-
-
 class ListServiceBYLocationConfigWrapper(object):
     """
     A wrapper class for ListService configuration related information.
@@ -97,12 +81,12 @@ class ListServiceByLocationInner(object):
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
 
-    def List_serviceBYlocation_for_point(self, service_urn, longitude, latitude, spatial_ref):
+    def list_services_by_location_for_point(self, service, longitude, latitude, spatial_ref):
         """
         List services for the given point.
 
-        :param service_urn: The identifier for the service to look up.
-        :type service_urn: ``str``
+        :param service: The identifier for the service to look up.
+        :type service: ``str``
         :param longitude: Longitude of the point to search.
         :type longitude: ``float``
         :param latitude: Latitude of the point to search.
@@ -114,25 +98,23 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given point.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings.values()
-        results = self._db_wrapper.get_list_services_for_point(longitude,
-            latitude,
-            spatial_ref,
-            esb_table)
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
+        if service is not None:
+            esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
+            result = self._db_wrapper.get_list_services_for_point(longitude, latitude, spatial_ref, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
+        elif service is None:
+            esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
+            result = self._db_wrapper.get_list_services_for_point(longitude, latitude, spatial_ref, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
 
-    def List_service_BYLocation_for_circle(self,
-                                service_urn,
-                                longitude,
-                                latitude,
-                                spatial_ref,
-                                radius,
-                                radius_uom,):
+    def list_services_by_location_for_circle(self, service, longitude, latitude, spatial_ref, radius, radius_uom,):
         """
         List services for the given circle.
 
-        :param service_urn: The identifier for the service to look up.
-        :type service_urn: ``str``
+        :param service: The identifier for the service to look up.
+        :type service: ``str``
         :param longitude: Longitude of the center of the circle to search.
         :type longitude: ``float``
         :param latitude: Latitude of the center of the circle to search.
@@ -148,30 +130,23 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given circle.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._mappings.values()
+        if service is not None:
+            esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
+            result = self._db_wrapper.get_intersecting_list_service_for_circle(longitude, latitude, spatial_ref, radius, radius_uom, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
+        elif service is None:
+            esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
+            result = self._db_wrapper.get_intersecting_list_service_for_circle(longitude, latitude, spatial_ref, radius, radius_uom, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
 
-        results = self._db_wrapper.get_intersecting_list_service_for_circle(
-            longitude,
-            latitude,
-            spatial_ref,
-            radius,
-            radius_uom, esb_table)
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
-
-
-
-    def List_service_ByLocation_for_ellipse(self,
-                                 longitude,
-                                 latitude,
-                                 spatial_ref,
-                                 semi_major_axis,
-                                 semi_minor_axis,
-                                 orientation,):
+    def list_services_by_location_for_ellipse(self, service, longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation,):
         """
         List services for the given ellipse.
 
-        :param service_urn: The identifier for the service to look up.
-        :type service_urn: ``str``
+        :param service: The identifier for the service to look up.
+        :type service: ``str``
         :param longitude: Longitude of the center of the ellipse to search.
         :type longitude: ``float``
         :param latitude: Latitude of the center of the ellipse to search.
@@ -189,37 +164,23 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given ellipse.
         :rtype: ``list`` of ``dict``
         """
-        # TODO: does there need to be an orientation UOM?
-        # TODO: Why do the ellipse queries always return the intersection areas but others don't?
+        if service is not None:
+            esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
+            result = self._db_wrapper.get_list_services_for_ellipse(longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
+        elif service is None:
+            esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
+            result = self._db_wrapper.get_list_services_for_ellipse(longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
 
-        esb_table = self._mappings.values()
-
-        results = self._db_wrapper.get_list_services_for_ellipse(
-            longitude,
-            latitude,
-            spatial_ref,
-            float(semi_major_axis),
-            float(semi_minor_axis),
-            float(orientation),
-            esb_table)
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
-
-
-    def list_service_ByLocation_for_arcband(self,
-                                 service_urn,
-                                 longitude,
-                                 latitude,
-                                 spatial_ref,
-                                 start_angle,
-                                 opening_angle,
-                                 inner_radius,
-                                 outer_radius,
-                                 return_shape=False):
+    def list_service_by_location_for_arcband(self, service, longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius, return_shape=False):
         """
         List services for the given arcband.
 
-        :param service_urn: The identifier for the service to look up.
-        :type service_urn: ``str``
+        :param service: The identifier for the service to look up.
+        :type service: ``str``
         :param longitude: Longitude of the center of the arcband to search.
         :type longitude: ``float``
         :param latitude: Latitude of the center of the arcband to search.
@@ -241,9 +202,9 @@ class ListServiceByLocationInner(object):
         """
         arcband = geom.generate_arcband(longitude, latitude, start_angle, opening_angle, inner_radius, outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
-        return self.List_service_ByLocation_for_polygon(service_urn, points, spatial_ref, return_shape)
+        return self.list_services_by_location_for_polygon(service, points, spatial_ref, return_shape)
 
-    def List_service_ByLocation_for_polygon(self, service_urn, points, spatial_ref, return_shape=False):
+    def list_services_by_location_for_polygon(self, service, points, spatial_ref, return_shape=False):
         """
         Listservices for the given polygon.
 
@@ -258,13 +219,16 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given polygon.
         :rtype: ``list`` of ``dict``
         """
-
-        esb_table = self._mappings.values()
-        results = self._db_wrapper.get_intersecting_list_service_for_polygon(points, spatial_ref, esb_table)
-
-        return [i[0].get('serviceurn') for i in results if i and i[0].get('serviceurn') != 'urn:nena:service:sos']
-
-
+        if service is not None:
+            esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
+            result = self._db_wrapper.get_intersecting_list_service_for_polygon(points, spatial_ref, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
+        elif service is None:
+            esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
+            result = self._db_wrapper.get_intersecting_list_service_for_polygon(points, spatial_ref, esb_table)
+            results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
+            return results
 
     def _clear_attributes(self, xml_element):
         """
@@ -298,7 +262,7 @@ class ListServiceBylocationOuter(object):
         self._inner = inner
         self._list_service_config = config
 
-    def List_ServiceBylocation_for_point(self, request):
+    def list_services_by_location_for_point(self, request):
         """
         List service for a point.
 
@@ -307,18 +271,15 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_serviceBYlocation_for_point(
+        mappings = self._inner.list_services_by_location_for_point(
             request.service,
             request.location.location.longitude,
             request.location.location.latitude,
             request.location.location.spatial_ref
         )
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata)
+        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_circle(self, request):
+    def list_services_by_location_for_circle(self, request):
         """
         List service for a circle.
 
@@ -327,19 +288,16 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_service_BYLocation_for_circle(
+        mappings = self._inner.list_services_by_location_for_circle(
             request.service,
             request.location.location.longitude,
             request.location.location.latitude,
             request.location.location.spatial_ref,
             float(request.location.location.radius),
             request.location.location.uom)
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata)
+        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_ellipse(self, request):
+    def list_services_by_location_for_ellipse(self, request):
         """
         List service for an ellipse.
 
@@ -348,19 +306,17 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_service_ByLocation_for_ellipse(
+        mappings = self._inner.list_services_by_location_for_ellipse(
+            request.service,
             request.location.location.longitude,
             request.location.location.latitude,
             request.location.location.spatial_ref,
             float(request.location.location.semiMajorAxis),
             float(request.location.location.semiMinorAxis),
             float(request.location.location.orientation))
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata)
+        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_arcband(self, request):
+    def list_service_by_location_for_arcband(self, request):
         """
         List service for an arcband.
 
@@ -369,7 +325,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.list_service_ByLocation_for_arcband(
+        mappings = self._inner.list_service_by_location_for_arcband(
             request.service,
             request.location.location.longitude,
             request.location.location.latitude,
@@ -378,12 +334,9 @@ class ListServiceBylocationOuter(object):
             float(request.location.location.opening_angle),
             float(request.location.location.inner_radius),
             float(request.location.location.outer_radius))
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata)
+        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_polygon(self, request):
+    def list_services_by_location_for_polygon(self, request):
         """
         List service for an arcband.
 
@@ -392,15 +345,12 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_service_ByLocation_for_polygon(
+        mappings = self._inner.list_services_by_location_for_polygon(
             request.service,
             request.location.location.vertices,
             request.location.location.spatial_ref
         )
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata)
+        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
     def _build_response(self, path, location_id, mapping,  nonlostdata):
         """
@@ -464,6 +414,4 @@ class ListServiceBylocationOuter(object):
         resp_mapping.source_id = mapping['gcunqid']
         resp_mapping.service_urn = mapping['serviceurn']
         resp_mapping.last_updated = mapping['updatedate']
-
-
         return resp_mapping
