@@ -335,34 +335,39 @@ class FindServiceInner(object):
         :return: The service mappings for the given circle.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._get_esb_table(service_urn)
 
-        multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
-        return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
+        if self._find_service_config.polygon_search_mode_policy() is PolygonSearchModePolicyEnum.SearchUsingCentroid:
+            # search using a centroid.
+            return self.find_service_for_point(service_urn, longitude, latitude, spatial_ref, return_shape)
+        else:
+            esb_table = self._get_esb_table(service_urn)
 
-        results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-            longitude,
-            latitude,
-            spatial_ref,
-            radius,
-            radius_uom, esb_table, return_area, return_shape)
+            multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
+            return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
 
-        if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
-            proximity_buffer = self._find_service_config.expanded_search_buffer()
             results = self._db_wrapper.get_intersecting_boundaries_for_circle(
                 longitude,
                 latitude,
                 spatial_ref,
                 radius,
-                radius_uom,
-                esb_table,
-                return_area,
-                return_shape,
-                True,
-                proximity_buffer)
+                radius_uom, esb_table, return_area, return_shape)
 
-        results = self._apply_polygon_multiple_match_policy(results)
-        return self._apply_policies(results, return_shape)
+            if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
+                proximity_buffer = self._find_service_config.expanded_search_buffer()
+                results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                    longitude,
+                    latitude,
+                    spatial_ref,
+                    radius,
+                    radius_uom,
+                    esb_table,
+                    return_area,
+                    return_shape,
+                    True,
+                    proximity_buffer)
+
+            results = self._apply_polygon_multiple_match_policy(results)
+            return self._apply_policies(results, return_shape)
 
     def find_service_for_ellipse(self,
                                  service_urn,
@@ -398,32 +403,37 @@ class FindServiceInner(object):
         # TODO: does there need to be an orientation UOM?
         # TODO: Why do the ellipse queries always return the intersection areas but others don't?
 
-        esb_table = self._get_esb_table(service_urn)
+        if self._find_service_config.polygon_search_mode_policy() is PolygonSearchModePolicyEnum.SearchUsingCentroid:
+            # search using a centroid.
+            return self.find_service_for_point(service_urn, longitude, latitude, spatial_ref, return_shape)
+        else:
 
-        results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
-            longitude,
-            latitude,
-            spatial_ref,
-            semi_major_axis,
-            semi_minor_axis,
-            orientation,
-            esb_table)
-
-        if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
-            # No results and Policy says we should buffer and research
-            proximity_buffer = self._find_service_config.expanded_search_buffer()
+            esb_table = self._get_esb_table(service_urn)
 
             results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
                 longitude,
                 latitude,
                 spatial_ref,
-                semi_major_axis + proximity_buffer,
-                semi_minor_axis + proximity_buffer,
+                semi_major_axis,
+                semi_minor_axis,
                 orientation,
                 esb_table)
 
-        results = self._apply_polygon_multiple_match_policy(results)
-        return self._apply_policies(results, return_shape)
+            if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
+                # No results and Policy says we should buffer and research
+                proximity_buffer = self._find_service_config.expanded_search_buffer()
+
+                results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
+                    longitude,
+                    latitude,
+                    spatial_ref,
+                    semi_major_axis + proximity_buffer,
+                    semi_minor_axis + proximity_buffer,
+                    orientation,
+                    esb_table)
+
+            results = self._apply_polygon_multiple_match_policy(results)
+            return self._apply_policies(results, return_shape)
 
     def find_service_for_arcband(self,
                                  service_urn,
