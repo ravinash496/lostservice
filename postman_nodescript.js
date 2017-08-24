@@ -4,7 +4,7 @@ var async = require('async'), // https://www.npmjs.com/package/async
 async.series([
   function (next) {
     newman.run({
-      collection: './tests/postman/TestingPostman.postman_collection.json',
+      collection: './tests/postman/ECRF_Collection_Test.postman_collection.json',
       reporters: 'cli',
       timeoutRequest: 10000,
       bail: true
@@ -12,7 +12,7 @@ async.series([
   },
   function (next) {
     newman.run({
-      collection: './tests/postman/ECRF_Collection_Test.postman_collection.json',
+      collection: './tests/postman/TestingPostman.postman_collection.json',
       reporters: 'cli',
       timeoutRequest: 10000,
       bail: true
