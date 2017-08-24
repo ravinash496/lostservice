@@ -25,7 +25,6 @@ before_script:
 script:
 - pytest --cov=lostservice ./tests/test_*
 - ./lostservice_deploy.sh
-- ./run_newman_tests.sh
 install:
 - pip install -r requirements.txt
 - pip install coverage
