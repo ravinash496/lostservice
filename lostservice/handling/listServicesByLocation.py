@@ -19,20 +19,6 @@ from lxml import etree
 from shapely.geometry import Polygon
 
 
-class ListServiceBYLocationException(Exception):
-    """
-    Raised when something goes wrong in the process of a ListService request.
-
-    :param message: The exception message
-    :type message:  ``str``
-    :param nested: Nested exception, if any.
-    :type nested:
-    """
-    def __init__(self, message, nested=None):
-        super().__init__(message)
-        self._nested = nested
-
-
 class ListServiceBYLocationConfigWrapper(object):
     """
     A wrapper class for ListService configuration related information.
@@ -95,7 +81,7 @@ class ListServiceByLocationInner(object):
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
 
-    def List_serviceBYlocation_for_point(self, service, longitude, latitude, spatial_ref):
+    def list_services_by_location_for_point(self, service, longitude, latitude, spatial_ref):
         """
         List services for the given point.
 
@@ -123,7 +109,7 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def List_service_BYLocation_for_circle(self, service, longitude, latitude, spatial_ref, radius, radius_uom,):
+    def list_services_by_location_for_circle(self, service, longitude, latitude, spatial_ref, radius, radius_uom,):
         """
         List services for the given circle.
 
@@ -155,7 +141,7 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def List_service_ByLocation_for_ellipse(self, service, longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation,):
+    def list_services_by_location_for_ellipse(self, service, longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation,):
         """
         List services for the given ellipse.
 
@@ -189,7 +175,7 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def list_service_ByLocation_for_arcband(self, service, longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius, return_shape=False):
+    def list_service_by_location_for_arcband(self, service, longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius, return_shape=False):
         """
         List services for the given arcband.
 
@@ -216,9 +202,9 @@ class ListServiceByLocationInner(object):
         """
         arcband = geom.generate_arcband(longitude, latitude, start_angle, opening_angle, inner_radius, outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
-        return self.List_service_ByLocation_for_polygon(service, points, spatial_ref, return_shape)
+        return self.list_services_by_location_for_polygon(service, points, spatial_ref, return_shape)
 
-    def List_service_ByLocation_for_polygon(self, service, points, spatial_ref, return_shape=False):
+    def list_services_by_location_for_polygon(self, service, points, spatial_ref, return_shape=False):
         """
         Listservices for the given polygon.
 
@@ -276,7 +262,7 @@ class ListServiceBylocationOuter(object):
         self._inner = inner
         self._list_service_config = config
 
-    def List_ServiceBylocation_for_point(self, request):
+    def list_services_by_location_for_point(self, request):
         """
         List service for a point.
 
@@ -285,7 +271,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_serviceBYlocation_for_point(
+        mappings = self._inner.list_services_by_location_for_point(
             request.service,
             request.location.location.longitude,
             request.location.location.latitude,
@@ -293,7 +279,7 @@ class ListServiceBylocationOuter(object):
         )
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_circle(self, request):
+    def list_services_by_location_for_circle(self, request):
         """
         List service for a circle.
 
@@ -302,7 +288,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_service_BYLocation_for_circle(
+        mappings = self._inner.list_services_by_location_for_circle(
             request.service,
             request.location.location.longitude,
             request.location.location.latitude,
@@ -311,7 +297,7 @@ class ListServiceBylocationOuter(object):
             request.location.location.uom)
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_ellipse(self, request):
+    def list_services_by_location_for_ellipse(self, request):
         """
         List service for an ellipse.
 
@@ -320,7 +306,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_service_ByLocation_for_ellipse(
+        mappings = self._inner.list_services_by_location_for_ellipse(
             request.service,
             request.location.location.longitude,
             request.location.location.latitude,
@@ -330,7 +316,7 @@ class ListServiceBylocationOuter(object):
             float(request.location.location.orientation))
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_arcband(self, request):
+    def list_service_by_location_for_arcband(self, request):
         """
         List service for an arcband.
 
@@ -339,7 +325,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.list_service_ByLocation_for_arcband(
+        mappings = self._inner.list_service_by_location_for_arcband(
             request.service,
             request.location.location.longitude,
             request.location.location.latitude,
@@ -350,7 +336,7 @@ class ListServiceBylocationOuter(object):
             float(request.location.location.outer_radius))
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
-    def List_serviceBylocation_for_polygon(self, request):
+    def list_services_by_location_for_polygon(self, request):
         """
         List service for an arcband.
 
@@ -359,7 +345,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
-        mappings = self._inner.List_service_ByLocation_for_polygon(
+        mappings = self._inner.list_services_by_location_for_polygon(
             request.service,
             request.location.location.vertices,
             request.location.location.spatial_ref

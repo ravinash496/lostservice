@@ -285,7 +285,9 @@ class LostApplication(object):
 
         if parsed_request is not None:
             trans.request = etree.tostring(parsed_request, encoding='unicode')
-            trans.requestsvcurn = parsed_request.xpath('//ls:service/text()', namespaces=nslookup)[0]
+            req_service_urn = parsed_request.xpath('//ls:service/text()', namespaces=nslookup)
+            if req_service_urn is not None and len(req_service_urn) > 0:
+                trans.requestsvcurn = req_service_urn[0]
 
             qname = etree.QName(parsed_request)
             request_type = "LoST" + str(qname.localname)

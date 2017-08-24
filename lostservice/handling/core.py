@@ -14,7 +14,7 @@ from lostservice.db.gisdb import GisDbInterface
 from lostservice.exception import BadRequestException
 from lostservice.handler import Handler
 from lostservice.handling.findservice import FindServiceOuter
-from lostservice.handling.listServicesByLocation import ListServiceBylocationOuter, ListServiceBYLocationException
+from lostservice.handling.listServicesByLocation import ListServiceBylocationOuter
 from lostservice.model.location import Arcband
 from lostservice.model.location import Circle
 from lostservice.model.location import Ellipse
@@ -199,15 +199,15 @@ class ListServicesByLocationHandler(Handler):
         """
         response = None
         if type(request.location.location) is Point:
-            response = self._outer.List_ServiceBylocation_for_point(request)
+            response = self._outer.list_services_by_location_for_point(request)
         elif type(request.location.location) is Circle:
-            response = self._outer.List_serviceBylocation_for_circle(request)
+            response = self._outer.list_services_by_location_for_circle(request)
         elif type(request.location.location) is Ellipse:
-            response = self._outer.List_serviceBylocation_for_ellipse(request)
+            response = self._outer.list_services_by_location_for_ellipse(request)
         elif type(request.location.location) is Arcband:
-            response = self._outer.List_serviceBylocation_for_arcband(request)
+            response = self._outer.list_service_by_location_for_arcband(request)
         elif type(request.location.location) is Polygon:
-            response = self._outer.List_serviceBylocation_for_polygon(request)
+            response = self._outer.list_services_by_location_for_polygon(request)
         else:
             raise ListServiceBYLocationException('Invalid location type.')
 
