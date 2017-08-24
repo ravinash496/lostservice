@@ -209,6 +209,6 @@ class ListServicesByLocationHandler(Handler):
         elif type(request.location.location) is Polygon:
             response = self._outer.list_services_by_location_for_polygon(request)
         else:
-            raise ListServiceBYLocationException('Invalid location type.')
+            raise BadRequestException('Invalid location type.')
 
         return response
