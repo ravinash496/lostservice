@@ -455,9 +455,12 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_policies.return_value = test_data
 
         actual = target.find_service_for_point('urn1', 0.0, 1.1, 'something', False)
+        buffer_dist = mock_config.additional_data_buffer()
 
         self.assertListEqual(actual, test_data)
-        mock_db.get_containing_boundary_for_point.assert_called_with(0.0, 1.1, 'something', 'service1')
+        mock_db.get_containing_boundary_for_point.assert_called_with(0.0, 1.1, 'something', 'service1',
+                                                                     add_data_requested=False,
+                                                                     buffer_distance = buffer_dist)
         mock_db.get_containing_boundary_for_point.assert_called_once()
         target._apply_point_multiple_match_policy.assert_called_with(test_data)
         target._apply_point_multiple_match_policy.assert_called_once()
@@ -486,6 +489,10 @@ class FindServiceInnerTest(unittest.TestCase):
             lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
         mock_config.expanded_search_buffer = MagicMock()
         mock_config.expanded_search_buffer.return_value = 10
+        mock_config.additional_data_uri = MagicMock()
+        mock_config.additional_data_uri.return_value = "additional.data.uri"
+        mock_config.additional_data_buffer = MagicMock()
+        mock_config.additional_data_buffer.return_value = 5.0
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
         target._apply_point_multiple_match_policy = MagicMock()
@@ -500,8 +507,17 @@ class FindServiceInnerTest(unittest.TestCase):
         mock_config.do_expanded_search.assert_called_once()
         mock_config.polygon_multiple_match_policy.assert_called_once()
         mock_config.expanded_search_buffer.assert_called_once()
-        mock_db.get_containing_boundary_for_point.assert_called_with(0.0, 1.1, 'something', 'service1')
+        mock_config.additional_data_uri.assert_called_once()
+        mock_db.get_containing_boundary_for_point.assert_called_with(
+            0.0,
+            1.1,
+            'something',
+            'service1',
+            add_data_requested=False,
+            buffer_distance = 5.0)
         mock_db.get_containing_boundary_for_point.assert_called_once()
+
+
 
         mock_db.get_intersecting_boundaries_for_circle.assert_called_with(0.0, 1.1, 'something', 10, None, 'service1', True, False)
         mock_db.get_intersecting_boundaries_for_circle.assert_called_once()

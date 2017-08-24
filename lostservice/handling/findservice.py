@@ -13,7 +13,7 @@ from enum import Enum
 from injector import inject
 from lostservice.configuration import Configuration
 from lostservice.exception import InternalErrorException
-from lostservice.model.responses import FindServiceResponse, ResponseMapping
+from lostservice.model.responses import FindServiceResponse, ResponseMapping, AdditionalDataResponseMapping
 from lostservice.exception import ServiceNotImplementedException
 import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
@@ -180,6 +180,41 @@ class FindServiceConfigWrapper(object):
             settings = self._config.get('Service', 'default', as_object=True, required=False)
         return settings
 
+    def settings_for_additionaldata(self, param):
+        """
+        Get the addtional data settings.
+        :param param: name of the parameter to get the setting
+        :type param: ``str``
+        :return: ``str``
+        """
+        settings = self._config.get('AddtionalData', param, as_object=False, required=False)
+        if settings is None:
+            return ""
+        return settings
+
+    def additional_data_uri(self):
+        """
+        Gets the additional data URI.
+
+        :return: The configured additional data URI.
+        :rtype: ``str``
+        """
+        uri = self._config.get('AddtionalData', 'service_urn', as_object=False, required=False)
+        if uri is None:
+            uri = ''
+        return uri
+
+    def additional_data_buffer(self):
+        """
+        Gets the additional data buffer.
+
+        :return: The configured additional data buffer.
+        :rtype: ``float``
+        """
+        buffer = self._config.get('AddtionalData', 'buffer_meters', as_object=False, required=False)
+        if buffer is None:
+            buffer = 0.0
+        return float(buffer)
 
 class FindServiceInner(object):
     """
@@ -232,13 +267,23 @@ class FindServiceInner(object):
         :return: The service mappings for the given point.
         :rtype: ``list`` of ``dict``
         """
-        esb_table = self._get_esb_table(service_urn)
+        ADD_DATA_REQUESTED = False
+        ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
+        buffer_distance = self._find_service_config.additional_data_buffer()
+        if service_urn == ADD_DATA_SERVICE:
+            ADD_DATA_REQUESTED = True
+            esb_table = self._find_service_config.settings_for_additionaldata("data_table")
+        else:
+            esb_table = self._get_esb_table(service_urn)
 
         results = self._db_wrapper.get_containing_boundary_for_point(
             longitude,
             latitude,
             spatial_ref,
-            esb_table)
+            esb_table,
+            add_data_requested=ADD_DATA_REQUESTED,
+            buffer_distance=buffer_distance)
+
 
         if results is not None and len(results) != 0:
             results = self._apply_point_multiple_match_policy(results)
@@ -533,7 +578,8 @@ class FindServiceInner(object):
 
         if mappings is not None:
             for mapping in mappings:
-                mapping['expiration'] = self._get_service_expiration_policy(mapping['serviceurn'])
+                if mapping.get('serviceurn'):
+                    mapping['expiration'] = self._get_service_expiration_policy(mapping['serviceurn'])
                 self._apply_service_boundary_policy(mapping, return_shape)
 
         return mappings
@@ -855,17 +901,21 @@ class FindServiceOuter(object):
         :return: A ResponseMapping instance.
         :rtype: :py:class:`lostservice.model.responses.ResponseMapping`
         """
-        resp_mapping = ResponseMapping()
-        resp_mapping.display_name = mapping['displayname']
-        resp_mapping.route_uri = mapping['routeuri']
-        resp_mapping.service_number = mapping['servicenum']
-        resp_mapping.source_id = mapping['gcunqid']
-        resp_mapping.service_urn = mapping['serviceurn']
+        if mapping.get('adddatauri'):
+            resp_mapping = AdditionalDataResponseMapping()
+            resp_mapping.adddatauri = mapping.get('adddatauri')
+            resp_mapping.service_urn = self._find_service_config.settings_for_additionaldata("service_urn")
+        else:
+            resp_mapping = ResponseMapping()
+            resp_mapping.display_name = mapping['displayname']
+            resp_mapping.route_uri = mapping['routeuri']
+            resp_mapping.service_number = mapping['servicenum']
+            resp_mapping.service_urn = mapping.get('serviceurn')
+            if include_boundary_value and 'ST_AsGML_1' in mapping:
+                resp_mapping.boundary_value = mapping['ST_AsGML_1']
         resp_mapping.last_updated = mapping['updatedate']
-        resp_mapping.expires = mapping['expiration']
-
-        if include_boundary_value and 'ST_AsGML_1' in mapping:
-            resp_mapping.boundary_value = mapping['ST_AsGML_1']
+        resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
+        resp_mapping.source_id = mapping['gcunqid']
 
         return resp_mapping
 

@@ -25,6 +25,7 @@ from lostservice.model.requests import FindServiceRequest
 from lostservice.model.requests import ListServicesRequest
 from lostservice.model.requests import GetServiceBoundaryRequest
 from lostservice.model.requests import ListServicesByLocationRequest
+from lostservice.model.responses import AdditionalDataResponseMapping, ResponseMapping
 import io
 
 LOST_PREFIX = 'lost'
@@ -617,34 +618,38 @@ class FindServiceXmlConverter(XmlConverter):
                                                     'sourceId': item.source_id})
 
             # add the displayname, serviceurn, routeuri, servicenum to mapping
-            services_element = lxml.etree.SubElement(mapping, 'displayName')
-            services_element.text = item.display_name
-
-            attr = services_element.attrib
-            attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
-
             services_element = lxml.etree.SubElement(mapping, 'service')
             services_element.text = item.service_urn
+            if type(item) is ResponseMapping:
+                services_element = lxml.etree.SubElement(mapping, 'displayName')
+                services_element.text = item.display_name
 
-            if item.boundary_value is None:
-                attr_element = collections.OrderedDict()
-                attr_element['source'] = item.source
-                attr_element['key'] = item.source_id
-                lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
-            else:
-                # TODO - fix the profile.
-                services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile='geodetic-2d')
+                attr = services_element.attrib
+                attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
 
-                final_gml_as_xml = io.StringIO(
-                    '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item.boundary_value))
-                final_gml = etree.parse(final_gml_as_xml).getroot()
-                services_element.extend(final_gml)
+                services_element = lxml.etree.SubElement(mapping, 'uri')
+                services_element.text = item.route_uri
 
-            services_element = lxml.etree.SubElement(mapping, 'uri')
-            services_element.text = item.route_uri
+                services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
+                services_element.text = item.service_number
 
-            services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
-            services_element.text = item.service_number
+                if item.boundary_value is None:
+                    attr_element = collections.OrderedDict()
+                    attr_element['source'] = item.source
+                    attr_element['key'] = item.source_id
+                    lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
+                else:
+                    # TODO - fix the profile.
+                    services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile='geodetic-2d')
+
+                    final_gml_as_xml = io.StringIO(
+                        '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item.boundary_value))
+                    final_gml = etree.parse(final_gml_as_xml).getroot()
+                    services_element.extend(final_gml)
+
+            elif type(item) is AdditionalDataResponseMapping:
+                services_element = lxml.etree.SubElement(mapping, 'uri')
+                services_element.text = item.adddatauri
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')
