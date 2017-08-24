@@ -11,8 +11,9 @@ from injector import inject
 import lostservice.model.responses as responses
 from lostservice.configuration import Configuration
 from lostservice.db.gisdb import GisDbInterface
+from lostservice.exception import BadRequestException
 from lostservice.handler import Handler
-from lostservice.handling.findservice import FindServiceOuter, FindServiceException
+from lostservice.handling.findservice import FindServiceOuter
 from lostservice.handling.listServicesByLocation import ListServiceBylocationOuter, ListServiceBYLocationException
 from lostservice.model.location import Arcband
 from lostservice.model.location import Circle
@@ -112,7 +113,7 @@ class FindServiceHandler(Handler):
         elif type(request.location.location) is Polygon:
             response = self._outer.find_service_for_polygon(request)
         else:
-            raise FindServiceException('Invalid location type.')
+            raise BadRequestException('Invalid location type.')
 
         return response
 

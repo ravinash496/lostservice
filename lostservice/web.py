@@ -3,7 +3,7 @@
 
 
 from werkzeug.wrappers import Request, Response
-from lostservice.app import LostApplication
+from lostservice.app import LostApplication, WebRequestContext
 
 
 class LostService(object):
@@ -15,6 +15,9 @@ class LostService(object):
 
     def dispatch_request(self, request):
         context = {}
+        web_ctx = WebRequestContext()
+        web_ctx.client_ip = request.access_route[0]
+        context['web_ctx'] = web_ctx
         result = self._lostapp.execute_query(request.data, context)
         return result
 

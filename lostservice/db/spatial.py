@@ -14,6 +14,7 @@ from sqlalchemy.sql import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.functions import func
 from shapely.geometry import Point
+from shapely.geometry import Polygon
 from shapely import affinity
 from shapely.geometry.polygon import LinearRing
 from shapely.wkt import loads
@@ -21,9 +22,10 @@ from geoalchemy2.shape import from_shape
 from osgeo import osr
 from osgeo import ogr
 import math
+from lostservice.exception import InternalErrorException
 
 
-class SpatialQueryException(Exception):
+class SpatialQueryException(InternalErrorException):
     """
     Raised when something goes wrong in the process of executing a spatial query.
 
@@ -33,8 +35,7 @@ class SpatialQueryException(Exception):
     :type nested:
     """
     def __init__(self, message, nested=None):
-        super().__init__(message)
-        self._nested = nested
+        super(SpatialQueryException, self).__init__(message, nested)
 
 
 def _execute_query(engine, query):
@@ -107,6 +108,45 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
     return retval
 
 
+def _get_nearest_point(long, lat, engine, table_name, geom, buffer_distance=None):
+    """
+    Queries the given table for the nearest boundary
+
+    :param engine: SQLAlchemy database engine
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :param table_name: The name of the service boundary table.
+    :type table_name: `str`
+    :param geom: The geometry to use in the search as a GeoAlchemy WKBElement.
+    :type geom: :py:class:geoalchemy2.types.WKBElement
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+    retval = None
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table(table_name, tbl_metadata, autoload=True)
+        # Construct the "contains" query and execute it.
+        utmsrid = getutmsrid(long, lat)
+        s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(),
+                    the_table.c.wkb_geometry.ST_Distance(geom).label('DISTANCE')],
+                   the_table.c.wkb_geometry.ST_Intersects(
+                       func.ST_Transform(
+                           func.ST_Buffer(
+                           func.ST_Transform(
+                               func.st_centroid(geom),
+                               utmsrid
+                           ),buffer_distance, 32), 4326))
+                   ).order_by('DISTANCE').limit(1)
+
+        retval = _execute_query(engine, s)
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct contains query.', ex)
+    except SpatialQueryException:
+        raise
+    return retval
+
+
 def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_intersection_area):
     """
     Queries the given table for any boundaries that intersect the given geometry.
@@ -153,7 +193,7 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
     return results
 
 
-def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, return_intersection_area):
+def _get_intersecting_boundaries_for_geom_value(engine, table_name, geom, return_intersection_area):
     """
     Queries the given table for any boundaries that intersect the given geometry and returns the shape.
 
@@ -205,11 +245,11 @@ def _get_intersecting_boundaries_for_geom_reference(engine, table_name, geom, re
     return results
 
 
-def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine):
+def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine, add_data_required=False, buffer_distance=None):
     """
     Executes a contains query for a point.
 
-    :param long: The x coordinate of the point.
+    :param long: The long coordinate of the point.
     :type long: `float`
     :param lat: The lat coordinate of the point.
     :type lat: `float`
@@ -230,7 +270,8 @@ def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine):
     # Get a GeoAlchemy WKBElement from the point.
     wkb_pt = from_shape(pt, trimmed_srid)
     # Run the query.
-
+    if add_data_required:
+        return _get_nearest_point(long, lat, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
 
@@ -381,7 +422,7 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
             return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle, proximity_buffer, return_intersection_area)
         else:
             # Call Overload to return the GML representation of the shape
-            return _get_intersecting_boundaries_for_geom_reference(engine, boundary_table, wkb_circle, return_intersection_area)
+            return _get_intersecting_boundaries_for_geom_value(engine, boundary_table, wkb_circle, return_intersection_area)
     else:
         if proximity_search == True:
             return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
@@ -429,10 +470,8 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
         s = select(
             [
                 the_table,
-                func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
-                the_table.c.wkb_geometry.ST_Area(
-                    the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
-                ).label('AREA_RET')
+                func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16),
+                func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(wkb_ellipse, 4326))).label('AREA_RET')
             ],
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
@@ -560,7 +599,7 @@ def get_containing_boundary_for_polygon(points, srid, boundary_table, engine, pr
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
+    trimmed_srid = int(srid.split('::')[1])
 
     ring = LinearRing(points)
     wkb_ring = from_shape(ring, trimmed_srid)
@@ -588,16 +627,21 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
+    trimmed_srid = int(srid.split('::')[1])
 
     ring = LinearRing(points)
-    wkb_ring = from_shape(ring, trimmed_srid)
+    shapely_polygon = Polygon(ring)
+
+    # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
+    # that we can use to query.
+    poly = loads(shapely_polygon.wkt)
+    wkb_poly = from_shape(poly, trimmed_srid)
 
     if proximity_search == True:
-        return get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_ring,
+        return get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_poly,
                                                 proximity_buffer, return_intersection_area)
     else:
-        return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_ring, return_intersection_area)
+        return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_poly, return_intersection_area)
 
 
 def get_boundaries_for_previous_id(pid, engine, boundary_table):
@@ -799,9 +843,8 @@ def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, b
             [
                 the_table,
                 func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
-                the_table.c.wkb_geometry.ST_Area(
-                    the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
-                ).label('AREA_RET')
+                func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(wkb_ellipse, 4326))).label(
+                    'AREA_RET')
             ],
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )

@@ -199,6 +199,128 @@ class ResponseMapping(object):
         self._boundary_value = value
 
 
+class AdditionalDataResponseMapping(object):
+    """
+    A container for a single Additional Data response mapping.
+
+    <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
+        <service>urn:nena:service:adddatauri</service>
+        <adddatauri>http://pv-qps-2/testdoc609784.doc</adddatauri>
+    </mapping>
+
+    Contains the following:
+    source (attribute) - the URI of the service that found the mapping (source_uri from config)
+    sourceID (attribute) - the unique id of the mapping (gcunqid)
+    lastUpdated (attribute) - time of last update for the mapping (updatedate)
+    expires (attribute) - policy based expiration (see core.py ~line 157)
+    service (element) - the service URN of the request (see section 5.4 of RFC 5222 for special handling)
+    adddatauri (element) - the additional data uri
+    """
+    def __init__(self,
+                 source=None,
+                 source_id=None,
+                 last_updated=None,
+                 expires=None,
+                 service_urn=None,
+                 adddatauri=None):
+        """
+        Constructor.
+
+        :param source:
+        :param source_id:
+        :param last_updated:
+        :param expires:
+        :param service_urn:
+        :param boundary_value:
+        :param adddatauri:
+        """
+        super(AdditionalDataResponseMapping, self).__init__()
+        self._source = source
+        self._source_id = source_id
+        self._last_updated = last_updated
+        self._expires = expires
+        self._service = service_urn
+        self._adddatauri = adddatauri
+
+    @property
+    def source(self):
+        """
+        The source of the mapping.
+
+        :return: ``str``
+        """
+        return self._source
+
+    @source.setter
+    def source(self, value):
+        self._source = value
+
+    @property
+    def source_id(self):
+        """
+        The id of the mapping from the associated source.
+
+        :return: ``str``
+        """
+        return self._source_id
+
+    @source_id.setter
+    def source_id(self, value):
+        self._source_id = value
+
+    @property
+    def last_updated(self):
+        """
+        The last update date of the mapping.
+
+        :return: ``str``
+        """
+        return self._last_updated
+
+    @last_updated.setter
+    def last_updated(self, value):
+        self._last_updated = value
+
+    @property
+    def expires(self):
+        """
+        The expiration of the mapping.
+
+        :return: ``str``
+        """
+        return self._expires
+
+    @expires.setter
+    def expires(self, value):
+        self._expires = value
+
+    @property
+    def service(self):
+        """
+        The service URN for the mapping (usually same as the URN in the request)
+
+        :return: ``str``
+        """
+        return self._service
+
+    @service.setter
+    def service(self, value):
+        self._service = value
+
+    @property
+    def adddatauri(self):
+        """
+        The add data uri.
+
+        :return: ``str`` or :py:class:`_ElementTree`
+        """
+        return self._adddatauri
+
+    @adddatauri.setter
+    def adddatauri(self, value):
+        self._adddatauri = value
+
+
 class FindServiceResponse(Response):
     """
     findService response class.
