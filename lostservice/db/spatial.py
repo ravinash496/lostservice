@@ -109,7 +109,7 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
     return retval
 
 
-def _get_nearest_point(x, y, engine, table_name, geom, buffer_distance=None):
+def _get_nearest_point(long, lat, engine, table_name, geom, buffer_distance=None):
     """
     Queries the given table for the nearest boundary
 
@@ -127,7 +127,7 @@ def _get_nearest_point(x, y, engine, table_name, geom, buffer_distance=None):
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(table_name, tbl_metadata, autoload=True)
         # Construct the "contains" query and execute it.
-        utmsrid = getutmsrid(x, y)
+        utmsrid = getutmsrid(long, lat)
         s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(),
                     the_table.c.wkb_geometry.ST_Distance(geom).label('DISTANCE')],
                    the_table.c.wkb_geometry.ST_Intersects(
@@ -246,14 +246,14 @@ def _get_intersecting_boundaries_for_geom_value(engine, table_name, geom, return
     return results
 
 
-def get_containing_boundary_for_point(x, y, srid, boundary_table, engine, add_data_required=False, buffer_distance=None):
+def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine, add_data_required=False, buffer_distance=None):
     """
     Executes a contains query for a point.
 
-    :param x: The x coordinate of the point.
-    :type x: `float`
-    :param y: The y coordinate of the point.
-    :type y: `float`
+    :param long: The long coordinate of the point.
+    :type long: `float`
+    :param lat: The lat coordinate of the point.
+    :type lat: `float`
     :param srid: The spatial reference Id of the point.
     :type srid: `str`
     :param boundary_table: The name of the service boundary table.
@@ -263,7 +263,7 @@ def get_containing_boundary_for_point(x, y, srid, boundary_table, engine, add_da
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Create a Shapely Point
-    pt = Point(x, y)
+    pt = Point(long, lat)
 
     # Pull out just the number from the SRID
     trimmed_srid = srid.split('::')[1]
@@ -272,7 +272,7 @@ def get_containing_boundary_for_point(x, y, srid, boundary_table, engine, add_da
     wkb_pt = from_shape(pt, trimmed_srid)
     # Run the query.
     if add_data_required:
-        return _get_nearest_point(x, y, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
+        return _get_nearest_point(long, lat, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
 
