@@ -284,26 +284,26 @@ class FindServiceInner(object):
             add_data_requested=ADD_DATA_REQUESTED,
             buffer_distance=buffer_distance)
 
+        if not ADD_DATA_REQUESTED:
+            if results is not None and len(results) != 0:
+                results = self._apply_point_multiple_match_policy(results)
+            elif self._find_service_config.do_expanded_search():
 
-        if results is not None and len(results) != 0:
-            results = self._apply_point_multiple_match_policy(results)
-        elif self._find_service_config.do_expanded_search():
+                multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
+                return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
+                proximity_buffer = self._find_service_config.expanded_search_buffer()
 
-            multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
-            return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
-            proximity_buffer = self._find_service_config.expanded_search_buffer()
+                results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                    longitude,
+                    latitude,
+                    spatial_ref,
+                    proximity_buffer,
+                    None,  # TODO, what is our UOM for buffers, assert meters?
+                    esb_table,
+                    return_area,
+                    return_shape)
 
-            results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                longitude,
-                latitude,
-                spatial_ref,
-                proximity_buffer,
-                None,  # TODO, what is our UOM for buffers, assert meters?
-                esb_table,
-                return_area,
-                return_shape)
-
-            results = self._apply_polygon_multiple_match_policy(results)
+                results = self._apply_polygon_multiple_match_policy(results)
 
         return self._apply_policies(results, return_shape)
 
@@ -488,21 +488,32 @@ class FindServiceInner(object):
 
             return self.find_service_for_point(service_urn, pt_array.x, pt_array.y, spatial_ref, return_shape)
         else:
-            esb_table = self._get_esb_table(service_urn)
-            results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
+            ADD_DATA_REQUESTED = False
+            ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
+            buffer_distance = self._find_service_config.additional_data_buffer()
+            if service_urn == ADD_DATA_SERVICE:
+                ADD_DATA_REQUESTED = True
+                esb_table = self._find_service_config.settings_for_additionaldata("data_table")
+            else:
+                esb_table = self._get_esb_table(service_urn)
 
-            if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
-                proximity_buffer = self._find_service_config.expanded_search_buffer()
-                # No results and Policy says we should buffer and research
+            if ADD_DATA_REQUESTED:
+                results = self._db_wrapper.get_addtionaldata_for_polygon(points, spatial_ref, esb_table, buffer_distance)
+            else:
+                results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
 
-                results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
-                    points,
-                    spatial_ref,
-                    esb_table,
-                    True,
-                    proximity_buffer)
+                if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
+                    proximity_buffer = self._find_service_config.expanded_search_buffer()
+                    # No results and Policy says we should buffer and research
 
-            results = self._apply_polygon_multiple_match_policy(results)
+                    results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
+                        points,
+                        spatial_ref,
+                        esb_table,
+                        True,
+                        proximity_buffer)
+
+                results = self._apply_polygon_multiple_match_policy(results)
             return self._apply_policies(results, return_shape)
 
     def _apply_point_multiple_match_policy(self, mappings):
@@ -903,7 +914,7 @@ class FindServiceOuter(object):
         """
         if mapping.get('adddatauri'):
             resp_mapping = AdditionalDataResponseMapping()
-            resp_mapping.adddatauri = mapping.get('adddatauri')
+            resp_mapping.adddatauri = mapping.get('adddatauri', "")
             resp_mapping.service_urn = self._find_service_config.settings_for_additionaldata("service_urn")
         else:
             resp_mapping = ResponseMapping()
