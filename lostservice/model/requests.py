@@ -162,12 +162,12 @@ class ListServicesByLocationRequest(Request):
     """
     listServicesByLocation request class.
     """
-    def __init__(self, service=None, location=None, path=[], nonlostdata=[], location_id=None):
+    def __init__(self, service=None, location=None, path= None, nonlostdata= None, location_id=None):
         super(ListServicesByLocationRequest, self).__init__()
         self._service = service
         self._location = location
-        self._path = path
-        self._nonlostdata = nonlostdata
+        self._path = path if path is not None else[]
+        self._nonlostdata = nonlostdata if nonlostdata is not None else []
         self._location_id = location_id
 
     @property
