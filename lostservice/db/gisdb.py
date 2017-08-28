@@ -155,21 +155,21 @@ class GisDbInterface(object):
     def get_intersecting_boundary_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table):
         return spatialdb.get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, self._engine)
 
-    def get_list_services_for_point(self, x, y, srid, boundary_table):
+    def get_list_services_for_point(self, long, lat, srid, boundary_table):
         """
         Executes a contains query for a point.
 
-        :param x: The x coordinate of the point.
-        :type x: `float`
-        :param y: The y coordinate of the point.
-        :type y: `float`
+        :param long: The x coordinate of the point.
+        :type long: `float`
+        :param lat: The y coordinate of the point.
+        :type lat: `float`
         :param srid: The spatial reference Id of the point.
         :type srid: `str`
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_list_service_for_point(x, y, srid, boundary_table, self._engine)
+        return spatialdb.get_list_service_for_point(long, lat, srid, boundary_table, self._engine)
 
     def get_intersecting_list_service_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area=False,
                                                  return_shape=False, proximity_search=False, proximity_buffer=0):
@@ -196,7 +196,7 @@ class GisDbInterface(object):
                                                                    self._engine, return_area, return_shape,
                                                                    proximity_search, proximity_buffer)
 
-    def get_list_services_for_ellipse(self, lat, long, srid, major, minor, orientation, boundary_table):
+    def get_list_services_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table):
         """
 
         :param lat: 
@@ -208,7 +208,7 @@ class GisDbInterface(object):
         :param boundary_table: 
         :return: 
         """
-        return spatialdb.get_list_services_for_ellipse(lat, long, srid, major, minor, orientation, boundary_table,
+        return spatialdb.get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table,
                                                        self._engine, )
 
     def get_intersecting_list_service_for_polygon(self, points, srid, boundary_table, proximity_search=False,
