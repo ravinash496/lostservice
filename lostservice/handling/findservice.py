@@ -43,6 +43,15 @@ class PointMultipleMatchPolicyEnum(Enum):
     ReturnLimitWarning = 2
     ReturnError = 3
 
+class ServiceBoundaryGeodeticOverridePolicyEnum(Enum):
+    MatchRequest = 1
+    ReturnReference = 2
+    ReturnValue = 3
+    ReturnNothing = 4
+
+class ServiceBoundaryCivicOverridePolicyEnum(Enum):
+    MatchRequest = 1
+    # TODO
 
 class FindServiceConfigWrapper(object):
     """
@@ -215,6 +224,39 @@ class FindServiceConfigWrapper(object):
         if buffer is None:
             buffer = 0.0
         return float(buffer)
+
+    def service_boundary_return_geodetic_override(self):
+        """
+        Gets the Geodetic service boundary override mode policy.
+
+        :return: :py:class:`ServiceBoundaryGeodeticOverridePolicyEnum`
+        """
+        retval = None
+        policy = self._config.get('Policy', 'service_boundary_return_geodetic_override', as_object=False, required=False)
+        if policy is not None:
+            try:
+                retval = ServiceBoundaryGeodeticOverridePolicyEnum[policy]
+            except KeyError:
+                retval = None
+
+        return retval
+
+    def service_boundary_return_civic_override(self):
+        """
+        Gets the Civic service boundary override mode policy.
+
+        :return: :py:class:`ServiceBoundaryCivicOverridePolicyEnum`
+        """
+        retval = None
+        policy = self._config.get('Policy', 'service_boundary_return_civic_override', as_object=False,
+                                  required=False)
+        if policy is not None:
+            try:
+                retval = ServiceBoundaryCivicOverridePolicyEnum[policy]
+            except KeyError:
+                retval = None
+
+        return retval
 
 class FindServiceInner(object):
     """
@@ -695,7 +737,8 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
-        include_boundary_value = request.serviceBoundary == 'value'
+        include_boundary_value = self._apply_override_policy(request)
+
         mappings = self._inner.find_service_for_point(
             request.service,
             request.location.location.longitude,
@@ -718,7 +761,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
-        include_boundary_value = request.serviceBoundary == 'value'
+        include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_circle(
             request.service,
             request.location.location.longitude,
@@ -743,7 +786,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
-        include_boundary_value = request.serviceBoundary == 'value'
+        include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_ellipse(
             request.service,
             request.location.location.longitude,
@@ -769,7 +812,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
-        include_boundary_value = request.serviceBoundary == 'value'
+        include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_arcband(
             request.service,
             request.location.location.longitude,
@@ -796,7 +839,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
-        include_boundary_value = request.serviceBoundary == 'value'
+        include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_polygon(
             request.service,
             request.location.location.vertices,
@@ -921,20 +964,38 @@ class FindServiceOuter(object):
             resp_mapping.route_uri = mapping['routeuri']
             resp_mapping.service_number = mapping['servicenum']
             resp_mapping.service_urn = mapping.get('serviceurn')
-            if include_boundary_value and 'ST_AsGML_1' in mapping:
+            if self._find_service_config.service_boundary_return_geodetic_override() == ServiceBoundaryGeodeticOverridePolicyEnum.ReturnNothing:
+                # Do not return ServiceBoundary tag at all
+                resp_mapping.boundary_value = None
+            elif include_boundary_value and 'ST_AsGML_1' in mapping:
                 resp_mapping.boundary_value = mapping['ST_AsGML_1']
+            else:
+                resp_mapping.boundary_value = ""
+
         resp_mapping.last_updated = mapping['updatedate']
         resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
         resp_mapping.source_id = mapping['gcunqid']
 
         return resp_mapping
 
+    def _apply_override_policy(self, request):
+        """
+        Check Service boundary return override settings 
+        :param request: 
+        :return: 
+        """
+        # use false for ReturnNothing - second check is done in _build_one_mapping()
+        include_boundary_value = False
 
+        if self._find_service_config.service_boundary_return_geodetic_override() == ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest:
+            # Respect the value in the request
+            include_boundary_value = request.serviceBoundary == 'value'
+        elif self._find_service_config.service_boundary_return_geodetic_override() == ServiceBoundaryGeodeticOverridePolicyEnum.ReturnReference:
+            # override the value in the request and never return the GML representing the shape
+            include_boundary_value = False
+        elif self._find_service_config.service_boundary_return_geodetic_override() == ServiceBoundaryGeodeticOverridePolicyEnum.ReturnValue:
+            # override the value in the request and alwasy return the GML representing the shape
+            include_boundary_value = True
 
-
-
-
-
-
-
+        return include_boundary_value
 

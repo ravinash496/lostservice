@@ -28,6 +28,8 @@ from lostservice.model.requests import ListServicesByLocationRequest
 from lostservice.model.responses import AdditionalDataResponseMapping, ResponseMapping
 import io
 
+import numpy
+
 LOST_PREFIX = 'lost'
 LOST_URN = 'urn:ietf:params:xml:ns:lost1'
 CIVIC_ADDRESS_PREFIX = 'civ'
@@ -303,9 +305,20 @@ class PolygonXmlConverter(XmlConverter):
             for polygon in data.findall('{0}exterior'.format(GML_URN_COORDS)):
                 for coord in polygon.findall("{0}LinearRing/".format(GML_URN_COORDS)):
                     position = coord.text
-                    lat, lon = position.split()
-                    point = [float(lon), float(lat)]
-                    model.vertices.append(point)
+                    if coord.tag == "{0}posList".format(GML_URN_COORDS):
+                        # format of GML is gml:posList
+                        sublist = numpy.array_split(position.split(), (len(position.split())) / 2)
+                        for item in sublist:
+                            lat = item[0]
+                            lon = item[1]
+                            point = [float(lon), float(lat)]
+                            model.vertices.append(point)
+                    else:
+                        # format of GML is gml:pos
+                        lat, lon = position.split()
+                        point = [float(lon), float(lat)]
+                        model.vertices.append(point)
+
         except (Exception, IndexError, TypeError):
             raise BadRequestException('Invalid polygon input.')
 
@@ -633,19 +646,23 @@ class FindServiceXmlConverter(XmlConverter):
                 services_element = lxml.etree.SubElement(mapping, 'serviceNumber')
                 services_element.text = item.service_number
 
-                if item.boundary_value is None:
-                    attr_element = collections.OrderedDict()
-                    attr_element['source'] = item.source
-                    attr_element['key'] = item.source_id
-                    lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
-                else:
-                    # TODO - fix the profile.
-                    services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile='geodetic-2d')
+                # if boundary_value = None do not add serviceBoundary tag to the response (override setting)
+                # if boundary_value = "" then include serviceBoundaryReference tag
+                # if boundary_value contains value then include serviceBoundary tag
+                if item.boundary_value is not None:
+                    if item.boundary_value == "":
+                        attr_element = collections.OrderedDict()
+                        attr_element['source'] = item.source
+                        attr_element['key'] = item.source_id
+                        lxml.etree.SubElement(mapping, 'serviceBoundaryReference', attrib=attr_element)
+                    else:
+                        # TODO - fix the profile.
+                        services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile='geodetic-2d')
 
-                    final_gml_as_xml = io.StringIO(
-                        '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item.boundary_value))
-                    final_gml = etree.parse(final_gml_as_xml).getroot()
-                    services_element.extend(final_gml)
+                        final_gml_as_xml = io.StringIO(
+                            '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item.boundary_value))
+                        final_gml = etree.parse(final_gml_as_xml).getroot()
+                        services_element.extend(final_gml)
 
             elif type(item) is AdditionalDataResponseMapping:
                 services_element = lxml.etree.SubElement(mapping, 'uri')
