@@ -61,6 +61,10 @@ class FindServiceOuterTest(unittest.TestCase):
         mock_inner.find_service_for_circle = MagicMock()
         mock_inner.find_service_for_circle.return_value = []
 
+        mock_config.service_boundary_return_geodetic_override = MagicMock()
+        mock_config.service_boundary_return_geodetic_override.return_value = \
+            lostservice.handling.findservice.ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest
+
         model = lostservice.model.requests.FindServiceRequest()
         model.serviceBoundary = 'value'
         model.service = 'some:service:urn'
@@ -105,6 +109,10 @@ class FindServiceOuterTest(unittest.TestCase):
 
         mock_inner.find_service_for_ellipse = MagicMock()
         mock_inner.find_service_for_ellipse.return_value = []
+
+        mock_config.service_boundary_return_geodetic_override = MagicMock()
+        mock_config.service_boundary_return_geodetic_override.return_value = \
+            lostservice.handling.findservice.ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest
 
         model = lostservice.model.requests.FindServiceRequest()
         model.serviceBoundary = 'value'
@@ -232,7 +240,8 @@ class FindServiceOuterTest(unittest.TestCase):
         except:
             self.fail("handle_request threw an exception.")
 
-    def test_build_one_mapping_no_boundary(self):
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_build_one_mapping_no_boundary(self, mock_config):
 
         mapping = {
             'displayname': 'foo',
@@ -244,7 +253,11 @@ class FindServiceOuterTest(unittest.TestCase):
             'expiration': 'never'
         }
 
-        target = lostservice.handling.findservice.FindServiceOuter(None, None)
+        mock_config.service_boundary_return_geodetic_override = MagicMock()
+        mock_config.service_boundary_return_geodetic_override.return_value = \
+            lostservice.handling.findservice.ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest
+
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, None)
         actual = target._build_one_mapping(mapping, False)
 
         self.assertEqual(actual.display_name, mapping['displayname'])
@@ -254,9 +267,10 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.service_urn, mapping['serviceurn'])
         self.assertEqual(actual.last_updated, mapping['updatedate'])
         self.assertEqual(actual.expires, mapping['expiration'])
-        self.assertIsNone(actual.boundary_value)
+        self.assertEqual(actual.boundary_value, '')
 
-    def test_build_one_mapping_with_boundary(self):
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_build_one_mapping_with_boundary(self, mock_config):
 
         mapping = {
             'displayname': 'foo',
@@ -269,7 +283,11 @@ class FindServiceOuterTest(unittest.TestCase):
             'ST_AsGML_1': '<GML />'
         }
 
-        target = lostservice.handling.findservice.FindServiceOuter(None, None)
+        mock_config.service_boundary_return_geodetic_override = MagicMock()
+        mock_config.service_boundary_return_geodetic_override.return_value = \
+            lostservice.handling.findservice.ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest
+
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, None)
         actual = target._build_one_mapping(mapping, True)
 
         self.assertEqual(actual.display_name, mapping['displayname'])
@@ -280,6 +298,37 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.last_updated, mapping['updatedate'])
         self.assertEqual(actual.expires, mapping['expiration'])
         self.assertEqual(actual.boundary_value, mapping['ST_AsGML_1'])
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_build_one_mapping_with_boundary_override_returnNothing(self, mock_config):
+
+        mapping = {
+            'displayname': 'foo',
+            'routeuri': 'bar',
+            'servicenum': 'baz',
+            'gcunqid': '{12345}',
+            'serviceurn': 'some.service.urn',
+            'updatedate': 'whenever',
+            'expiration': 'never',
+            'ST_AsGML_1': '<GML />'
+        }
+
+        mock_config.service_boundary_return_geodetic_override = MagicMock()
+        mock_config.service_boundary_return_geodetic_override.return_value = \
+            lostservice.handling.findservice.ServiceBoundaryGeodeticOverridePolicyEnum.ReturnNothing
+
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, None)
+        actual = target._build_one_mapping(mapping, True)
+
+        self.assertEqual(actual.display_name, mapping['displayname'])
+        self.assertEqual(actual.route_uri, mapping['routeuri'])
+        self.assertEqual(actual.service_number, mapping['servicenum'])
+        self.assertEqual(actual.source_id, mapping['gcunqid'])
+        self.assertEqual(actual.service_urn, mapping['serviceurn'])
+        self.assertEqual(actual.last_updated, mapping['updatedate'])
+        self.assertEqual(actual.expires, mapping['expiration'])
+        self.assertIsNone(actual.boundary_value)
+
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     def test_build_mapping_list(self, mock_config):
@@ -407,6 +456,65 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.mappings[0].expires, mappings[0]['expiration'])
         self.assertEqual(actual.mappings[0].boundary_value, mappings[0]['ST_AsGML_1'])
 
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_build_warnings_no_change(self, mock_config):
+
+        mock_config.source_uri = MagicMock()
+        mock_config.source_uri.return_value = 'foo'
+
+        mock_config.polygon_multiple_match_policy = MagicMock()
+        mock_config.polygon_multiple_match_policy.return_value = \
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnLimitWarning
+
+        mappings = [{
+            'displayname': 'foo',
+            'routeuri': 'bar',
+            'servicenum': 'baz',
+            'gcunqid': '{12345}',
+            'serviceurn': 'some.service.urn',
+            'updatedate': 'whenever',
+            'expiration': 'never',
+            'ST_AsGML_1': '<GML />'
+        }]
+
+        nonlostdata = ['<notLoST>']
+
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, None)
+        actual = target._build_warnings(mappings, nonlostdata)
+
+        self.assertEqual(len(actual), 1)
+        self.assertEqual(actual[0], '<notLoST>')
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_build_warnings_add_warning(self, mock_config):
+
+        mock_config.source_uri = MagicMock()
+        mock_config.source_uri.return_value = 'foo'
+
+        mock_config.polygon_multiple_match_policy = MagicMock()
+        mock_config.polygon_multiple_match_policy.return_value = \
+            lostservice.handling.findservice.PolygonMultipleMatchPolicyEnum.ReturnLimitWarning
+
+        mappings = [{
+            'displayname': 'foo',
+            'routeuri': 'bar',
+            'servicenum': 'baz',
+            'gcunqid': '{12345}',
+            'serviceurn': 'some.service.urn',
+            'updatedate': 'whenever',
+            'expiration': 'never',
+            'ST_AsGML_1': '<GML />',
+            'tooManyMappings': True
+        }]
+
+        nonlostdata = ['<notLoST>']
+
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, None)
+        actual = target._build_warnings(mappings, nonlostdata)
+
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0], '<notLoST>')
+        self.assertEqual(actual[1].tag, 'warnings')
 
 if __name__ == '__main__':
     unittest.main()

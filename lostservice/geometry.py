@@ -75,7 +75,6 @@ def calculate_arc(centerx, centery, radius, start_angle, end_angle):
     y = centery + radius * np.sin(theta)
     return x, y
 
-    return arc
 
 
 def generate_arcband(long, lat, band_start, band_sweep, inner_radius, outer_radius):
