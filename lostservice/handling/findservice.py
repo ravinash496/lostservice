@@ -904,7 +904,6 @@ class FindServiceOuter(object):
                 attr = warnings_element.attrib
                 attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
 
-
                 nonlostdata.append((xml_warning))
 
         return nonlostdata
@@ -964,6 +963,7 @@ class FindServiceOuter(object):
             resp_mapping.route_uri = mapping['routeuri']
             resp_mapping.service_number = mapping['servicenum']
             resp_mapping.service_urn = mapping.get('serviceurn')
+
             if self._find_service_config.service_boundary_return_geodetic_override() == ServiceBoundaryGeodeticOverridePolicyEnum.ReturnNothing:
                 # Do not return ServiceBoundary tag at all
                 resp_mapping.boundary_value = None
