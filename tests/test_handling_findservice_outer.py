@@ -483,7 +483,7 @@ class FindServiceOuterTest(unittest.TestCase):
         actual = target._build_warnings(mappings, nonlostdata)
 
         self.assertEqual(len(actual), 1)
-        self.assertEqual(actual[0], ['<notLoST>'])
+        self.assertEqual(actual[0], '<notLoST>')
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     def test_build_warnings_add_warning(self, mock_config):
@@ -513,7 +513,7 @@ class FindServiceOuterTest(unittest.TestCase):
         actual = target._build_warnings(mappings, nonlostdata)
 
         self.assertEqual(len(actual), 2)
-        self.assertEqual(actual[0], ['<notLoST>'])
+        self.assertEqual(actual[0], '<notLoST>')
         self.assertEqual(actual[1].tag, 'warnings')
 
 if __name__ == '__main__':
