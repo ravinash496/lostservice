@@ -346,6 +346,9 @@ class FindServiceInner(object):
                     return_shape)
 
                 results = self._apply_polygon_multiple_match_policy(results)
+        else:
+            if results is None:
+                results = [{'adddatauri': ""}]
 
         return self._apply_policies(results, return_shape)
 
@@ -964,7 +967,7 @@ class FindServiceOuter(object):
         :return: A ResponseMapping instance.
         :rtype: :py:class:`lostservice.model.responses.ResponseMapping`
         """
-        if mapping.get('adddatauri'):
+        if 'adddatauri' in mapping:
             resp_mapping = AdditionalDataResponseMapping()
             resp_mapping.adddatauri = mapping.get('adddatauri', "")
             resp_mapping.service_urn = self._find_service_config.settings_for_additionaldata("service_urn")
@@ -983,9 +986,9 @@ class FindServiceOuter(object):
             else:
                 resp_mapping.boundary_value = ""
 
-        resp_mapping.last_updated = mapping['updatedate']
+        resp_mapping.last_updated = mapping.get('updatedate','')
         resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
-        resp_mapping.source_id = mapping['gcunqid']
+        resp_mapping.source_id = mapping.get('gcunqid',"")
 
         return resp_mapping
 
