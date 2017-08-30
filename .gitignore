@@ -101,3 +101,4 @@ scratch
 **/.idea/lostservice.iml
 **/.idea/misc.xml
 .idea
+tests/requests/test.xml
