@@ -644,6 +644,44 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
         return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_poly, return_intersection_area)
 
 
+def get_addtionaldata_for_polygon(points, srid, boundary_table, engine, buffer_distance):
+    """
+    Executes an addtional data query for a polygon.
+
+    :param points: A list of vertices in (x,y) format.
+    :type points: `list`
+    :param srid: The spatial reference Id of the vertices.
+    :type srid: `str`
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons
+    :type return_intersection_area bool
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+    # Pull out just the number from the SRID
+    trimmed_srid = int(srid.split('::')[1])
+
+    polygon_addionaldata_points = []
+    add_srcunqid = []
+    for point in points:
+        # Create a Shapely Point
+        pt = Point(point)
+
+        # Pull out just the number from the SRID
+        trimmed_srid = srid.split('::')[1]
+
+        # Get a GeoAlchemy WKBElement from the point.
+        wkb_pt = from_shape(pt, trimmed_srid)
+
+        add_point = _get_nearest_point(point[0], point[1], engine, boundary_table, wkb_pt,
+                                       buffer_distance=buffer_distance)
+        if add_point and add_point[0]['srcunqid'] not in add_srcunqid:
+            polygon_addionaldata_points.append(add_point[0])
+            add_srcunqid.append(add_point[0]['srcunqid'])
+    return  polygon_addionaldata_points
+
 def get_boundaries_for_previous_id(pid, engine, boundary_table):
     """
     Executes an query to get the boundary.
