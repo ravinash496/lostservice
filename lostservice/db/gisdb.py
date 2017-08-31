@@ -134,7 +134,7 @@ class GisDbInterface(object):
         """
         return spatialdb.get_intersecting_boundaries_for_polygon(points, srid, boundary_table, self._engine, True, proximity_search, proximity_buffer)
 
-    def get_addtionaldata_for_polygon(self, points, srid, boundary_table, buffer_distance ):
+    def get_additionaldata_for_polygon(self, points, srid, boundary_table, buffer_distance ):
         """
         Executes an additonal data query for a polygon.
 
@@ -146,7 +146,7 @@ class GisDbInterface(object):
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_addtionaldata_for_polygon(points, srid, boundary_table, self._engine, buffer_distance)
+        return spatialdb.get_additionaldata_for_polygon(points, srid, boundary_table, self._engine, buffer_distance)
 
 
     def get_boundaries_for_previous_id(self, pid, boundary_table):
@@ -227,3 +227,7 @@ class GisDbInterface(object):
 
         return spatialdb.get_intersecting_list_service_for_polygon(points, srid, boundary_table, self._engine, False,
                                                                    proximity_search, proximity_buffer)
+
+    def get_additional_data_for_circle(self, long, lat, srid, radius, uom, boundary_table, buffer_distance):
+        return spatialdb.get_additional_data_for_circle(long, lat, srid, radius, uom, boundary_table, buffer_distance, self._engine)
+
