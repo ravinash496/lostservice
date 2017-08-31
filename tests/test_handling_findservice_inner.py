@@ -145,7 +145,7 @@ class FindServiceInnerTest(unittest.TestCase):
             """
 
         output = """
-                    <gml:Polygon xmlns:gml="http://www.opengis.net/gml">
+                    <gml:Polygon srsName="EPSG:4326" xmlns:gml="http://www.opengis.net/gml">
                         <gml:exterior>
                             <gml:LinearRing>
                                 <gml:posList>
