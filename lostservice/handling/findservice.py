@@ -696,6 +696,9 @@ class FindServiceInner(object):
 
             count = 0
             for node in root.iter():
+
+                if node.tag == '{0}MultiSurface'.format(GML_URN_COORDS):
+                    attr_srs = node.attrib
                 if node.tag == '{0}Polygon'.format(GML_URN_COORDS):
                     polygontxt = etree.tostring(node)
                     count = count + 1
@@ -705,6 +708,7 @@ class FindServiceInner(object):
                 return mapping
 
             modified_root = etree.XML(polygontxt)
+            modified_root.set('srsName', attr_srs.get('srsName', 'EPSG:4326'))
             modified_root = self._clear_attributes(modified_root)
 
             # Update value with new GML
