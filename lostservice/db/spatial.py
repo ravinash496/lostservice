@@ -147,6 +147,66 @@ def _get_nearest_point(long, lat, engine, table_name, geom, buffer_distance=None
     return retval
 
 
+def _get_additional_data_for_geometry(engine, geom, table_name):
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table(table_name, tbl_metadata, autoload=True)
+
+        s = select(
+            [the_table],
+            func.ST_Contains(the_table.c.wkb_geometry,geom))
+
+        results = _execute_query(engine, s)
+        return results
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct intersection query.', ex)
+    except SpatialQueryException:
+        raise
+
+
+def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buffer_distance, utmsrid):
+    try:
+        # Get a reference to the table we're going to look in.
+        tbl_metadata = MetaData(bind=engine)
+        the_table = Table(table_name, tbl_metadata, autoload=True)
+
+        s = select(
+            [the_table],
+            func.ST_Intersects(
+                func.ST_Buffer(func.ST_Transform(
+                    func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance),
+                the_table.c.wkb_geometry.ST_Transform(utmsrid)))
+
+        results = _execute_query(engine, s)
+        return results
+    except SQLAlchemyError as ex:
+        raise SpatialQueryException(
+            'Unable to construct intersection query.', ex)
+    except SpatialQueryException:
+        raise
+
+    return None
+
+
+def get_additional_data_for_circle(long, lat, srid, radius, uom, table_name, buffer_distance, engine):
+    # Pull out just the number from the SRID
+    trimmed_srid = int(srid.split('::')[1])
+
+    # Get a version of the circle we can use.
+    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
+
+    utmsrid = getutmsrid(long, lat)
+
+    results = _get_additional_data_for_geometry(engine, wkb_circle, table_name)
+    if results is None:
+        results = _get_additional_data_for_geometry_with_buffer(engine, wkb_circle, table_name,
+                                                               buffer_distance, utmsrid)
+
+    return results
+
+
 def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_intersection_area):
     """
     Queries the given table for any boundaries that intersect the given geometry.
@@ -644,7 +704,7 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
         return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_poly, return_intersection_area)
 
 
-def get_addtionaldata_for_polygon(points, srid, boundary_table, engine, buffer_distance):
+def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_distance):
     """
     Executes an addtional data query for a polygon.
 

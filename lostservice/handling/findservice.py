@@ -385,33 +385,51 @@ class FindServiceInner(object):
             # search using a centroid.
             return self.find_service_for_point(service_urn, longitude, latitude, spatial_ref, return_shape)
         else:
-            esb_table = self._get_esb_table(service_urn)
+            ADD_DATA_REQUESTED = False
+            ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
+            buffer_distance = self._find_service_config.additional_data_buffer()
+            if service_urn == ADD_DATA_SERVICE:
+                ADD_DATA_REQUESTED = True
+                esb_table = self._find_service_config.settings_for_additionaldata("data_table")
+            else:
+                esb_table = self._get_esb_table(service_urn)
 
             multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
             return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
 
-            results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                longitude,
-                latitude,
-                spatial_ref,
-                radius,
-                radius_uom, esb_table, return_area, return_shape)
-
-            if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
-                proximity_buffer = self._find_service_config.expanded_search_buffer()
-                results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+            results=[]
+            if ADD_DATA_REQUESTED:
+                results = self._db_wrapper.get_additional_data_for_circle(
                     longitude,
                     latitude,
                     spatial_ref,
                     radius,
                     radius_uom,
                     esb_table,
-                    return_area,
-                    return_shape,
-                    True,
-                    proximity_buffer)
+                    buffer_distance)
+            else:
+                results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                    longitude,
+                    latitude,
+                    spatial_ref,
+                    radius,
+                    radius_uom, esb_table, return_area, return_shape)
 
-            results = self._apply_polygon_multiple_match_policy(results)
+                if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
+                    proximity_buffer = self._find_service_config.expanded_search_buffer()
+                    results = self._db_wrapper.get_intersecting_boundaries_for_circle(
+                        longitude,
+                        latitude,
+                        spatial_ref,
+                        radius,
+                        radius_uom,
+                        esb_table,
+                        return_area,
+                        return_shape,
+                        True,
+                        proximity_buffer)
+
+                results = self._apply_polygon_multiple_match_policy(results)
             return self._apply_policies(results, return_shape)
 
     def find_service_for_ellipse(self,
@@ -553,7 +571,7 @@ class FindServiceInner(object):
                 esb_table = self._get_esb_table(service_urn)
 
             if ADD_DATA_REQUESTED:
-                results = self._db_wrapper.get_addtionaldata_for_polygon(points, spatial_ref, esb_table, buffer_distance)
+                results = self._db_wrapper.get_additionaldata_for_polygon(points, spatial_ref, esb_table, buffer_distance)
             else:
                 results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
 
