@@ -91,9 +91,7 @@ class FindServiceInnerTest(unittest.TestCase):
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
         xml = """
-            <gml:MultiSurface xmlns:gml="http://www.opengis.net/gml" srsName="EPSG:4326">
-                <gml:surfaceMember>
-                    <gml:Polygon>
+                    <gml:Polygon xmlns:gml="http://www.opengis.net/gml">
                         <gml:exterior>
                             <gml:LinearRing>
                                 <gml:posList srsDimension="2">
@@ -102,15 +100,11 @@ class FindServiceInnerTest(unittest.TestCase):
                             </gml:LinearRing>
                         </gml:exterior>
                     </gml:Polygon>
-                </gml:surfaceMember>
-            </gml:MultiSurface>
             """
         root = etree.fromstring(xml)
 
         output = """
-            <gml:MultiSurface xmlns:gml="http://www.opengis.net/gml" srsName="EPSG:4326">
-                <gml:surfaceMember>
-                    <gml:Polygon>
+                    <gml:Polygon xmlns:gml="http://www.opengis.net/gml">
                         <gml:exterior>
                             <gml:LinearRing>
                                 <gml:posList>
@@ -119,8 +113,6 @@ class FindServiceInnerTest(unittest.TestCase):
                             </gml:LinearRing>
                         </gml:exterior>
                     </gml:Polygon>
-                </gml:surfaceMember>
-            </gml:MultiSurface>
             """
         expected = etree.tostring(etree.fromstring(output), pretty_print=False)
 
@@ -153,9 +145,7 @@ class FindServiceInnerTest(unittest.TestCase):
             """
 
         output = """
-            <gml:MultiSurface xmlns:gml="http://www.opengis.net/gml" srsName="EPSG:4326">
-                <gml:surfaceMember>
-                    <gml:Polygon>
+                    <gml:Polygon srsName="EPSG:4326" xmlns:gml="http://www.opengis.net/gml">
                         <gml:exterior>
                             <gml:LinearRing>
                                 <gml:posList>
@@ -164,8 +154,6 @@ class FindServiceInnerTest(unittest.TestCase):
                             </gml:LinearRing>
                         </gml:exterior>
                     </gml:Polygon>
-                </gml:surfaceMember>
-            </gml:MultiSurface>
             """
         parsed_output = etree.tostring(etree.fromstring(output), pretty_print=False).decode("utf-8")
 

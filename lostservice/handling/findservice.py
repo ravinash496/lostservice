@@ -720,15 +720,33 @@ class FindServiceInner(object):
         # ReturnAreaMajorityPolygon
         # ReturnAllAsSinglePolygons
 
+        GML_URN = 'http://www.opengis.net/gml'
+        GML_URN_COORDS = '{0}{1}{2}'.format('{', GML_URN, '}')
+
         if return_shape and 'ST_AsGML_1' in mapping:
             gml = mapping['ST_AsGML_1']
             gml = gml.replace('>', ' xmlns:gml="http://www.opengis.net/gml">', 1)
-
             root = etree.XML(gml)
-            root = self._clear_attributes(root)
+
+            count = 0
+            for node in root.iter():
+
+                if node.tag == '{0}MultiSurface'.format(GML_URN_COORDS):
+                    attr_srs = node.attrib
+                if node.tag == '{0}Polygon'.format(GML_URN_COORDS):
+                    polygontxt = etree.tostring(node)
+                    count = count + 1
+
+            if count > 1:
+                # TODO Multipolygons - Not supported currently so just return unedited GML
+                return mapping
+
+            modified_root = etree.XML(polygontxt)
+            modified_root.set('srsName', attr_srs.get('srsName', 'EPSG:4326'))
+            modified_root = self._clear_attributes(modified_root)
 
             # Update value with new GML
-            mapping['ST_AsGML_1'] = etree.tostring(root).decode("utf-8")
+            mapping['ST_AsGML_1'] = etree.tostring(modified_root).decode("utf-8")
 
         return mapping
 
