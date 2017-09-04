@@ -119,6 +119,18 @@ class FindServiceConfigWrapper(object):
 
         return int(limit)
 
+    def additionaldata_result_limit(self):
+        """
+        Gets the maximum number mappings to return. If results exceeds this value include a "toomanyMappings" warning.
+
+        :return: ``int``
+        """
+        limit = self._config.get('AddtionalData', 'return_limit_number', as_object=False, required=False)
+        if limit is None:
+            limit = 100  # Default to 100
+
+        return int(limit)
+
     def polygon_search_mode_policy(self):
         """
         Gets the polygon search mode policy.
@@ -407,6 +419,7 @@ class FindServiceInner(object):
                     radius_uom,
                     esb_table,
                     buffer_distance)
+                results = self._apply_addtionaldata_multiple_match_policy(results)
             else:
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
                     longitude,
@@ -572,6 +585,7 @@ class FindServiceInner(object):
 
             if ADD_DATA_REQUESTED:
                 results = self._db_wrapper.get_additionaldata_for_polygon(points, spatial_ref, esb_table, buffer_distance)
+                results = self._apply_addtionaldata_multiple_match_policy(results)
             else:
                 results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
 
@@ -645,6 +659,26 @@ class FindServiceInner(object):
                 # Find and return Max area
                 max_area_item = max(mappings, key=lambda x: x['AREA_RET'])
                 mappings = [max_area_item]
+
+        return mappings
+
+    def _apply_addtionaldata_multiple_match_policy(self, mappings):
+        """
+        Apply the a addtional data multiple match policy to given mappings.
+
+        :param mappings: The mappings returned from a point search.
+        :type mappings ``list`` of ``dict``
+        :return: Mapping list adjusted according to the match policy.
+        :rtype: ``list`` of ``dict``
+        """
+
+        if mappings is not None:
+            i = len(mappings)
+            limit = self._find_service_config.additionaldata_result_limit()
+            if i > limit:
+                # Results exceeds configurable setting - cut off results and apply warning
+                del mappings[limit:i]
+                [mapping.update({'tooManyMappings': True}) for mapping in mappings]
 
         return mappings
 
@@ -920,8 +954,7 @@ class FindServiceOuter(object):
 
         if mappings is None:
             return nonlostdata
-
-        if self._find_service_config.polygon_multiple_match_policy() == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning:
+        if self._check_is_addurl_in_mappings(mappings) == True or (self._find_service_config.polygon_multiple_match_policy() == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning):
             if self._check_too_many_mappings(mappings) == True:
                 # Setting is ReturnLimitWarning and flag was found so generate a new element for warnings and add
                 # tooManyMappings as subelement.  Place this in nonlostdata as another element to be added
@@ -939,6 +972,17 @@ class FindServiceOuter(object):
                 nonlostdata.append((xml_warning))
 
         return nonlostdata
+
+    def _check_is_addurl_in_mappings(self, mappings):
+        """
+        Check for addurl in mapping.
+        :param mappings:
+        :return:
+        """
+        for mapping in mappings:
+            if "adddatauri" in mapping:
+                return True
+            return False
 
     def _check_too_many_mappings(self, mappings):
         """
