@@ -1,0 +1,6 @@
+[
+{
+	"Service": "urn:nena:service:responder",
+    "Expected_ServiceList": "urn:nena:service:responder.federal_police"
+}
+]
