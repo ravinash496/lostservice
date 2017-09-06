@@ -77,7 +77,7 @@
 	"startAngle": "",
 	"openingAngle": "",
 	"Service": "urn:nena:service:sos",
-    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police urn:nena:service:sos.call_taker"
+    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police"
 },
 {
 	"Type": "poly7",
@@ -117,7 +117,7 @@
 	"startAngle": "",
 	"openingAngle": "",
 	"Service": "urn:nena:service:sos",
-    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police urn:nena:service:sos.call_taker"
+    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police"
 },
 {
 	"Type": "ellipse",
@@ -137,7 +137,7 @@
 	"startAngle": "",
 	"openingAngle": "",
 	"Service": "urn:nena:service:sos",
-    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police urn:nena:service:sos.call_taker"
+    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police"
 },
 {
 	"Type": "ellipse",
@@ -157,7 +157,7 @@
 	"startAngle": "",
 	"openingAngle": "",
 	"Service": "urn:nena:service:sos",
-    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police urn:nena:service:sos.call_taker"
+    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police"
 },
 {
 	"Type": "arcband",
@@ -197,6 +197,6 @@
 	"startAngle": "75.5297058999522",
 	"openingAngle": "90.0000000000001",
 	"Service": "urn:nena:service:sos",
-    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police urn:nena:service:sos.call_taker"
+    "Expected_ServiceList": "urn:nena:service:sos.EMS urn:nena:service:sos.fire urn:nena:service:sos.police"
 }
 ]

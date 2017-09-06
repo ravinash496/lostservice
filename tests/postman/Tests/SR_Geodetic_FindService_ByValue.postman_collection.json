@@ -26,15 +26,15 @@
 							"// If the interior ring does not exist and it tries to find it, there will be an error. Example: circle, simple polygon or ellipse",
 							"if (data.posListIntRing === '')  ",
 							"{",
-							"    tests[\"Expected Service: \" + Service] = Service == data.Expected_Service;",
-							"    tests[\"Exterior Ring: \" + posListExtRing] = posListExtRing == data.posListExtRing;",
+							"    tests[\"Expected Service Matches: \"] = Service == data.Expected_Service;",
+							"    tests[\"Exterior Ring Matches: \"] = posListExtRing === data.posListExtRing;",
 							"}",
 							"else",
 							"{",
 							"    var posListIntRing = jsonObject.findServiceResponse.mapping.serviceBoundary['gml:Polygon']['gml:interior']['gml:LinearRing']['gml:posList'];",
-							"    tests[\"Expected Service: \" + Service] = Service == data.Expected_Service;",
-							"    tests[\"Exterior Ring: \" + posListExtRing] = posListExtRing == data.posListExtRing;",
-							"    tests[\"Interior Ring: \" + posListIntRing] = posListIntRing == data.posListIntRing;",
+							"    tests[\"Expected Service(s) Correctly Returned: \"] = Service === data.Expected_Service;",
+							"    tests[\"Exterior Ring Correctly Matches: \"] = posListExtRing === data.posListExtRing;",
+							"    tests[\"Interior Ring Correctly Matches: \"] = posListIntRing === data.posListIntRing;",
 							"}",
 							"",
 							"tests[\"Expected URI: \" + URI] = URI == data.Expected_URI;",
@@ -93,7 +93,7 @@
 				}
 			],
 			"request": {
-				"url": "http://pv-qps-2/SpatialRouter/",
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
 				"method": "POST",
 				"header": [
 					{

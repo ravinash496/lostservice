@@ -15,12 +15,13 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
+							"tests[data.Type] = true === true;",
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Response time is less than 150ms\"] = responseTime < 150;",
+							"tests[\"Response time is less than 300ms\"] = responseTime < 1000;",
 							"var jsonObject = xml2Json(responseBody);",
 							"var ServiceList = jsonObject.listServicesByLocationResponse.serviceList;",
 							"",
-							"tests[\"Service List: \" + ServiceList] = ServiceList == data.Expected_ServiceList;",
+							"tests[\"Service List: \" + ServiceList] = ServiceList === data.Expected_ServiceList;",
 							""
 						]
 					}
@@ -74,12 +75,12 @@
 				}
 			],
 			"request": {
-				"url": "{{url}}",
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/x-www-form-urlencoded",
+						"value": "application/xml",
 						"description": ""
 					}
 				],
