@@ -264,6 +264,32 @@ class FindServiceInnerTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_apply_addtionaldata_multiple_match_policy(self, mock_config, mock_db):
+        mock_config.additionaldata_result_limit = MagicMock()
+        mock_config.additionaldata_result_limit.return_value = 3
+
+        mock_db.get_urn_table_mappings = MagicMock()
+        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
+
+        input = [
+            {'id': 1},
+            {'id': 2},
+            {'id': 3},
+            {'id': 4}
+        ]
+        expected = [
+            {'id': 1, 'tooManyMappings': True},
+            {'id': 2, 'tooManyMappings': True},
+            {'id': 3, 'tooManyMappings': True}
+        ]
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        actual = target._apply_addtionaldata_multiple_match_policy(input)
+
+        self.assertListEqual(actual, expected)
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
     def test_apply_polygon_policy_limit_only_two(self, mock_config, mock_db):
         mock_config.polygon_multiple_match_policy = MagicMock()
         mock_config.polygon_multiple_match_policy.return_value = \
