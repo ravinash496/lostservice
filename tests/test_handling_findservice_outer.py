@@ -516,5 +516,28 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual[0], '<notLoST>')
         self.assertEqual(actual[1].tag, 'warnings')
 
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_check_is_addurl_in_mappings(self, mock_config):
+
+        mock_config.source_uri = MagicMock()
+        mock_config.source_uri.return_value = 'foo'
+
+        mappings = [{
+            'servicenum': 'baz',
+            'gcunqid': '{12345}',
+            'serviceurn': 'some.service.urn',
+            'updatedate': 'whenever',
+            'expiration': 'never',
+            'tooManyMappings': True,
+            'adddatauri': "someuri"
+        }]
+
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, None)
+        actual = target._check_is_addurl_in_mappings(mappings)
+        expected = True
+
+        self.assertEqual(actual, expected)
+
+
 if __name__ == '__main__':
     unittest.main()
