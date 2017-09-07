@@ -702,7 +702,7 @@ class FindServiceInnerTest(unittest.TestCase):
         target.find_service_for_polygon = MagicMock()
         target.find_service_for_polygon.return_value = expected
 
-        actual = target.find_service_for_arcband('urn1', 0.0, 1.1, 'something', 20.0, 90.0, 10.0, 20.0, False)
+        actual = target.find_service_for_arcband('urn1', 0.0, 1.1, 'urn:ogc:def:crs:EPSG::4326', 20.0, 90.0, 10.0, 20.0, False)
 
         self.assertListEqual(actual, expected)
         target.find_service_for_polygon.assert_called_once()

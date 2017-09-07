@@ -156,7 +156,7 @@ def _get_additional_data_for_geometry(engine, geom, table_name):
 
         s = select(
             [the_table],
-            func.ST_Contains(the_table.c.wkb_geometry,geom))
+            func.ST_Intersects(the_table.c.wkb_geometry,geom))
 
         results = _execute_query(engine, s)
         return results
@@ -194,9 +194,10 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
 def get_additional_data_for_circle(long, lat, srid, radius, uom, table_name, buffer_distance, engine):
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
+    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
     utmsrid = gc_geom.getutmsrid(long, lat)
 
     results = _get_additional_data_for_geometry(engine, wkb_circle, table_name)
