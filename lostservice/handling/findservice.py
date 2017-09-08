@@ -420,6 +420,8 @@ class FindServiceInner(object):
                     esb_table,
                     buffer_distance)
                 results = self._apply_addtionaldata_multiple_match_policy(results)
+                if results is None or len(results)==0:
+                    results = [{'adddatauri':''}]
             else:
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
                     longitude,
@@ -483,32 +485,52 @@ class FindServiceInner(object):
             # search using a centroid.
             return self.find_service_for_point(service_urn, longitude, latitude, spatial_ref, return_shape)
         else:
+            ADD_DATA_REQUESTED = False
+            ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
+            buffer_distance = self._find_service_config.additional_data_buffer()
+            if service_urn == ADD_DATA_SERVICE:
+                ADD_DATA_REQUESTED = True
+                esb_table = self._find_service_config.settings_for_additionaldata("data_table")
+            else:
+                esb_table = self._get_esb_table(service_urn)
 
-            esb_table = self._get_esb_table(service_urn)
-
-            results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
-                longitude,
-                latitude,
-                spatial_ref,
-                semi_major_axis,
-                semi_minor_axis,
-                orientation,
-                esb_table)
-
-            if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
-                # No results and Policy says we should buffer and research
-                proximity_buffer = self._find_service_config.expanded_search_buffer()
-
+            if ADD_DATA_REQUESTED:
+                results = self._db_wrapper.get_additional_data_for_ellipse(
+                    longitude,
+                    latitude,
+                    spatial_ref,
+                    semi_major_axis,
+                    semi_minor_axis,
+                    orientation,
+                    esb_table,
+                    buffer_distance)
+                results = self._apply_addtionaldata_multiple_match_policy(results)
+                if results is None or len(results)==0:
+                    results = [{'adddatauri':''}]
+            else:
                 results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
                     longitude,
                     latitude,
                     spatial_ref,
-                    semi_major_axis + proximity_buffer,
-                    semi_minor_axis + proximity_buffer,
+                    semi_major_axis,
+                    semi_minor_axis,
                     orientation,
                     esb_table)
 
-            results = self._apply_polygon_multiple_match_policy(results)
+                if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
+                    # No results and Policy says we should buffer and research
+                    proximity_buffer = self._find_service_config.expanded_search_buffer()
+
+                    results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
+                        longitude,
+                        latitude,
+                        spatial_ref,
+                        semi_major_axis + proximity_buffer,
+                        semi_minor_axis + proximity_buffer,
+                        orientation,
+                        esb_table)
+
+                results = self._apply_polygon_multiple_match_policy(results)
             return self._apply_policies(results, return_shape)
 
     def find_service_for_arcband(self,
@@ -586,6 +608,8 @@ class FindServiceInner(object):
             if ADD_DATA_REQUESTED:
                 results = self._db_wrapper.get_additionaldata_for_polygon(points, spatial_ref, esb_table, buffer_distance)
                 results = self._apply_addtionaldata_multiple_match_policy(results)
+                if results is None or len(results)==0:
+                    results = [{'adddatauri':''}]
             else:
                 results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
 

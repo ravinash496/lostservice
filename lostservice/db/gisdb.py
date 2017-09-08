@@ -155,6 +155,9 @@ class GisDbInterface(object):
     def get_intersecting_boundary_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table):
         return spatialdb.get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, self._engine)
 
+    def get_additional_data_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table, buffer_distance):
+        return spatialdb.get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation,buffer_distance, boundary_table, self._engine)
+
     def get_list_services_for_point(self, long, lat, srid, boundary_table):
         """
         Executes a contains query for a point.
