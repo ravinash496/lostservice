@@ -41,8 +41,8 @@ class GeometryTest(unittest.TestCase):
 
         resultx, resulty = reproject_point(x, y, source_srid, target_srid)
 
-        self.assertEqual(resultx, 521164.168)
-        self.assertEqual(resulty, 377812.968)
+        self.assertEqual(resultx, 521164.1680000003)
+        self.assertEqual(resulty, 377812.9680000007)
 
 
     def test_getutmsrid(self):
