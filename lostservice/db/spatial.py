@@ -544,6 +544,47 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
     return results
 
 
+def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, buffer_distance, boundary_table, engine):
+    """
+    Executes a contains query for a ellipse.
+
+    :param long: longitude value .
+    :type long: `float`
+    :param lat: latitude value .
+    :type lat: `float`
+    :param srid: The spatial reference Id of the ellipse.
+    :type srid: `str`
+    :param major: The majorAxis value.
+    :type major: `int`
+    :param minor: The minorAxis value.
+    :type minor: `int`
+    :param orientation: The orientation of ellipse.
+    :type orientation: `float`
+    :param buffer_distance: buffer distance
+    :type buffer_distance: `int`
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+
+
+    # Pull out just the number from the SRID
+    trimmed_srid = int(srid.split('::')[1])
+
+    utmsrid = getutmsrid(longitude=long, latitude=lat)
+
+    wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, trimmed_srid)
+
+    results = _get_additional_data_for_geometry(engine, wkb_ellipse, boundary_table)
+    if results is None:
+        results = _get_additional_data_for_geometry_with_buffer(engine, wkb_ellipse, boundary_table,
+                                                                buffer_distance, utmsrid)
+
+    return results
+
+
 def _transform_ellipse(long ,lat , major, minor, orientation, srid):
     """
     Takes the fundamental bits of a ellipse and converts it to a descritized ellipse (polygon)
