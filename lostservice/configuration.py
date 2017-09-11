@@ -10,7 +10,7 @@ Configuration related classes and functions.
 
 import os
 import configparser
-from enum import Enum
+from lostservice.exception import InternalErrorException
 
 _DBHOSTNAME = 'DBHOSTNAME'
 _DBPORT = 'DBPORT'
@@ -20,40 +20,22 @@ _DBPASSWORD = 'DBPASSWORD'
 _CONFIGFILE = 'CONFIGFILE'
 _LOGFILE = 'LOGFILE'
 _SOURCE_URI = 'SOURCE_URI'
+_LOGDBHOSTNAME = 'LOGDBHOSTNAME'
+_LOGDBPORT = 'LOGDBPORT'
+_LOGDBNAME = 'LOGDBNAME'
+_LOGDBUSER = 'LOGDBUSER'
+_LOGDBPASSWORD = 'LOGDBPASSWORD'
 
 
-
-class ConfigurationException(Exception):
+class ConfigurationException(InternalErrorException):
     """
     Something went wrong while loading, retrieving, or setting configuration
     values.
+
     """
-    def __init__(self, message):
+    def __init__(self, message, nested=None):
         # Call the base class constructor with the parameters it needs
-        super(ConfigurationException, self).__init__(message)
-
-
-class ServiceExpiresPolicyEnum(Enum):
-    NoCache = 1
-    NoExpiration = 2
-    TimeSpan = 3
-
-class PolygonSearchModePolicyEnum(Enum):
-    SearchUsingPolygon = 1
-    SearchUsingCentroid = 2
-
-class PolygonMultipleMatchPolicyEnum(Enum):
-    ReturnAll = 1
-    ReturnAllLimit5 = 2
-    ReturnAreaMajority = 3
-    ReturnFirst = 4
-    ReturnError = 5
-
-class PointMultipleMatchPolicyEnum(Enum):
-    ReturnAll = 1
-    ReturnAllLimit5 = 2
-    ReturnFirst = 3
-    ReturnError = 4
+        super(ConfigurationException, self).__init__(message, nested)
 
 
 class Configuration(object):
@@ -94,8 +76,8 @@ class Configuration(object):
         if not os.path.isfile(self._custom_config) \
                 or not os.path.isfile(self._default_config):
             raise ConfigurationException(
-                'One of custom ({0}) or default({1}) '
-                'configuration files missing.'.format(self._custom_config, self._default_config))
+                'One of custom ({0}) or default({1}) configuration files missing.'
+                .format(self._custom_config, self._default_config))
 
         self._custom_config_parser = configparser.ConfigParser()
         self._custom_config_parser.read(self._custom_config)
@@ -106,8 +88,8 @@ class Configuration(object):
         self._update_config_from_env()
 
         # Finally, cache the connection string for later.
-        self._db_connection_string = self._rebuild_db_connection_string()
-        self._logging_db_connection_string = self._rebuild_db_connection_string(section="Logging")
+        self._db_connection_string = self._rebuild_db_connection_string('Database')
+        self._logging_db_connection_string = self._rebuild_db_connection_string('LoggingDB')
 
     @property
     def custom_config_file(self):
@@ -160,7 +142,7 @@ class Configuration(object):
 
         try:
             if required and not found:
-                print('Option {0} not found not found..'.format(option))
+                print('Option {0} not found...'.format(option))
             elif not required and not found:
                 return None
 
@@ -264,38 +246,61 @@ class Configuration(object):
         if source_uri is not None:
             self.set_option('Service', 'source_uri', source_uri)
 
-    def _rebuild_db_connection_string(self, section="Database"):
+        env_log_dbhostname = os.getenv(_LOGDBHOSTNAME)
+        if env_log_dbhostname is not None:
+            self.set_option('LoggingDB', 'host', env_log_dbhostname)
+
+        env_log_dbport = os.getenv(_LOGDBPORT)
+        if env_log_dbport is not None:
+            self.set_option('LoggingDB', 'port', env_log_dbport)
+
+        env_log_dbname = os.getenv(_LOGDBNAME)
+        if env_log_dbname is not None:
+            self.set_option('LoggingDB', 'dbname', env_log_dbname)
+
+        env_log_dbusername = os.getenv(_LOGDBUSER)
+        if env_log_dbusername is not None:
+            self.set_option('LoggingDB', 'username', env_log_dbusername)
+
+        env_log_dbpassword = os.getenv(_LOGDBPASSWORD)
+        if env_log_dbpassword is not None:
+            self.set_option('LoggingDB', 'password', env_log_dbpassword)
+
+    def _rebuild_db_connection_string(self, section):
         """
         Recreates the database connection string from configuration.
 
         :return: ``str``
         """
-        host = self.get(section, 'host')
-        port = self.get(section, 'port')
-        dbname = self.get(section, 'dbname')
-        user = self.get(section, 'username')
-        password = self.get(section, 'password')
+        db_connection_string = None
+        if section in self.get_sections():
+            host = self.get(section, 'host')
+            port = self.get(section, 'port')
+            dbname = self.get(section, 'dbname')
+            user = self.get(section, 'username')
+            password = self.get(section, 'password')
+            conn_string_template = 'postgresql://{0}:{1}@{2}:{3}/{4}'
+            db_connection_string = conn_string_template.format(user, password, host, port, dbname)
 
-        # postgresql://scott:tiger@localhost/mydatabase'
-        conn_string_template = 'postgresql://{0}:{1}@{2}:{3}/{4}'
-        db_connection_string = conn_string_template.format(user, password, host, port, dbname)
-        if section=="Database":
-            self._db_connection_string = db_connection_string
-        else:
-            self._logging_db_connection_string = db_connection_string
+        return db_connection_string
 
-    def get_db_connection_string(self, section="Database"):
+    def get_gis_db_connection_string(self):
         """
-        Gets a valid database connection string from configuration.
+        Gets a valid gis database connection string from configuration.
 
         :rtype: ``str``
         """
-        if section=="Logging":
-            if self._logging_db_connection_string is None:
-                self._rebuild_db_connection_string(section="Logging")
-            return self._logging_db_connection_string
-        else:
-            if self._db_connection_string is None:
-                self._rebuild_db_connection_string()
-            return self._db_connection_string
+        if self._db_connection_string is None:
+            self._db_connection_string = self._rebuild_db_connection_string('Database')
+        return self._db_connection_string
+
+    def get_logging_db_connection_string(self):
+        """
+        Gets a valid database connection string for the logging database from configuration.
+
+        :return: ``str``
+        """
+        if self._logging_db_connection_string is None:
+            self._logging_db_connection_string = self._rebuild_db_connection_string('LoggingDB')
+        return self._logging_db_connection_string
 

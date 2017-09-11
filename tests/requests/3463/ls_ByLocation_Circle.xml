@@ -1,0 +1,13 @@
+<listServicesByLocation
+      xmlns="urn:ietf:params:xml:ns:lost1"
+      xmlns:gml="http://www.opengis.net/gml"
+      xmlns:slb="urn:ietf:params:xml:ns:lost1:slb" recursive="true">
+   <location id="b4d43179-11cf-4b24-aaa6-74af9d296265" profile="geodetic-2d">
+      <gs:Circle xmlns:gs="http://www.opengis.net/pidflo/1.0" xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::3463">
+          <gml:pos>377812.968 521164.168</gml:pos>
+          <gs:radius uom="urn:ogc:def:uom:EPSG::9001">7707.99711086547</gs:radius>
+      </gs:Circle>
+   </location>
+      <service>urn:nena:service:sos</service>
+      <slb:serviceListBoundaryRequest type="value"/>
+</listServicesByLocation>

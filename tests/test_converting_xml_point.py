@@ -24,9 +24,9 @@ class PointTest(unittest.TestCase):
 
         target = PointXmlConverter()
         result = target.parse(root)
-        self.assertEquals(result.spatial_ref, 'urn:ogc:def:crs:EPSG::4326')
-        self.assertEquals(result.latitude, 45.4524048105657)
-        self.assertEquals(result.longitude, -68.5452615106889)
+        self.assertEqual(result.spatial_ref, 'urn:ogc:def:crs:EPSG::4326')
+        self.assertEqual(result.latitude, 45.4524048105657)
+        self.assertEqual(result.longitude, -68.5452615106889)
 
 
 if __name__ == '__main__':

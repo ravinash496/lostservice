@@ -1,0 +1,12 @@
+<findService xmlns="urn:ietf:params:xml:ns:lost1" validateLocation="false" serviceBoundary="reference">
+   <location id="24b276e1-7eca-48d5-be24-30e0dd4c1ca0" profile="geodetic-2d">
+      <gs:ArcBand xmlns:gs="http://www.opengis.net/pidflo/1.0" xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
+       <gml:pos>46.6590717387414 -69.1017379617961</gml:pos>
+       <gs:innerRadius uom="urn:ogc:def:uom:EPSG::9001">0</gs:innerRadius>
+       <gs:outerRadius uom="urn:ogc:def:uom:EPSG::9001">42304.4692422285</gs:outerRadius>
+       <gs:startAngle uom="urn:ogc:def:uom:EPSG::9102">105.600837806612</gs:startAngle>
+       <gs:openingAngle uom="urn:ogc:def:uom:EPSG::9102">90.0000000000021</gs:openingAngle>
+      </gs:ArcBand>
+   </location>
+   <service>urn:nena:service:sos</service>
+</findService>

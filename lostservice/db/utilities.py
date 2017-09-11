@@ -8,13 +8,9 @@ General database utility functions
 """
 
 from sqlalchemy import MetaData, Table
-from sqlalchemy.sql import select, or_
 from sqlalchemy.exc import SQLAlchemyError
-from lostservice.model.location import Point
-from lostservice.configuration import PointMultipleMatchPolicyEnum
-from lostservice.configuration import PolygonSearchModePolicyEnum
-from lostservice.configuration import PolygonMultipleMatchPolicyEnum
-from lxml import etree
+from sqlalchemy.sql import select, or_
+
 
 class MappingDiscoveryException(Exception):
     """
@@ -102,118 +98,3 @@ def get_urn_table_mappings(engine):
         raise
 
     return mappings
-
-
-def apply_policy_settings(config, results, request):
-    """
-     
-     :param request: 
-     :return: 
-     """
-
-    if results is not None:
-        if len(results) == 1:
-            # there is only one result return it
-            results = _apply_service_boundary_policy(results,request)
-            return results
-        else:
-
-            polygon_search_mode_policy = config.get('Policy', 'polygon_search_mode_policy',
-                                                    as_object=False, required=False)
-
-            # we have multiple results, then we need to apply policy to formulate the response
-            if (type(request.location.location) is Point) or (polygon_search_mode_policy == PolygonSearchModePolicyEnum.SearchUsingCentroid.name):
-                # This covers queries using points, or polygons centroids
-                # TODO Deal with CIVIC
-                point_multiple_match_policy = config.get('Policy', 'point_multiple_match_policy', as_object=False, required=False)
-
-                if point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnAll.name:
-                    return _apply_service_boundary_policy(results,request)
-                elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnAllLimit5.name:
-                    i = len(results)
-                    del results[5:i]        # removes items starting at 5 until the end of the list
-                    return _apply_service_boundary_policy(results,request)
-                elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnFirst.name:
-                    i = len(results)
-                    del results[1:i]  # removes items starting at 1 until the end of the list
-                    return _apply_service_boundary_policy(results,request)
-                elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError.name:
-                    raise MappingDiscoveryException('Multiple results matched request location')
-
-            else:
-                # This covers queries using polygons
-                polygon_multiple_match_policy = config.get('Policy', 'polygon_multiple_match_policy',
-                                                           as_object=False, required=False)
-                if polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAll.name:
-                    return _apply_service_boundary_policy(results,request)
-                elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAllLimit5.name:
-                    i = len(results)
-                    del results[5:i]  # removes items starting at 5 until the end of the list
-                    return _apply_service_boundary_policy(results,request)
-                elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnFirst.name:
-                    i = len(results)
-                    del results[1:i]  # removes items starting at 1 until the end of the list
-                    return _apply_service_boundary_policy(results,request)
-                elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnAreaMajority.name:
-                    # Find and return Max area
-                    max_area_item = max(results, key=lambda x: x['AREA_RET'])
-                    results =[max_area_item]
-                    return _apply_service_boundary_policy(results,request)
-                elif polygon_multiple_match_policy == PolygonMultipleMatchPolicyEnum.ReturnError.name:
-                    raise MappingDiscoveryException('Multiple results matched request location')
-
-        return _apply_service_boundary_policy(results,request)
-
-def case_insensitive_string_to_boolean_conversion(value):
-
-    result = False
-
-    if not value:
-        result = False
-    else:
-        if value.lower() in ['true', '1', 't', 'y', 'yes', ]:
-            result = True
-
-    return result
-
-
-
-def _apply_service_boundary_policy(results, request):
-
-    #TODO -
-    # Simplify - On
-    # Simplify -Off
-        # ReturnUnedited - Done
-        # ReturnAreaMajorityPolygon
-        # ReturnAllAsSinglePolygons
-
-    if request.serviceBoundary == 'value':
-
-        for row in results:
-            if 'ST_AsGML_1' in row:
-               gml= row['ST_AsGML_1']
-               gml = gml.replace('>', ' xmlns:gml="http://www.opengis.net/gml">',1)
-
-               root = etree.XML(gml)
-               root = _clear_attributes(root)
-
-               # Update value with new GML
-               row['ST_AsGML_1'] = etree.tostring(root).decode("utf-8")
-
-
-    return results
-
-
-def _clear_attributes(xml_element):
-    """
-    remove all attributes 
-    :param xml_element: 
-    :return: 
-    """
-    for child in xml_element:
-        child.attrib.clear()
-
-        if len(xml_element):
-            child=_clear_attributes(child)
-
-    return xml_element

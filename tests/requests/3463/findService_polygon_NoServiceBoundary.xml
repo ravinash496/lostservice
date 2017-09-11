@@ -1,0 +1,16 @@
+<findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="reference">
+   <location id="9636f44a-f7d1-4b60-a05c-2c8dda628006" profile="geodetic-2d">
+      <gml:Polygon xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::3463">
+         <gml:exterior>
+            <gml:LinearRing>
+               <gml:pos>314384.739 604116.739</gml:pos>
+               <gml:pos>314400.49 606905.453</gml:pos>
+               <gml:pos>313739.03 605524.325</gml:pos>
+               <gml:pos>313601.446 604217.281</gml:pos>
+               <gml:pos>314384.739 604116.739</gml:pos>
+            </gml:LinearRing>
+         </gml:exterior>
+      </gml:Polygon>
+   </location>
+   <service>urn:nena:service:sos</service>
+</findService>
