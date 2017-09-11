@@ -10,8 +10,8 @@ Functions for manipulating geometries.
 from osgeo import ogr, osr
 import numpy as np
 import shapely.geometry as geom
-from lostservice.db.spatial import getutmsrid
-
+from osgeo import osr
+from osgeo import ogr
 
 def reproject_point(x, y, source_srid, target_srid):
     """
@@ -57,6 +57,53 @@ def reproject_geom(geom, source_srid, target_srid):
     return geom
 
 
+def getutmsrid(longitude, latitude, incomming_srid = 4326):
+    """
+
+    :param latitude: latitude to find the utm srid
+    :param longitude: longitude to find the utm srid
+    :return: UTM srid
+    """
+
+    if incomming_srid != 4326:
+        # Translate Coordinates from projected system into 4326 in order to calculate UTM Zone
+        # Source spatial reference.
+        source = osr.SpatialReference()
+        source.ImportFromEPSG(incomming_srid)
+
+        target = osr.SpatialReference()
+        target.ImportFromEPSG(4326)
+
+        # Set up the transform.
+        transform = osr.CoordinateTransformation(source, target)
+
+        # Create a geometry we can use with the transform.
+        point_wkt = ogr.CreateGeometryFromWkt('POINT({0} {1})'.format(longitude, latitude))
+
+        # Transform it and apply the buffer.
+        point_wkt.Transform(transform)
+
+        longitude = point_wkt.GetX()
+        latitude = point_wkt.GetY()
+
+
+    prefix = 0
+    if latitude>0:
+        '''All EPSG UTM codes in the northern hemisphere start with 326**'''
+        prefix = 32600
+    else:
+        '''All EPSG UTM codes in the southern hemisphere start with 327**'''
+        prefix = 32700
+
+    '''UTM zones are all 6 degrees apart - 60 zones for 360 degrees
+    Zone 1 starts from 180 degrees to 174 degrees west longitude
+    Zone 31 starts from 0 degrees to 6 degreess east longitude
+
+    Convert -180 to 180 degrees latitude on a 360 degree scale, 
+    then divde by 6 and add 1 to get the zone number'''
+    zone = int(float((longitude+180)/6))+1
+    return prefix + zone
+
 def calculate_arc(centerx, centery, radius, start_angle, end_angle):
     """
     Calculate lists of x and y coordinates for an arc with the given properties.
@@ -77,7 +124,7 @@ def calculate_arc(centerx, centery, radius, start_angle, end_angle):
 
 
 
-def generate_arcband(long, lat, band_start, band_sweep, inner_radius, outer_radius):
+def generate_arcband(long, lat, spatial_ref, band_start, band_sweep, inner_radius, outer_radius):
     """
     Generate a new arcband with the given parameters.  Assumes the center coordinates are
     in EPSG 4326, the radii are converted to UTM and the angles are in degrees.
@@ -90,11 +137,12 @@ def generate_arcband(long, lat, band_start, band_sweep, inner_radius, outer_radi
     :param outer_radius:
     :return: :py:class:'osgeo.ogr.Geometry`
     """
-
-    utmsrid = getutmsrid(longitude=long, latitude=lat)
+    # Pull out just the number from the SRID
+    trimmed_srid = int(spatial_ref.split('::')[1])
+    utmsrid = getutmsrid(long, lat, trimmed_srid)
 
     # project the center since the radii are in meters
-    center_x, center_y = reproject_point(long, lat, 4326, utmsrid)
+    center_x, center_y = reproject_point(long, lat, trimmed_srid, utmsrid)
 
     # adjust for the fact that we're not doing standard geometry - back up 90 degress
     # to start from north.
