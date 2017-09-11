@@ -162,7 +162,7 @@ class FindServiceInnerTest(unittest.TestCase):
 
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
 
-        actual = target._apply_service_boundary_policy(input, True)
+        actual = target.apply_service_boundary_policy(input, True)
 
         self.assertEqual(len(input.keys()), 2)
         self.assertDictEqual(input, expected)
@@ -179,7 +179,7 @@ class FindServiceInnerTest(unittest.TestCase):
 
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
 
-        actual = target._apply_service_boundary_policy(input, True)
+        actual = target.apply_service_boundary_policy(input, True)
 
         self.assertEqual(len(input.keys()), 1)
         self.assertDictEqual(input, expected)
@@ -195,7 +195,7 @@ class FindServiceInnerTest(unittest.TestCase):
 
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
 
-        actual = target._apply_service_boundary_policy(input, False)
+        actual = target.apply_service_boundary_policy(input, False)
 
         self.assertEqual(len(input.keys()), 2)
         self.assertDictEqual(input, expected)

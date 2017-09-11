@@ -11,6 +11,7 @@ The main entry point for ECRF/LVF services.
 import os
 import argparse
 import logging
+from logging.handlers import RotatingFileHandler
 import datetime
 import pytz
 import socket
@@ -116,7 +117,9 @@ class LostApplication(object):
 
         conf = self._di_container.get(config.Configuration)
 
-        filehandler = logging.FileHandler(conf.get('Logging', 'logfile'))
+        logfile = conf.get('Logging', 'logfile')
+        filehandler = RotatingFileHandler(logfile, mode='a', maxBytes=10 * 1024 * 1024,
+                                             backupCount=2, encoding=None, delay=0)
         filehandler.setLevel(logging.DEBUG)
         filehandler.setFormatter(formatter)
 

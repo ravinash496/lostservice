@@ -14,6 +14,7 @@ from lostservice.db.gisdb import GisDbInterface
 from lostservice.exception import BadRequestException
 from lostservice.handler import Handler
 from lostservice.handling.findservice import FindServiceOuter
+from lostservice.handling.findservice import FindServiceInner
 from lostservice.handling.listServicesByLocation import ListServiceBylocationOuter
 from lostservice.model.location import Arcband
 from lostservice.model.location import Circle
@@ -58,6 +59,10 @@ class ListServicesHandler(Handler):
             # service urn
             root_service = request.service + '.'
             filtered = filter(lambda s: root_service in s, service_list)
+            service_list = filtered
+        else:
+            # Filter the response to only the Top Level Services
+            filtered= filter(lambda k: '.' not in k, service_list)
             service_list = filtered
 
         # No Recursion available so just add our path
@@ -123,7 +128,7 @@ class GetServiceBoundaryHandler(Handler):
     Base getServiceBoundary request handler.
     """
     @inject
-    def __init__(self, config: Configuration, db_wrapper: GisDbInterface):
+    def __init__(self, config: Configuration, db_wrapper: GisDbInterface, inner: FindServiceInner):
         """
         Constructor
 
@@ -131,6 +136,8 @@ class GetServiceBoundaryHandler(Handler):
         :type config: :py:class:`lostservice.configuration.Configuration`
         :param db_wrapper: The db wrapper class instance.
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
+        :param inner: The FindService inner class instance
+        :type inner: :py:class:lostservice.handling.FindServiceInner'
         """
         super(GetServiceBoundaryHandler, self).__init__(config, db_wrapper)
 
