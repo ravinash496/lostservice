@@ -25,8 +25,9 @@ class GeometryTest(unittest.TestCase):
 
         resultx, resulty = reproject_point(x, y, source_srid, target_srid)
 
-        self.assertEqual(resultx, -68.84724495254032)
-        self.assertEqual(resulty, 46.899295967195435)
+        # Verify value is within (-/+) .000000001
+        self.assertAlmostEqual(resultx, -68.84724495254032, delta=.000000001)
+        self.assertAlmostEqual(resulty, 46.899295967195435, delta=.000000001)
 
     def test_reproject_point_4326(self):
         """
@@ -40,9 +41,10 @@ class GeometryTest(unittest.TestCase):
         target_srid = 3463
 
         resultx, resulty = reproject_point(x, y, source_srid, target_srid)
-
-        self.assertEqual(resultx, 521164.1680000003)
-        self.assertEqual(resulty, 377812.9680000007)
+        
+        # Verify value is within (-/+) .000000001
+        self.assertAlmostEqual(resultx, 521164.1680000003, delta=.000000001)
+        self.assertAlmostEqual(resulty, 377812.9680000007, delta=.000000001)
 
 
     def test_getutmsrid(self):
