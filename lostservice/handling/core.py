@@ -140,6 +140,7 @@ class GetServiceBoundaryHandler(Handler):
         :type inner: :py:class:lostservice.handling.FindServiceInner'
         """
         super(GetServiceBoundaryHandler, self).__init__(config, db_wrapper)
+        self._inner = inner
 
     def handle_request(self, request, context):
         """
@@ -169,6 +170,8 @@ class GetServiceBoundaryHandler(Handler):
                 results[0]['nonlostdata'] = request.nonlostdata
 
                 break
+        for item in results:
+            item =  self._inner.apply_service_boundary_policy(item, True)
 
         return results
 
