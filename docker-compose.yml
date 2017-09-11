@@ -27,9 +27,9 @@ services:
             NODE_NAME: node1 # Node name
             CLUSTER_NODE_NETWORK_NAME: pgmaster # (default: hostname of the node)
             NODE_PRIORITY: 100  # (default: 100)
-            CONFIGS: "listen_addresses:'*'"
-                                  # in format variable1:value1[,variable2:value2[,...]]
-                                  # used for pgpool.conf file
+            CONFIGS: "search_path:'active,public'|listen_addresses:'*'"
+            # in format variable1:value1[,variable2:value2[,...]]
+            # used for pgpool.conf file
 
             CLUSTER_NAME: pg_cluster # default is pg_cluster
 #           database we want to use for application
