@@ -22,6 +22,7 @@ from geoalchemy2.shape import from_shape
 from osgeo import osr
 from osgeo import ogr
 import math
+import lostservice.geometry as gc_geom
 from lostservice.exception import InternalErrorException
 
 
@@ -126,7 +127,7 @@ def _get_nearest_point(long, lat, engine, table_name, geom, buffer_distance=None
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(table_name, tbl_metadata, autoload=True)
         # Construct the "contains" query and execute it.
-        utmsrid = getutmsrid(long, lat)
+        utmsrid = gc_geom.getutmsrid(long, lat)
         s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(),
                     the_table.c.wkb_geometry.ST_Distance(geom).label('DISTANCE')],
                    the_table.c.wkb_geometry.ST_Intersects(
@@ -155,7 +156,7 @@ def _get_additional_data_for_geometry(engine, geom, table_name):
 
         s = select(
             [the_table],
-            func.ST_Contains(the_table.c.wkb_geometry,geom))
+            func.ST_Intersects(the_table.c.wkb_geometry,geom))
 
         results = _execute_query(engine, s)
         return results
@@ -193,11 +194,11 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
 def get_additional_data_for_circle(long, lat, srid, radius, uom, table_name, buffer_distance, engine):
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
-
-    utmsrid = getutmsrid(long, lat)
+    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
+    utmsrid = gc_geom.getutmsrid(long, lat)
 
     results = _get_additional_data_for_geometry(engine, wkb_circle, table_name)
     if results is None:
@@ -233,15 +234,15 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
             s = select(
                 [the_table,
                  func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16),
-                 func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))).label('AREA_RET')
+                 func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_Transform(func.ST_SetSRID(geom, geom.srid),4326))).label('AREA_RET')
                  ],
-                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_Transform(func.ST_SetSRID(geom, geom.srid),4326)))
         else:
 
             s = select(
                 [the_table,
                  func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16)],
-                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_Transform(func.ST_SetSRID(geom, geom.srid),4326)))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
@@ -321,44 +322,21 @@ def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine, a
     :type engine: :py:class:`sqlalchemy.engine.Engine`
     :return: A list of dictionaries containing the contents of returned rows.
     """
+
+
+    # Pull out just the number from the SRID
+    trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+
     # Create a Shapely Point
     pt = Point(long, lat)
 
-    # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
-
     # Get a GeoAlchemy WKBElement from the point.
-    wkb_pt = from_shape(pt, trimmed_srid)
+    wkb_pt = from_shape(pt, 4326)
     # Run the query.
     if add_data_required:
         return _get_nearest_point(long, lat, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
-
-
-def getutmsrid(longitude, latitude):
-    """
-
-    :param latitude: latitude to find the utm srid
-    :param longitude: longitude to find the utm srid
-    :return: UTM srid
-    """
-    prefix = 0
-    if latitude>0:
-        '''All EPSG UTM codes in the northern hemisphere start with 326**'''
-        prefix = 32600
-    else:
-        '''All EPSG UTM codes in the southern hemisphere start with 327**'''
-        prefix = 32700
-
-    '''UTM zones are all 6 degrees apart - 60 zones for 360 degrees
-    Zone 1 starts from 180 degrees to 174 degrees west longitude
-    Zone 31 starts from 0 degrees to 6 degreess east longitude
-
-    Convert -180 to 180 degrees latitude on a 360 degree scale, 
-    then divde by 6 and add 1 to get the zone number'''
-    zone = int(float((longitude+180)/6))+1
-    return prefix + zone
-
 
 def _transform_circle(long, lat, srid, radius, uom):
     """
@@ -389,7 +367,7 @@ def _transform_circle(long, lat, srid, radius, uom):
     # it's 9001/meters for now and project to 3857.
     target = osr.SpatialReference()
     #target.ImportFromEPSG(3857)
-    target.ImportFromEPSG(getutmsrid(longitude=long, latitude=lat))
+    target.ImportFromEPSG(gc_geom.getutmsrid(longitude=long, latitude=lat))
 
     # Set up the transform.
     transform = osr.CoordinateTransformation(source, target)
@@ -437,9 +415,10 @@ def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_ta
 
     # Pull out just the number from the SRID
     trimmed_srid = srid.split('::')[1]
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
+    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
 
     # Now execute the query.
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
@@ -472,9 +451,10 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
 
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
+    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
 
     # Now execute the query.
     if return_shape == True:
@@ -517,15 +497,13 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
 
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
-
+    long, lat = gc_geom.reproject_point(long,lat,trimmed_srid,4326)
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
-        utmsrid = getutmsrid(longitude=long, latitude=lat)
-
-        wkb_ellipse = _transform_ellipse(long ,lat , major, minor, orientation, trimmed_srid)
+        wkb_ellipse = _transform_ellipse(long ,lat , major, minor, orientation, 4326)
 
         s = select(
             [
@@ -605,10 +583,10 @@ def _transform_ellipse(long ,lat , major, minor, orientation, srid):
     # TODO - Need to handle different values for the incoming UOM
     # TODO - Must have a lookup table of some kind.
     # The target will depend on the value of uom, but we'll just assume
-    # it's 9001/meters for now and project to 3857.
+    # it's 9001/meters for now.
     target = osr.SpatialReference()
     # target.ImportFromEPSG(3857)
-    target.ImportFromEPSG(getutmsrid(longitude=long, latitude=lat))
+    target.ImportFromEPSG(gc_geom.getutmsrid(long, lat, srid))
 
     # Set up the transform.
     transform = osr.CoordinateTransformation(source, target)
@@ -821,17 +799,17 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
         # Construct the "contains" query and execute it.
-        utmsrid = getutmsrid(longitude=long, latitude=lat)
+        utmsrid = gc_geom.getutmsrid(long, lat, geom.srid)
 
         if return_intersection_area:
         # include a calculation for the intersecting the area
 
             s = select([the_table, the_table.c.wkb_geometry.ST_AsGML(), func.ST_Area(
             func.ST_Intersection(
-                func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance), the_table.c.wkb_geometry.ST_Transform(utmsrid))).label(
+                func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, geom.srid), utmsrid), buffer_distance), the_table.c.wkb_geometry.ST_Transform(utmsrid))).label(
             'AREA_RET')],
                    func.ST_Intersects(
-                       func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance),
+                       func.ST_Buffer(func.ST_Transform(func.ST_SetSRID(geom, geom.srid), utmsrid), buffer_distance),
                        the_table.c.wkb_geometry.ST_Transform(utmsrid)))
 
 
@@ -864,14 +842,16 @@ def get_list_service_for_point(long, lat, srid, boundary_table, engine):
     :param engine: 
     :return: 
     """
+    # Pull out just the number from the SRID
+    trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+
     # Create a Shapely Point
     pt = Point(long, lat)
 
-    # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
 
     # Get a GeoAlchemy WKBElement from the point.
-    wkb_pt = from_shape(pt, trimmed_srid)
+    wkb_pt = from_shape(pt, 4326)
     # Run the query.
     return (_get_list_service_for_geom(engine, i, wkb_pt) for i in boundary_table)
 
@@ -903,9 +883,10 @@ def get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boun
 
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, trimmed_srid, radius, uom)
+    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
 
     # Now execute the query.
 
@@ -929,7 +910,7 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
+    trimmed_srid = int(srid.split('::')[1])
 
     ring = LinearRing(points)
     wkb_ring = from_shape(ring, trimmed_srid)
@@ -966,27 +947,25 @@ def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, b
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-
     trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
-
-        utmsrid = getutmsrid(longitude=long, latitude=lat)
-
-        wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, trimmed_srid)
+        wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
 
         s = select(
             [
                 the_table,
-                func.ST_AsGML(3, the_table.c.wkb_geometry.ST_Dump().geom, 15, 16),
+                func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16),
                 func.ST_Area(the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(wkb_ellipse, 4326))).label(
                     'AREA_RET')
             ],
             the_table.c.wkb_geometry.ST_Intersects(wkb_ellipse)
         )
+
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
         raise SpatialQueryException(
@@ -1004,7 +983,7 @@ def get_intersecting_list_service_with_buffer(long, lat, engine, table_name, geo
         the_table = Table(table_name, tbl_metadata, autoload=True)
 
         # Construct the "contains" query and execute it.
-        utmsrid = getutmsrid(longitude=long, latitude=lat)
+        utmsrid = gc_geom.getutmsrid(longitude=long, latitude=lat)
 
         if return_intersection_area:
         # include a calculation for the intersecting the area
@@ -1060,13 +1039,14 @@ def _get_intersecting_list_service_for_geom(engine, table_name, geom, return_int
             # include a calculation for the intersecting the area
             s = select(
                 [the_table.c.serviceurn, func.ST_Area(
-                    the_table.c.wkb_geometry.ST_Intersection(func.ST_SetSRID(geom, 4326))).label('AREA_RET')],
-                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
+                    the_table.c.wkb_geometry.ST_Intersection(func.ST_Transform(func.ST_SetSRID(geom, geom.srid), 4326))).label('AREA_RET')],
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_Transform(func.ST_SetSRID(geom, geom.srid), 4326)))
         else:
 
             s = select(
                 [the_table.c.serviceurn, func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16)],
-                the_table.c.wkb_geometry.ST_Intersects(func.ST_SetSRID(geom, 4326)))
+                the_table.c.wkb_geometry.ST_Intersects(func.ST_Transform(func.ST_SetSRID(geom, geom.srid), 4326)))
+
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:

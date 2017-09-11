@@ -567,9 +567,12 @@ class FindServiceInner(object):
         :return: The service mappings for the given arcband.
         :rtype: ``list`` of ``dict``
         """
-        arcband = geom.generate_arcband(longitude, latitude, start_angle, opening_angle, inner_radius, outer_radius)
+
+        WGS84SPATIALREFERENCE = 'urn:ogc:def:crs:EPSG::4326'
+
+        arcband = geom.generate_arcband(longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
-        return self.find_service_for_polygon(service_urn, points, spatial_ref, return_shape)
+        return self.find_service_for_polygon(service_urn, points, WGS84SPATIALREFERENCE, return_shape)
 
     def find_service_for_polygon(self, service_urn, points, spatial_ref, return_shape=False):
         """

@@ -230,19 +230,6 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def _clear_attributes(self, xml_element):
-        """
-        remove all attributes
-        :param xml_element:
-        :return:
-        """
-        for child in xml_element:
-            child.attrib.clear()
-
-            if len(xml_element):
-                child = self._clear_attributes(child)
-        return xml_element
-
 
 class ListServiceBylocationOuter(object):
     """
