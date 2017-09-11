@@ -16,4 +16,4 @@ async.series([
       bail: true
     }, next);
   }
-], process.exit);
+], process.exit(911));
