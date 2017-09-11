@@ -324,7 +324,7 @@ class FindServiceInner(object):
         ADD_DATA_REQUESTED = False
         ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
         buffer_distance = self._find_service_config.additional_data_buffer()
-        if service_urn == ADD_DATA_SERVICE:
+        if service_urn.lower() == ADD_DATA_SERVICE.lower():
             ADD_DATA_REQUESTED = True
             esb_table = self._find_service_config.settings_for_additionaldata("data_table")
         else:
@@ -725,11 +725,11 @@ class FindServiceInner(object):
             for mapping in mappings:
                 if mapping.get('serviceurn'):
                     mapping['expiration'] = self._get_service_expiration_policy(mapping['serviceurn'])
-                self._apply_service_boundary_policy(mapping, return_shape)
+                self.apply_service_boundary_policy(mapping, return_shape)
 
         return mappings
 
-    def _apply_service_boundary_policy(self, mapping, return_shape):
+    def apply_service_boundary_policy(self, mapping, return_shape):
         """
         Apply the service boundary policy to result mappings.
 
