@@ -101,3 +101,6 @@ scratch
 **/.idea/lostservice.iml
 **/.idea/misc.xml
 .idea
+
+# node modules
+./node_modules
