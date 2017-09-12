@@ -16,9 +16,9 @@
 						"type": "text/javascript",
 						"exec": [
 							"var responseAsJson = xml2Json(responseBody);",
-							"",
+							"tests[\"responseBody is not null\"] = responseBody !== null;",
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Response time is less than 1s\"] = responseTime < 1000;",
+							"tests[\"Response time is less than 1s\"] = responseTime < 100;",
 							"",
 							"tests[\"uri is \" + responseAsJson.findServiceResponse.mapping.uri] = responseAsJson.findServiceResponse.mapping.uri === 'sip:sos@penobscotrcc.ngesi.maine.gov';",
 							""

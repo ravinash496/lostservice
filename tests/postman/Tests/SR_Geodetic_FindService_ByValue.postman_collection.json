@@ -1,0 +1,114 @@
+{
+	"variables": [],
+	"info": {
+		"name": "SR_Geodetic_FindService_ByValue",
+		"_postman_id": "29e6cf84-f9eb-638f-5013-998d02ce8ad8",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_Geodetic_FindService_ByValue",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"//tests[\"Response time is less than 150ms\"] = responseTime < 150;",
+							"var jsonObject = xml2Json(responseBody);",
+							"var Service = jsonObject.findServiceResponse.mapping.service;",
+							"var URI = jsonObject.findServiceResponse.mapping.uri;",
+							"var ServiceNumber = jsonObject.findServiceResponse.mapping.serviceNumber;",
+							"var posListExtRing = jsonObject.findServiceResponse.mapping.serviceBoundary['gml:Polygon']['gml:exterior']['gml:LinearRing']['gml:posList'];",
+							"",
+							"// If the interior ring does not exist and it tries to find it, there will be an error. Example: circle, simple polygon or ellipse",
+							"if (data.posListIntRing === '')  ",
+							"{",
+							"    tests[\"Expected Service Matches: \"] = Service == data.Expected_Service;",
+							"    tests[\"Exterior Ring Matches: \"] = posListExtRing === data.posListExtRing;",
+							"}",
+							"else",
+							"{",
+							"    var posListIntRing = jsonObject.findServiceResponse.mapping.serviceBoundary['gml:Polygon']['gml:interior']['gml:LinearRing']['gml:posList'];",
+							"    tests[\"Expected Service(s) Correctly Returned: \"] = Service === data.Expected_Service;",
+							"    tests[\"Exterior Ring Correctly Matches: \"] = posListExtRing === data.posListExtRing;",
+							"    tests[\"Interior Ring Correctly Matches: \"] = posListIntRing === data.posListIntRing;",
+							"}",
+							"",
+							"tests[\"Expected URI: \" + URI] = URI == data.Expected_URI;",
+							"",
+							"if (data.Expected_Service_Number !==\"\")  // 7-5-17: Arcband queries do not return a service number",
+							"{",
+							"    tests[\"Expected Service number: \" + ServiceNumber] = ServiceNumber == data.Expected_Service_Number;",
+							"}",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var Type = data.Type;",
+							"var Pos1 = data.Pos1;",
+							"var Pos2 = data.Pos2;",
+							"var Pos3 = data.Pos3;",
+							"var Pos4 = data.Pos4;",
+							"var Radius = data.Radius;",
+							"var semiMajorAxis = data.semiMajorAxis;",
+							"var semiMinorAxis = data.semiMinorAxis;",
+							"var orientation = data.orientation;",
+							"var innerRadius = data.innerRadius;",
+							"var outerRadius = data.outerRadius;",
+							"var startAngle = data.startAngle;",
+							"var openingAngle = data.openingAngle;",
+							"var Service = data.Service;",
+							"",
+							"if (Type == \"point\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"1a046d9d-2a97-43c7-b986-e11f660c0a7a\" profile=\"geodetic-2d\"><gml:Point xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos1}}</gml:pos></gml:Point></location><service>{{Service}}</service></findService>');",
+							"}",
+							"if (Type == \"circle\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"b4d43179-11cf-4b24-aaa6-74af9d296265\" profile=\"geodetic-2d\"><gs:Circle xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos1}}</gml:pos><gs:radius uom=\"urn:ogc:def:uom:EPSG::9001\">{{Radius}}</gs:radius></gs:Circle></location><service>{{Service}}</service></findService>');",
+							"}",
+							"if (Type == \"poly4\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"eccf97af-6ce4-4502-a649-78cfea91f97b\" profile=\"geodetic-2d\"><gml:Polygon xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:exterior><gml:LinearRing><gml:pos>{{Pos1}}</gml:pos><gml:pos>{{Pos2}}</gml:pos><gml:pos>{{Pos3}}</gml:pos><gml:pos>{{Pos4}}</gml:pos></gml:LinearRing></gml:exterior></gml:Polygon></location><service>{{Service}}</service></findService>');",
+							"}",
+							"if (Type == \"ellipse\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"ceacd2ce-00a2-499d-85c4-00867b99739d\" profile=\"geodetic-2d\"><gs:Ellipse xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos1}}</gml:pos><gs:semiMajorAxis uom=\"urn:ogc:def:uom:EPSG::9001\">{{semiMajorAxis}}</gs:semiMajorAxis><gs:semiMinorAxis uom=\"urn:ogc:def:uom:EPSG::9001\">{{semiMinorAxis}}</gs:semiMinorAxis><gs:orientation uom=\"urn:ogc:def:uom:EPSG::9102\">{{orientation}}</gs:orientation></gs:Ellipse></location><service>{{Service}}</service></findService>');",
+							"}",
+							"if (Type == \"arcband\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"4dbaf2b4-88f2-44db-be7e-5d9955b6bfcc\" profile=\"geodetic-2d\"><gs:ArcBand xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos1}}</gml:pos><gs:innerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{innerRadius}}</gs:innerRadius><gs:outerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{outerRadius}}</gs:outerRadius><gs:startAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{startAngle}}</gs:startAngle><gs:openingAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{openingAngle}}</gs:openingAngle></gs:ArcBand></location><service>{{Service}}</service></findService>');",
+							"}",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{Body}}\r\n\r\n"
+				},
+				"description": "This is the Root API Request"
+			},
+			"response": []
+		}
+	]
+}
