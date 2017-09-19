@@ -16,7 +16,6 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"tests[\"Response time is less than 150ms\"] = responseTime < 1000;",
 							"var jsonObject = xml2Json(responseBody);",
 							"var ServiceList = jsonObject.listServicesResponse.serviceList;",
 							"",
