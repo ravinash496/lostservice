@@ -901,6 +901,8 @@ class FindServiceOuter(object):
         # From the JSON configuration, create the source maps that apply to this database.
         source_maps = CivicAddressSourceMapCollection(config=jsons)
 
+        civvy_obj = civic_request.location.location
+
         # Create the query executor for the PostgreSQL database.
         host = self._find_service_config._config.get('Database', 'host', as_object=False, required=True)
         db_name = self._find_service_config._config.get('Database', 'dbname', as_object=False, required=True)
@@ -914,8 +916,43 @@ class FindServiceOuter(object):
             PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
         ], source_maps=source_maps)
 
+        civic_dict = {}
+        civic_dict['country'] = civvy_obj.country
+        if civvy_obj.a1:
+            civic_dict['a1'] =  civvy_obj.a1
+        if civvy_obj.a2:
+            civic_dict['a2'] = civvy_obj.a2
+        if civvy_obj.a3:
+            civic_dict['a3'] = civvy_obj.a3
+        if civvy_obj.a4:
+            civic_dict['a4'] = civvy_obj.a4
+        if civvy_obj.a5:
+            civic_dict['a5'] = civvy_obj.a5
+        if civvy_obj.a6:
+            civic_dict['a6'] = civvy_obj.a6
+        if civvy_obj.prd:
+            civic_dict['prd'] = civvy_obj.prd
+        if civvy_obj.pod:
+            civic_dict['pod'] = civvy_obj.pod
+        if civvy_obj.sts:
+            civic_dict['sts'] = civvy_obj.sts
+        if civvy_obj.hno:
+            civic_dict['hno'] = int(civvy_obj.hno)
+        if civvy_obj.hns:
+            civic_dict['hns'] = civvy_obj.hns
+        if civvy_obj.lmk:
+            civic_dict['lmk'] = civvy_obj.lmk
+        if civvy_obj.loc:
+            civic_dict['loc'] = civvy_obj.loc
+        if civvy_obj.flr:
+            civic_dict['flr'] = civvy_obj.flr
+        if civvy_obj.nam:
+            civic_dict['nam'] = civvy_obj.nam
+        if civvy_obj.pc:
+            civic_dict['pc'] = int(civvy_obj.pc)
+
         # We can create several civic addresses and pass them to the locator.
-        civic_address = CivicAddress(country='US', a6='maine', hno=100)
+        civic_address = CivicAddress(**civic_dict)
 
         # Let's get the results for this civic address.
         locator_results = locator.locate_civic_address(civic_address=civic_address)
