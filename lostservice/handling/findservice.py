@@ -930,8 +930,8 @@ class FindServiceOuter(object):
             civic_dict['a5'] = civvy_obj.a5
         if civvy_obj.a6:
             civic_dict['a6'] = civvy_obj.a6
-        if civvy_obj.prd:
-            civic_dict['prd'] = civvy_obj.prd
+        if civvy_obj.rd:
+            civic_dict['prd'] = civvy_obj.rd
         if civvy_obj.pod:
             civic_dict['pod'] = civvy_obj.pod
         if civvy_obj.sts:
