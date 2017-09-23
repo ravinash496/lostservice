@@ -839,6 +839,88 @@ class FindServiceOuter(object):
         self._inner = inner
         self._find_service_config = config
 
+
+    def get_points_for_civicaddress(self, civic_request):
+        from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
+        from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
+        from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
+        from civvy.db.postgis.query import PgQueryExecutor
+
+        # The locator needs some information about the underlying data store.
+        jsons = """
+                {
+                    "streets" : {
+                        "collection" : "active.roadcenterline",
+                        "geometry" : "wkb_geometry",
+                        "label" : ["predir", "pretype", "strname", "posttype", "postdir"],
+                        "properties" : {
+                            "country" : ["countryl", "countryr"],
+                            "a1" : ["statel", "stater"],
+                            "a2" : ["countyl", "countyr"],
+                            "a3" : ["incmunil", "incmunir", "uninccomml", "uninccommr"],
+                            "a6" : "strname",
+                            "prd" : "predir",
+                            "pod" : "postdir",
+                            "sts" : "posttype",
+                            "hno" : ["fromaddl", "toaddl", "fromaddr", "toaddr"],
+                            "pc" : ["zipcodel", "zipcoder"]
+                        },
+                        "sides" : {
+                            "left" : [
+                                "statel", "countyl", "incmunil", "uninccomml", "fromaddl", "toaddl", "zipcodel"
+                            ],
+                            "right" : [
+                                "stater", "countyr" , "incmunir", "uninccomml", "fromaddr", "toaddr", "zipcoder"
+                            ]
+                        },
+                        "ranges" : {
+                            "bottom" : [ "fromaddl", "fromaddr" ],
+                            "top" : [ "toaddl", "toaddr" ]
+                        }
+                    },
+                    "points" : {
+                        "collection" : "active.ssap",
+                        "geometry" : "wkb_geometry",
+                        "label" : ["addnum", "predir", "pretype", "strname", "posttype", "postdir"],
+                        "properties" : {
+                            "country" : "country",
+                            "a1" : "state",
+                            "a3" : ["incmuni", "uninccomm"],
+                            "a6" : "strname",
+                            "prd" : "predir",
+                            "pod" : "postdir",
+                            "sts" : "posttype",
+                            "hno" : "addnum",
+                            "hns" : "addnumsuf",
+                            "lmk" : "landmark",
+                            "pc" : "zipcode"
+                        }
+                    }
+                }
+                """
+        # From the JSON configuration, create the source maps that apply to this database.
+        source_maps = CivicAddressSourceMapCollection(config=jsons)
+
+        # Create the query executor for the PostgreSQL database.
+        host = self._find_service_config._config.get('Database', 'host', as_object=False, required=True)
+        db_name = self._find_service_config._config.get('Database', 'dbname', as_object=False, required=True)
+        username = self._find_service_config._config.get('Database', 'username', as_object=False, required=True)
+        password = self._find_service_config._config.get('Database', 'password', as_object=False, required=True)
+        query_executor = PgQueryExecutor(database=db_name,host=host, user=username, password=password)
+
+        # Now let's create the locator and supply it with the common default strategies.
+        locator = Locator(strategies=[
+            PgPointsAggregateLocatorStrategy(query_executor=query_executor),
+            PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
+        ], source_maps=source_maps)
+
+        # We can create several civic addresses and pass them to the locator.
+        civic_address = CivicAddress(country='US', a6='maine', hno=100)
+
+        # Let's get the results for this civic address.
+        locator_results = locator.locate_civic_address(civic_address=civic_address)
+        return locator_results
+
     def find_service_for_point(self, request):
         """
         Find service for a point.
@@ -855,6 +937,38 @@ class FindServiceOuter(object):
             request.location.location.longitude,
             request.location.location.latitude,
             request.location.location.spatial_ref,
+            include_boundary_value
+        )
+        return self._build_response(request.path,
+                                    request.location.id,
+                                    mappings,
+                                    request.nonlostdata,
+                                    include_boundary_value)
+
+    def find_service_for_civicaddress(self, request):
+        """
+        Find service for a civic address.
+
+        :param request:  A findService request object with a civic address location.
+        :type request :py:class:`lostservice.model.requests.FindServiceRequest`
+        :return: A findService response.
+        :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
+        """
+        include_boundary_value = self._apply_override_policy(request)
+
+        civic_points = self.get_points_for_civicaddress(request)
+
+        first_civic_point=civic_points[0]
+        civvy_geometry = first_civic_point.geometry
+        spatial_reference = civvy_geometry.GetSpatialReference()
+        epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
+        srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
+        spatial_ref = "{0}::{1}".format(epsg, srid)
+        mappings = self._inner.find_service_for_point(
+            request.service,
+            civvy_geometry.GetX(),
+            civvy_geometry.GetY(),
+            spatial_ref,
             include_boundary_value
         )
         return self._build_response(request.path,

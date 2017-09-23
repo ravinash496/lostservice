@@ -21,7 +21,7 @@ from lostservice.model.location import Circle
 from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
 from lostservice.model.location import Polygon
-
+from lostservice.model.location import CivicAddress
 
 class ListServicesHandler(Handler):
     """
@@ -117,6 +117,8 @@ class FindServiceHandler(Handler):
             response = self._outer.find_service_for_arcband(request)
         elif type(request.location.location) is Polygon:
             response = self._outer.find_service_for_polygon(request)
+        elif type(request.location.location) is CivicAddress:
+            response = self._outer.find_service_for_civicaddress(request)
         else:
             raise BadRequestException('Invalid location type.')
 
