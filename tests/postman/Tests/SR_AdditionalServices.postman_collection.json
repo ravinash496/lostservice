@@ -1,14 +1,14 @@
 {
 	"variables": [],
 	"info": {
-		"name": "ExpectedURI tests",
+		"name": "SR_AdditionalServices",
 		"_postman_id": "512eda05-8216-c3e2-1849-5b24fc2a6cd6",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
+			"name": "SR_Additional Services Tests",
 			"event": [
 				{
 					"listen": "test",

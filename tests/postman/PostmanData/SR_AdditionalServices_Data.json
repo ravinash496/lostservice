@@ -17,6 +17,7 @@
 		"Service": "urn:nena:service:adddatauri",
 		"Expected_Service": "urn:nena:service:adddatauri",
 		"Expected_URI": "http://pv-qps-2/testdoc609784.doc",
+		"Expected_source_path": "authoritative.example",
 		"Expected_locationUsed_id": "a9f93608-1092-42c6-9423-c0167e11398d"
 	},
 	{
@@ -25,18 +26,10 @@
 		"Pos2": "46.3127711751671 -67.7873773314138",
 		"Pos3": "46.30991582196 -67.7802389483963",
 		"Pos4": "46.3218131269892 -67.7778594873905",
-		"Pos5": "46.3222890191904 -67.7845219782068",	
-		"Radius": "",
-		"semiMajorAxis": "",
-		"semiMinorAxis": "",
-		"orientation": "",
-		"innerRadius": "",
-		"outerRadius": "",
-		"startAngle": "",
-		"openingAngle": "",
+		"Pos5": "46.3222890191904 -67.7845219782068",
 		"Service": "urn:nena:service:adddatauri",
 		"Expected_Service": "urn:nena:service:adddatauri",
-		"Expected_URI": "",
+		"Expected_source_path": "authoritative.example",
 		"Expected_locationUsed_id": "9636f44a-f7d1-4b60-a05c-2c8dda628006"
 	},
 	{
