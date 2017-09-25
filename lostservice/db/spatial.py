@@ -551,7 +551,7 @@ def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, 
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
 
-    utmsrid = getutmsrid(longitude=long, latitude=lat)
+    utmsrid = gc_geom.getutmsrid(longitude=long, latitude=lat)
 
     wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, trimmed_srid)
 
