@@ -19,6 +19,7 @@ import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
+import json
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -363,6 +364,103 @@ class FindServiceInner(object):
                 results = [{'adddatauri': ""}]
 
         return self._apply_policies(results, return_shape)
+
+    def find_service_for_civicaddress(self, civic_request, return_shape=False):
+        """
+        Function to find the service for the civic address
+        :param civic_request: civic address request
+        :type civic_request: civicAddress
+        :param return_shape: Whether or not to return the geometries of found mappings.
+        :type return_shape: bool
+        :return: The service mappings for the given civic address.
+        """
+        from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
+        from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
+        from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
+        from civvy.db.postgis.query import PgQueryExecutor
+
+        # The locator needs some information about the underlying data store.
+        jsons = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
+
+        # From the JSON configuration, create the source maps that apply to this database.
+        source_maps = CivicAddressSourceMapCollection(config=jsons)
+
+        civvy_obj = civic_request.location.location
+
+        # Create the query executor for the PostgreSQL database.
+        host = self._find_service_config._config.get('Database', 'host', as_object=False, required=True)
+        db_name = self._find_service_config._config.get('Database', 'dbname', as_object=False, required=True)
+        username = self._find_service_config._config.get('Database', 'username', as_object=False, required=True)
+        password = self._find_service_config._config.get('Database', 'password', as_object=False, required=True)
+        query_executor = PgQueryExecutor(database=db_name,host=host, user=username, password=password)
+
+        # Now let's create the locator and supply it with the common default strategies.
+        locator = Locator(strategies=[
+            PgPointsAggregateLocatorStrategy(query_executor=query_executor),
+            PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
+        ], source_maps=source_maps)
+
+        civic_dict = {}
+        civic_dict['country'] = civvy_obj.country
+        if civvy_obj.a1:
+            civic_dict['a1'] =  civvy_obj.a1
+        if civvy_obj.a2:
+            civic_dict['a2'] = civvy_obj.a2
+        if civvy_obj.a3:
+            civic_dict['a3'] = civvy_obj.a3
+        if civvy_obj.a4:
+            civic_dict['a4'] = civvy_obj.a4
+        if civvy_obj.a5:
+            civic_dict['a5'] = civvy_obj.a5
+        if civvy_obj.a6:
+            civic_dict['a6'] = civvy_obj.a6
+        if civvy_obj.rd:
+            civic_dict['prd'] = civvy_obj.rd
+        if civvy_obj.pod:
+            civic_dict['pod'] = civvy_obj.pod
+        if civvy_obj.sts:
+            civic_dict['sts'] = civvy_obj.sts
+        if civvy_obj.hno:
+            civic_dict['hno'] = civvy_obj.hno
+        if civvy_obj.hns:
+            civic_dict['hns'] = civvy_obj.hns
+        if civvy_obj.lmk:
+            civic_dict['lmk'] = civvy_obj.lmk
+        if civvy_obj.loc:
+            civic_dict['loc'] = civvy_obj.loc
+        if civvy_obj.flr:
+            civic_dict['flr'] = civvy_obj.flr
+        if civvy_obj.nam:
+            civic_dict['nam'] = civvy_obj.nam
+        if civvy_obj.pc:
+            civic_dict['pc'] = civvy_obj.pc
+
+        # We can create several civic addresses and pass them to the locator.
+        civic_address = CivicAddress(**civic_dict)
+
+        # Let's get the results for this civic address.
+        locator_results = locator.locate_civic_address(civic_address=civic_address)
+        mappings = None
+        if len(locator_results)>0:
+            first_civic_point=locator_results[0]
+            civvy_geometry = first_civic_point.geometry
+            spatial_reference = civvy_geometry.GetSpatialReference()
+            epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
+            srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
+            spatial_ref = "{0}::{1}".format(epsg, srid)
+            mappings = self.find_service_for_point(
+                civic_request.service,
+                civvy_geometry.GetX(),
+                civvy_geometry.GetY(),
+                spatial_ref,
+                return_shape=return_shape
+            )
+        else:
+            ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
+            if civic_request.service.lower() == ADD_DATA_SERVICE.lower():
+                mappings = [{'adddatauri': ""}]
+
+        return mappings
 
     def find_service_for_circle(self,
                                 service_urn,
@@ -857,6 +955,27 @@ class FindServiceOuter(object):
             request.location.location.spatial_ref,
             include_boundary_value
         )
+        return self._build_response(request.path,
+                                    request.location.id,
+                                    mappings,
+                                    request.nonlostdata,
+                                    include_boundary_value)
+
+    def find_service_for_civicaddress(self, request):
+        """
+        Find service for a civic address.
+        :param request:  A findService request object with a civic address location.
+        :type request :py:class:`lostservice.model.requests.FindServiceRequest`
+        :return: A findService response.
+        :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
+        """
+        include_boundary_value = self._apply_override_policy(request)
+
+        mappings = self._inner.find_service_for_civicaddress(
+            request,
+            include_boundary_value
+        )
+
         return self._build_response(request.path,
                                     request.location.id,
                                     mappings,

@@ -598,7 +598,8 @@ class FindServiceXmlConverter(XmlConverter):
                 else:
                     if (LOST_URN not in element.tag) and (
                                 PIDFLO_URN not in element.tag) and (
-                                GML_URN not in element.tag):
+                                GML_URN not in element.tag) and (
+                            CIVIC_ADDRESS_URN not in element.tag):
                         request.nonlostdata.append(element)
         except (BadRequestException, LocationProfileException):
             raise
