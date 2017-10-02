@@ -43,7 +43,7 @@ COPY server.py /app/server.py
 COPY /lostservice /app/lostservice
 
 WORKDIR /app
-RUN virtualenv --python python3.6 venv && /bin/bash -c "source ./venv/bin/activate" && ./venv/bin/pip install -r requirements.txt
+RUN virtualenv --python python3.6 venv && /bin/bash -c "source ./venv/bin/activate" && ./venv/bin/pip install -r requirements.txt --extra-index-url https://pypi.fury.io/pykzs1JoUSeCp2i3ggdL/geocomm/
 
 # Expose ports
 EXPOSE 8080
