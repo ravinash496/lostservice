@@ -17,6 +17,7 @@ import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
+import json
 
 
 class ListServiceBYLocationConfigWrapper(object):
@@ -108,6 +109,95 @@ class ListServiceByLocationInner(object):
             result = self._db_wrapper.get_list_services_for_point(longitude, latitude, spatial_ref, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
+
+    def list_services_by_location_for_civicaddress(self, civic_request):
+        from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
+        from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
+        from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
+        from civvy.db.postgis.query import PgQueryExecutor
+
+        # The locator needs some information about the underlying data store.
+        jsons = json.dumps(self._list_service_config.settings_for_service("civvy_map"))
+
+        # From the JSON configuration, create the source maps that apply to this database.
+        source_maps = CivicAddressSourceMapCollection(config=jsons)
+
+        civvy_obj = civic_request.location.location
+
+        # Create the query executor for the PostgreSQL database.
+        host = self._list_service_config._config.get('Database', 'host', as_object=False, required=True)
+        db_name = self._list_service_config._config.get('Database', 'dbname', as_object=False, required=True)
+        username = self._list_service_config._config.get('Database', 'username', as_object=False, required=True)
+        password = self._list_service_config._config.get('Database', 'password', as_object=False, required=True)
+        query_executor = PgQueryExecutor(database=db_name, host=host, user=username, password=password)
+
+        # Now let's create the locator and supply it with the common default strategies.
+        locator = Locator(strategies=[
+            PgPointsAggregateLocatorStrategy(query_executor=query_executor),
+            PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
+        ], source_maps=source_maps)
+
+        civic_dict = {}
+        civic_dict['country'] = civvy_obj.country
+        if civvy_obj.a1:
+            civic_dict['a1'] = civvy_obj.a1
+        if civvy_obj.a2:
+            civic_dict['a2'] = civvy_obj.a2
+        if civvy_obj.a3:
+            civic_dict['a3'] = civvy_obj.a3
+        if civvy_obj.a4:
+            civic_dict['a4'] = civvy_obj.a4
+        if civvy_obj.a5:
+            civic_dict['a5'] = civvy_obj.a5
+        if civvy_obj.a6:
+            civic_dict['a6'] = civvy_obj.a6
+        if civvy_obj.rd:
+            civic_dict['a6'] = civvy_obj.rd
+        if civvy_obj.pod:
+            civic_dict['pod'] = civvy_obj.pod
+        if civvy_obj.sts:
+            civic_dict['sts'] = civvy_obj.sts
+        if civvy_obj.hno:
+            civic_dict['hno'] = civvy_obj.hno
+        if civvy_obj.hns:
+            civic_dict['hns'] = civvy_obj.hns
+        if civvy_obj.lmk:
+            civic_dict['lmk'] = civvy_obj.lmk
+        if civvy_obj.loc:
+            civic_dict['loc'] = civvy_obj.loc
+        if civvy_obj.flr:
+            civic_dict['flr'] = civvy_obj.flr
+        if civvy_obj.nam:
+            civic_dict['nam'] = civvy_obj.nam
+        if civvy_obj.pc:
+            civic_dict['pc'] = civvy_obj.pc
+
+        # We can create several civic addresses and pass them to the locator.
+        civic_address = CivicAddress(**civic_dict)
+
+        # Let's get the results for this civic address.
+        locator_results = locator.locate_civic_address(civic_address=civic_address)
+        mappings = None
+        if len(locator_results) > 0:
+            first_civic_point = None
+            for locater_result in locator_results:
+                if locater_result.score==0:
+                    first_civic_point = locater_result
+                    break
+            if first_civic_point:
+                civvy_geometry = first_civic_point.geometry
+                spatial_reference = civvy_geometry.GetSpatialReference()
+                epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
+                srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
+                spatial_ref = "{0}::{1}".format(epsg, srid)
+                mappings = self.list_services_by_location_for_point(
+                    civic_request.service,
+                    civvy_geometry.GetX(),
+                    civvy_geometry.GetY(),
+                    spatial_ref
+                )
+
+        return mappings
 
     def list_services_by_location_for_circle(self, service, longitude, latitude, spatial_ref, radius, radius_uom,):
         """
@@ -264,6 +354,15 @@ class ListServiceBylocationOuter(object):
             request.location.location.latitude,
             request.location.location.spatial_ref
         )
+        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+
+    def list_services_by_location_for_civicaddress(self, request):
+        """
+
+        :param request:
+        :return:
+        """
+        mappings = self._inner.list_services_by_location_for_civicaddress(request)
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
     def list_services_by_location_for_circle(self, request):
