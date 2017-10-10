@@ -1,0 +1,19 @@
+<listServicesByLocation
+      xmlns="urn:ietf:params:xml:ns:lost1"
+      xmlns:gml="http://www.opengis.net/gml"
+      xmlns:slb="urn:ietf:params:xml:ns:lost1:slb" validateLocation="false">
+   <location id="48022b27-a2a5-4b1e-aee0-013fc19ae131" profile="civic">
+      <civ:civicAddress xmlns:civ="urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr">
+         <civ:country>US</civ:country>
+         <civ:A1>ME</civ:A1>
+         <civ:A2>Penobscot</civ:A2>
+         <civ:A3>Brewer</civ:A3>
+         <civ:RD>Bangor</civ:RD>
+         <civ:STS>St</civ:STS>
+         <civ:HNO>13</civ:HNO>
+         <civ:PC>04412</civ:PC>
+      </civ:civicAddress>
+   </location>
+   <service>urn:nena:service:sos</service>
+   <slb:serviceListBoundaryRequest type="value"/>
+</listServicesByLocation>
