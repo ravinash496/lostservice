@@ -547,14 +547,12 @@ def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, 
     :return: A list of dictionaries containing the contents of returned rows.
     """
 
-
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    utmsrid = gc_geom.getutmsrid(long, lat)
 
-    utmsrid = gc_geom.getutmsrid(longitude=long, latitude=lat)
-
-    wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, trimmed_srid)
-
+    wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
     results = _get_additional_data_for_geometry(engine, wkb_ellipse, boundary_table)
     if results is None:
         results = _get_additional_data_for_geometry_with_buffer(engine, wkb_ellipse, boundary_table,
