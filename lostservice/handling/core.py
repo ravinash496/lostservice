@@ -220,6 +220,8 @@ class ListServicesByLocationHandler(Handler):
             response = self._outer.list_service_by_location_for_arcband(request)
         elif type(request.location.location) is Polygon:
             response = self._outer.list_services_by_location_for_polygon(request)
+        elif type(request.location.location) is CivicAddress:
+            response = self._outer.list_services_by_location_for_civicaddress(request)
         else:
             raise BadRequestException('Invalid location type.')
 
