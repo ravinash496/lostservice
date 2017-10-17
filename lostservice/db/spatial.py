@@ -153,9 +153,11 @@ def _get_additional_data_for_geometry(engine, geom, table_name):
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(table_name, tbl_metadata, autoload=True)
+
         s = select(
             [the_table],
             func.ST_Intersects(the_table.c.wkb_geometry,geom))
+
         results = _execute_query(engine, s)
         return results
     except SQLAlchemyError as ex:
@@ -335,7 +337,6 @@ def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine, a
     if add_data_required:
         return _get_nearest_point(long, lat, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
-
 
 def _transform_circle(long, lat, srid, radius, uom):
     """
@@ -548,10 +549,7 @@ def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, 
 
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
-    print(trimmed_srid)
-    print('ppp', long,lat)
     long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
-    print(lat,long)
     utmsrid = gc_geom.getutmsrid(long, lat)
 
     wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
@@ -706,11 +704,9 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-
     trimmed_srid = int(srid.split('::')[1])
-    print(points)
-    ring = LinearRing(points)
 
+    ring = LinearRing(points)
     shapely_polygon = Polygon(ring)
 
     # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
@@ -741,7 +737,6 @@ def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_
     :type return_intersection_area bool
     :return: A list of dictionaries containing the contents of returned rows.
     """
-
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
 
