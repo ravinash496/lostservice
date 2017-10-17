@@ -16,6 +16,7 @@ from lostservice.exception import InternalErrorException
 from lostservice.model.responses import FindServiceResponse, ResponseMapping, AdditionalDataResponseMapping
 from lostservice.exception import ServiceNotImplementedException
 import lostservice.geometry as geom
+from lostservice.geometryutility import GeometryUtility
 from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
@@ -271,6 +272,29 @@ class FindServiceConfigWrapper(object):
 
         return retval
 
+    def do_polygon_simplification(self):
+        """
+        Gets the polygon simplification policy.
+
+        :return: ``bool``
+        """
+        policy = self._config.get('Policy', 'service_boundary_simplify_result', as_object=True, required=False)
+        if policy is None:
+            policy = False
+        return policy
+
+    def simplification_tolerance(self):
+        """
+        Gets the tolerance range for simplification.
+
+        :return: ``float``
+        """
+        tolerance = self._config.get('Policy', 'service_boundary_simplify_tolerance', as_object=False, required=False)
+        if tolerance is None:
+            tolerance = 0.0
+
+        return float(tolerance)
+
 class FindServiceInner(object):
     """
     A class to handle the actual implementation of the various findService requests, responsible for making calls to
@@ -290,6 +314,7 @@ class FindServiceInner(object):
         self._find_service_config = config
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
+        self._geomutil = GeometryUtility()
 
     def _get_esb_table(self, service_urn):
         """
@@ -855,12 +880,16 @@ class FindServiceInner(object):
 
             count = 0
             for node in root.iter():
-
                 if node.tag == '{0}MultiSurface'.format(GML_URN_COORDS):
                     attr_srs = node.attrib
                 if node.tag == '{0}Polygon'.format(GML_URN_COORDS):
                     polygontxt = etree.tostring(node)
                     count = count + 1
+            # If we need to do simplification, let's do it now as the last step, before we move on.
+            if self._find_service_config.do_polygon_simplification(): # IT'S SO SIMPLE
+                mapping = self._geomutil.simplify_polygon(
+                    mapping_object=mapping,
+                    tolerance=self._find_service_config.simplification_tolerance())
 
             if count > 1:
                 # TODO Multipolygons - Not supported currently so just return unedited GML

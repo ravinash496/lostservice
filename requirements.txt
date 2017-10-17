@@ -1,4 +1,4 @@
-﻿aiohttp==2.2.3
+aiohttp==2.2.3
 alabaster==0.7.10
 appdirs==1.4.3
 astroid==1.5.2
@@ -12,7 +12,7 @@ colorama==0.3.7
 defusedxml==0.5.0
 docutils==0.13.1
 eyeD3==0.8
-gdal==2.1.3
+GDAL>=2.1.0
 generateDS==2.25a0
 GeoAlchemy2==0.4.0
 imagesize==0.7.1
@@ -25,6 +25,7 @@ lazy-object-proxy==1.3.1
 lxml==3.7.3
 MarkupSafe==1.0
 mccabe==0.6.1
+measurement==1.8.0
 multidict==3.1.3
 numpy==1.12.1
 OSR==0.0.1
@@ -44,6 +45,7 @@ snowballstemmer==1.2.1
 Sphinx==1.5.5
 sphinx-rtd-theme==0.2.4
 SQLAlchemy==1.1.9
+sympy==0.7.6.1
 tempora==1.7
 typing==3.6.1
 Werkzeug==0.12.2
