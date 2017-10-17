@@ -153,11 +153,9 @@ def _get_additional_data_for_geometry(engine, geom, table_name):
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(table_name, tbl_metadata, autoload=True)
-
         s = select(
             [the_table],
             func.ST_Intersects(the_table.c.wkb_geometry,geom))
-
         results = _execute_query(engine, s)
         return results
     except SQLAlchemyError as ex:
@@ -337,6 +335,7 @@ def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine, a
     if add_data_required:
         return _get_nearest_point(long, lat, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
+
 
 def _transform_circle(long, lat, srid, radius, uom):
     """
@@ -549,7 +548,10 @@ def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, 
 
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
+    print(trimmed_srid)
+    print('ppp', long,lat)
     long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    print(lat,long)
     utmsrid = gc_geom.getutmsrid(long, lat)
 
     wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
@@ -704,9 +706,11 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
 
+    trimmed_srid = int(srid.split('::')[1])
+    print(points)
     ring = LinearRing(points)
+
     shapely_polygon = Polygon(ring)
 
     # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
@@ -737,27 +741,30 @@ def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_
     :type return_intersection_area bool
     :return: A list of dictionaries containing the contents of returned rows.
     """
+
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
 
-    polygon_addionaldata_points = []
-    add_srcunqid = []
+    p= []
     for point in points:
-        # Create a Shapely Point
-        pt = Point(point)
+        long, lat = gc_geom.reproject_point(point[0], point[1], trimmed_srid, 4326)
+        p.append([long, lat])
+    utmsrid = gc_geom.getutmsrid(p[0][0], p[0][1])
+    ring = LinearRing(p)
 
-        # Pull out just the number from the SRID
-        trimmed_srid = srid.split('::')[1]
+    shapely_polygon = Polygon(ring)
 
-        # Get a GeoAlchemy WKBElement from the point.
-        wkb_pt = from_shape(pt, trimmed_srid)
+    # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
+    # that we can use to query.
 
-        add_point = _get_nearest_point(point[0], point[1], engine, boundary_table, wkb_pt,
-                                       buffer_distance=buffer_distance)
-        if add_point and add_point[0]['srcunqid'] not in add_srcunqid:
-            polygon_addionaldata_points.append(add_point[0])
-            add_srcunqid.append(add_point[0]['srcunqid'])
-    return  polygon_addionaldata_points
+    poly = loads(shapely_polygon.wkt)
+    wkb_poly = from_shape(poly, 4326)
+    results = _get_additional_data_for_geometry(engine, wkb_poly, boundary_table)
+    if results is None:
+        results = _get_additional_data_for_geometry_with_buffer(engine, wkb_poly, boundary_table,
+                                                                buffer_distance, utmsrid)
+    return results
+
 
 def get_boundaries_for_previous_id(pid, engine, boundary_table):
     """
@@ -798,6 +805,7 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
 
         # Construct the "contains" query and execute it.
         utmsrid = gc_geom.getutmsrid(long, lat, geom.srid)
+
 
         if return_intersection_area:
         # include a calculation for the intersecting the area
@@ -909,8 +917,12 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
     """
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
+    p = []
+    for point in points:
+        long, lat = gc_geom.reproject_point(point[0], point[1], trimmed_srid, 4326)
+        p.append([long, lat])
 
-    ring = LinearRing(points)
+    ring = LinearRing(p)
     wkb_ring = from_shape(ring, trimmed_srid)
 
     return (_get_intersecting_list_service_for_geom(engine, i, wkb_ring, return_intersection_area) for i in
@@ -1083,6 +1095,7 @@ def _get_list_service_for_geom(engine, table_name, geom):
     except SpatialQueryException:
         raise
     return retval
+
 
 def simplify_service_boundary_geometry(engine, table_name, geom):
     """
