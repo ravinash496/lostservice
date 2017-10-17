@@ -1,16 +1,16 @@
-<findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="reference">
-   <location id="9636f44a-f7d1-4b60-a05c-2c8dda628006" profile="geodetic-2d">
+<findService xmlns="urn:ietf:params:xml:ns:lost1">
+  <location id="6ecf45a2-a0ce-42c4-a573-c38fd3f30dac" profile="geodetic-2d">
       <gml:Polygon xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
          <gml:exterior>
             <gml:LinearRing>
-               <gml:pos>46.3222890191904 -67.7845219782068</gml:pos>
-               <gml:pos>46.3127711751671 -67.7873773314138</gml:pos>
-               <gml:pos>46.30991582196 -67.7802389483963</gml:pos>
-               <gml:pos>46.3218131269892 -67.7778594873905</gml:pos>
-               <gml:pos>46.3222890191904 -67.7845219782068</gml:pos>
+               <gml:pos>46.3027932907592 -69.8685571844249</gml:pos>
+               <gml:pos>46.2824533150691 -69.8667370181856</gml:pos>
+               <gml:pos>46.2830225811399 -69.833270710988</gml:pos>
+               <gml:pos>46.3041122487925 -69.8294211943715</gml:pos>
+               <gml:pos>46.3027932907592 -69.8685571844249</gml:pos>
             </gml:LinearRing>
          </gml:exterior>
       </gml:Polygon>
    </location>
-<service>urn:nena:service:adddatauri</service>
+   <service>urn:nena:service:adddatauri</service>
 </findService>

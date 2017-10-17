@@ -1,11 +1,11 @@
-<findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="reference">
-   <location id="a9f93608-1092-42c6-9423-c0167e11398d" profile="geodetic-2d">
-     <gs:ArcBand xmlns:gs="http://www.opengis.net/pidflo/1.0" xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
-         <gml:pos>44.5280301137595 -70.4794532946715</gml:pos>
+<findService xmlns="urn:ietf:params:xml:ns:lost1">
+  <location id="ba248af0-ff99-42ea-9822-e2899297ad5b" profile="geodetic-2d">
+      <gs:ArcBand xmlns:gs="http://www.opengis.net/pidflo/1.0" xmlns:gml="http://www.opengis.net/gml" srsName="urn:ogc:def:crs:EPSG::4326">
+         <gml:pos>46.3009475332419 -69.8778049439497</gml:pos>
          <gs:innerRadius uom="urn:ogc:def:uom:EPSG::9001">0</gs:innerRadius>
-         <gs:outerRadius uom="urn:ogc:def:uom:EPSG::9001">99999.999990016</gs:outerRadius>
-         <gs:startAngle uom="urn:ogc:def:uom:EPSG::9102">50.736135401459</gs:startAngle>
-         <gs:openingAngle uom="urn:ogc:def:uom:EPSG::9102">90</gs:openingAngle>
+         <gs:outerRadius uom="urn:ogc:def:uom:EPSG::9001">3262.35764979175</gs:outerRadius>
+         <gs:startAngle uom="urn:ogc:def:uom:EPSG::9102">53.4089117325945</gs:startAngle>
+         <gs:openingAngle uom="urn:ogc:def:uom:EPSG::9102">90.0000000000098</gs:openingAngle>
       </gs:ArcBand>
    </location>
    <service>urn:nena:service:adddatauri</service>
