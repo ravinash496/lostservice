@@ -285,6 +285,10 @@ class GeometryUtility(object):
         # First we take the wkb_geometry item of our results object and turn it into a shapely geometry.
         # We only do this, to get the wkb, and then re-transform it back into an ogr geometry.
         # It's very silly, but it's the only way.. for now.
+
+        if mapping_object['wkb_geometry'] is None:
+            return mapping_object
+
         shapely_geometry = to_shape(mapping_object['wkb_geometry'])
 
         # Also, we add a definitive WKID to the geometry

@@ -124,10 +124,15 @@ class FindServiceInnerTest(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     @patch('lostservice.db.gisdb.GisDbInterface')
-    def test_apply_service_boundary_policy(self, mock_db):
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_apply_service_boundary_policy(self, mock_config, mock_db):
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
+        mock_config.source_uri = MagicMock()
+        mock_config.source_uri.return_value = 'foo'
+        mock_config.service_boundary_simplify_result = False
+        mock_config.service_boundary_simplify_tolerance = 10.0
         xml = """
             <gml:MultiSurface srsName="EPSG:4326">
                 <gml:surfaceMember>
@@ -157,14 +162,14 @@ class FindServiceInnerTest(unittest.TestCase):
             """
         parsed_output = etree.tostring(etree.fromstring(output), pretty_print=False).decode("utf-8")
 
-        input = {'gcunqid': '12345', 'ST_AsGML_1': xml}
-        expected = {'gcunqid': '12345', 'ST_AsGML_1': parsed_output}
+        input = {'gcunqid': '12345', 'wkb_geometry': '' ,'ST_AsGML_1': xml}
+        expected = {'gcunqid': '12345', 'wkb_geometry': '' ,'ST_AsGML_1': parsed_output}
 
-        target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
 
         actual = target.apply_service_boundary_policy(input, True)
 
-        self.assertEqual(len(input.keys()), 2)
+        self.assertEqual(len(input.keys()), 3)
         self.assertDictEqual(input, expected)
         self.assertEqual(input['ST_AsGML_1'], expected['ST_AsGML_1'])
         self.assertEqual(input['gcunqid'], expected['gcunqid'])
