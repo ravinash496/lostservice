@@ -131,7 +131,8 @@ class FindServiceInnerTest(unittest.TestCase):
 
         mock_config.source_uri = MagicMock()
         mock_config.source_uri.return_value = 'foo'
-        mock_config.service_boundary_simplify_result = False
+        mock_config.do_polygon_simplification = MagicMock()
+        mock_config.do_polygon_simplification.return_value = False
         mock_config.service_boundary_simplify_tolerance = 10.0
         xml = """
             <gml:MultiSurface srsName="EPSG:4326">
