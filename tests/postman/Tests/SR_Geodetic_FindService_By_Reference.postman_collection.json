@@ -1,0 +1,114 @@
+{
+	"variables": [],
+	"info": {
+		"name": "SR_Geodetic_FindService_ByReference",
+		"_postman_id": "19cf1767-b967-fbcc-8183-99885f2bd234",
+		"description": "SR_Geodetic_Temp",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_Geodetic_FindService_ByReference",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"var jsonObject = xml2Json(responseBody);",
+							"var Service = jsonObject.findServiceResponse.mapping.service;",
+							"var URI = jsonObject.findServiceResponse.mapping.uri;",
+							"var ServiceNumber = jsonObject.findServiceResponse.mapping.serviceNumber;",
+							"",
+							"tests[\"Expected Service: \" + Service] = Service == data.Expected_Service;",
+							"tests[\"Expected URI: \" + URI] = URI == data.Expected_URI;",
+							"if (ServiceNumber != \"undefined\") tests[\"Expected Service number: \" + ServiceNumber] = ServiceNumber == data.Expected_Service_Number;",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var type = data.Type;",
+							"var Pos = data.Pos;",
+							"var Radius = data.Radius;",
+							"var Service = data.Service.trim();",
+							"var Pt1 = data.Pt1;",
+							"var Pt2 = data.Pt2;",
+							"var Pt3 = data.Pt3;",
+							"var Pt4 = data.Pt4;",
+							"var Pt5 = data.Pt5;",
+							"var Pt6 = data.Pt6;",
+							"var Pt7 = data.Pt7;",
+							"var SemiMajorAxis = data.SemiMajorAxis;",
+							"var SemiMinorAxis = data.SemiMinorAxis;",
+							"var Orientation = data.Orientation;",
+							"var innerRadius = data.innerRadius;",
+							"var outerRadius = data.outerRadius;",
+							"var startAngle = data.startAngle;",
+							"var openingAngle = data.openingAngle;",
+							"",
+							"",
+							"if (type == \"point\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"1a046d9d-2a97-43c7-b986-e11f660c0a7a\" profile=\"geodetic-2d\"><gml:Point xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos></gml:Point></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"circle\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"reference\"><location id=\"24b276e1-7eca-48d5-be24-30e0dd4c1ca0\" profile=\"geodetic-2d\"><gs:Circle xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos><gs:radius uom=\"urn:ogc:def:uom:EPSG::9001\">{{Radius}}</gs:radius></gs:Circle></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"poly6pt\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"reference\"><location id=\"1a046d9d-2a97-43c7-b986-e11f660c0a7a\" profile=\"geodetic-2d\"><gml:Polygon xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:exterior><gml:LinearRing><gml:pos>{{Pt1}}</gml:pos><gml:pos>{{Pt2}}</gml:pos><gml:pos>{{Pt3}}</gml:pos><gml:pos>{{Pt4}}</gml:pos><gml:pos>{{Pt5}}</gml:pos><gml:pos>{{Pt6}}</gml:pos></gml:LinearRing></gml:exterior></gml:Polygon></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"ellipse\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"1a046d9d-2a97-43c7-b986-e11f660c0a7a\" profile=\"geodetic-2d\"><gs:Ellipse xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos><gs:semiMajorAxis uom=\"urn:ogc:def:uom:EPSG::9001\">{{SemiMajorAxis}}</gs:semiMajorAxis><gs:semiMinorAxis uom=\"urn:ogc:def:uom:EPSG::9001\">{{SemiMinorAxis}}</gs:semiMinorAxis><gs:orientation uom=\"urn:ogc:def:uom:EPSG::9102\">{{Orientation}}</gs:orientation></gs:Ellipse></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"arcband\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"reference\"><location id=\"4dbaf2b4-88f2-44db-be7e-5d9955b6bfcc\" profile=\"geodetic-2d\"><gs:ArcBand xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos><gs:innerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{innerRadius}}</gs:innerRadius><gs:outerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{outerRadius}}</gs:outerRadius><gs:startAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{startAngle}}</gs:startAngle><gs:openingAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{openingAngle}}</gs:openingAngle></gs:ArcBand></location><service>{{Service}}</service></findService>');",
+							"}",
+							"",
+							"//pm.sendRequest(\"https://postman-echo.com/get\", function (err, response) {",
+							"//    console.log(response.json());",
+							"//});",
+							"",
+							"//pm.sendRequest(\"https://postman-echo.com/get\", function (err, response) {",
+							"//    console.log(response.json());",
+							"//});",
+							"",
+							"//pm.sendRequest(\"https://postman-echo.com/get\", function (err, response) {",
+							"//    console.log(response.json());",
+							"//});",
+							"",
+							"pm.environment.get(\"variable_key\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/xml",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{Body}}"
+				},
+				"description": "This is the Root API Request"
+			},
+			"response": []
+		}
+	]
+}

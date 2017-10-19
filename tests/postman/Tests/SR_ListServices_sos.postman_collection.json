@@ -1,0 +1,48 @@
+{
+	"variables": [],
+	"info": {
+		"name": "SR_ListServices",
+		"_postman_id": "70c15b96-29ef-66d1-63d3-287ec2c1186b",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_Geodetic_ListServices",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"tests[\"Response time is less than 150ms\"] = responseTime < 1000;",
+							"var jsonObject = xml2Json(responseBody);",
+							"var ServiceList = jsonObject.listServicesResponse.serviceList;",
+							"",
+							"tests[\"Service List: \"] = ServiceList === data.Expected_ServiceList;",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://pv-qps-2/SpatialRouter/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<listServices xmlns=\"urn:ietf:params:xml:ns:lost1\">\r\n    <service>{{Service}}</service>\r\n</listServices>\r\n"
+				},
+				"description": "This is the Root API Request"
+			},
+			"response": []
+		}
+	]
+}

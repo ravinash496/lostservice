@@ -9,7 +9,7 @@ if [ -z "$TRAVIS_PULL_REQUEST" ] || [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     docker --version
 
     # Build the image.
-    docker build -t $IMAGE_NAME .
+    docker build --build-arg GEMFURY_URL=$GEMFURY_URL -t $IMAGE_NAME .
 
     # This is needed to login on AWS and push the image on ECR
     eval $(aws ecr get-login --region $AWS_DEFAULT_REGION)

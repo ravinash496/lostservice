@@ -33,4 +33,4 @@ How To...
    :maxdepth: 2
    :caption: Topics to help you get started.
 
-   development/*
+   development/how-to/*
