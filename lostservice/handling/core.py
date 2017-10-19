@@ -16,12 +16,13 @@ from lostservice.handler import Handler
 from lostservice.handling.findservice import FindServiceOuter
 from lostservice.handling.findservice import FindServiceInner
 from lostservice.handling.listServicesByLocation import ListServiceBylocationOuter
-from lostservice.model.location import Arcband
-from lostservice.model.location import Circle
-from lostservice.model.location import Ellipse
-from lostservice.model.location import Point
-from lostservice.model.location import Polygon
-from lostservice.model.location import CivicAddress
+from lostservice.model.geodetic import Arcband
+from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
+from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Polygon
+from lostservice.model.civic import CivicAddress
+
 
 class ListServicesHandler(Handler):
     """

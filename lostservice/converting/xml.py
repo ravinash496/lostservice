@@ -8,27 +8,28 @@
 Xml conversion classes.
 """
 
-from lxml import etree
-import lxml
 import collections
-from lostservice.converter import Converter
-from lostservice.exception import LocationProfileException, InvalidLocationException, BadRequestException
-from lostservice.exception import NotFoundException
-from lostservice.model.location import CivicAddress
-from lostservice.model.location import Circle
-from lostservice.model.location import Ellipse
-from lostservice.model.location import Point
-from lostservice.model.location import Arcband
-from lostservice.model.location import Location
-from lostservice.model.location import Polygon
-from lostservice.model.requests import FindServiceRequest
-from lostservice.model.requests import ListServicesRequest
-from lostservice.model.requests import GetServiceBoundaryRequest
-from lostservice.model.requests import ListServicesByLocationRequest
-from lostservice.model.responses import AdditionalDataResponseMapping, ResponseMapping
 import io
 
+import lxml
 import numpy
+from lxml import etree
+
+from lostservice.converter import Converter
+from lostservice.exception import LocationProfileException, BadRequestException
+from lostservice.exception import NotFoundException
+from lostservice.model.civic import CivicAddress
+from lostservice.model.geodetic import Arcband
+from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
+from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Polygon
+from lostservice.model.location import Location
+from lostservice.model.requests import FindServiceRequest
+from lostservice.model.requests import GetServiceBoundaryRequest
+from lostservice.model.requests import ListServicesByLocationRequest
+from lostservice.model.requests import ListServicesRequest
+from lostservice.model.responses import AdditionalDataResponseMapping, ResponseMapping
 
 LOST_PREFIX = 'lost'
 LOST_URN = 'urn:ietf:params:xml:ns:lost1'

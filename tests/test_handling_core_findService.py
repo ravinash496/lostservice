@@ -27,7 +27,7 @@ class FindServiceTest(unittest.TestCase):
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Point()
+        model.location.location = lostservice.model.geodetic.Point()
 
         try:
             actual = target.handle_request(model, {})
@@ -50,7 +50,7 @@ class FindServiceTest(unittest.TestCase):
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Circle()
+        model.location.location = lostservice.model.geodetic.Circle()
 
         try:
             actual = target.handle_request(model, {})
@@ -73,7 +73,7 @@ class FindServiceTest(unittest.TestCase):
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Ellipse()
+        model.location.location = lostservice.model.geodetic.Ellipse()
 
         try:
             actual = target.handle_request(model, {})
@@ -96,7 +96,7 @@ class FindServiceTest(unittest.TestCase):
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Arcband()
+        model.location.location = lostservice.model.geodetic.Arcband()
 
         try:
             actual = target.handle_request(model, {})
@@ -119,7 +119,7 @@ class FindServiceTest(unittest.TestCase):
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Polygon()
+        model.location.location = lostservice.model.geodetic.Polygon()
 
         try:
             actual = target.handle_request(model, {})

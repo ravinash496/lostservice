@@ -28,10 +28,10 @@ class FindServiceOuterTest(unittest.TestCase):
         model.path = ['path.one', 'path.two']
         model.location = lostservice.model.location.Location()
         model.location.id = '1234'
-        model.location.location = lostservice.model.location.Point()
+        model.location.location = lostservice.model.geodetic.Point()
         model.location.location.longitude = 0.0
         model.location.location.latitude = 0.0
-        model.location.location.spatial_ref = 'bar'
+        model.location.location.spatial_ref = 'bar::4321'
 
         target = lostservice.handling.findservice.FindServiceOuter(mock_config, mock_inner)
 
@@ -71,10 +71,10 @@ class FindServiceOuterTest(unittest.TestCase):
         model.path = ['path.one']
         model.location = lostservice.model.location.Location()
         model.location.id = '1234'
-        model.location.location = lostservice.model.location.Circle()
+        model.location.location = lostservice.model.geodetic.Circle()
         model.location.location.longitude = 0.0
         model.location.location.latitude = 0.0
-        model.location.location.spatial_ref = 'bar'
+        model.location.location.spatial_ref = 'bar::4321'
         model.location.location.radius = '1.1'
         model.location.location.uom = 'baz'
         model.nonlostdata = ['non-lost-data']
@@ -120,10 +120,10 @@ class FindServiceOuterTest(unittest.TestCase):
         model.path = []
         model.location = lostservice.model.location.Location()
         model.location.id = '1234'
-        model.location.location = lostservice.model.location.Ellipse()
+        model.location.location = lostservice.model.geodetic.Ellipse()
         model.location.location.longitude = 0.0
         model.location.location.latitude = 0.0
-        model.location.location.spatial_ref = 'bar'
+        model.location.location.spatial_ref = 'bar::4321'
         model.location.location.semiMajorAxis = '1.1'
         model.location.location.semiMinorAxis = '2.2'
         model.location.location.orientation = '3.3'
@@ -168,10 +168,10 @@ class FindServiceOuterTest(unittest.TestCase):
         model.path = []
         model.location = lostservice.model.location.Location()
         model.location.id = '1234'
-        model.location.location = lostservice.model.location.Arcband()
+        model.location.location = lostservice.model.geodetic.Arcband()
         model.location.location.longitude = 0.0
         model.location.location.latitude = 0.0
-        model.location.location.spatial_ref = 'bar'
+        model.location.location.spatial_ref = 'bar::4321'
         model.location.location.start_angle = '1.1'
         model.location.location.opening_angle = '2.2'
         model.location.location.inner_radius = '3.3'
@@ -218,9 +218,9 @@ class FindServiceOuterTest(unittest.TestCase):
         model.path = []
         model.location = lostservice.model.location.Location()
         model.location.id = '1234'
-        model.location.location = lostservice.model.location.Polygon()
+        model.location.location = lostservice.model.geodetic.Polygon()
         model.location.location.vertices = [[1, 1], [2, 2], [3, 3]]
-        model.location.location.spatial_ref = 'bar'
+        model.location.location.spatial_ref = 'bar::1234'
         model.nonlostdata = []
         target = lostservice.handling.findservice.FindServiceOuter(mock_config, mock_inner)
 
