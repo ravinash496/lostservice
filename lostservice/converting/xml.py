@@ -256,7 +256,7 @@ class CircleXmlConverter(XmlConverter):
             circle.latitude = float(lat)
             circle.longitude = float(lon)
 
-            circle.radius = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'radius'))
+            circle.radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'radius')))
             circle.uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'radius', 'uom'))
         except (Exception, TypeError):
             raise BadRequestException('Invalid circle input.')
@@ -375,10 +375,10 @@ class EllipseXmlConverter(XmlConverter):
             ellipse.latitude = float(lat)
             ellipse.longitude = float(lon)
 
-            ellipse.semiMajorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis'))
-            ellipse.semiMinorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis'))
-            ellipse.orientation = float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
-            #ellipse.orientation = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
+            ellipse.semiMajorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis')))
+            ellipse.semiMinorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis')))
+            ellipse.orientation = \
+                float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
             ellipse.semiMajorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
             ellipse.semiMinorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
             ellipse.orientationuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'orientation', 'uom'))
