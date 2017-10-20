@@ -1,0 +1,14 @@
+<findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="value" validateLocation="true">
+   <location id="2c103e36-aefe-46e1-a064-4b55706805ca" profile="civic">
+      <civ:civicAddress xmlns:civ="urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr">
+         <civ:country>US</civ:country>
+         <civ:A1>ME</civ:A1>
+         <civ:A2>Oak Grove</civ:A2>
+         <civ:RD>Cross Hill</civ:RD>
+         <civ:STS>Rd</civ:STS>
+         <civ:HNO>1063</civ:HNO>
+         <civ:PC>90120</civ:PC>
+      </civ:civicAddress>
+   </location>
+   <service>urn:nena:service:sos</service>
+</findService>
