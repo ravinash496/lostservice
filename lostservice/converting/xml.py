@@ -585,6 +585,9 @@ class FindServiceXmlConverter(XmlConverter):
             if 'serviceBoundary' in root.attrib:
                 request.serviceBoundary = root.attrib['serviceBoundary']
 
+            if 'validateLocation' in root.attrib:
+                request.validateLocation = root.attrib['validateLocation']
+
             for element in root.iter():
                 if element.tag == '{urn:ietf:params:xml:ns:lost1}location':
                     location_parser = LocationXmlConverter()
@@ -669,6 +672,17 @@ class FindServiceXmlConverter(XmlConverter):
             elif type(item) is AdditionalDataResponseMapping:
                 services_element = lxml.etree.SubElement(mapping, 'uri')
                 services_element.text = item.adddatauri
+
+            if hasattr(item,"locationValidation"):
+                # add the validation element
+                validation_element = lxml.etree.SubElement(xml_response, 'locationValidation')
+                if item.locationValidation.get("valid"):
+                    valid_element = lxml.etree.SubElement(validation_element, 'valid')
+                    valid_element.text = item.locationValidation.get("valid")
+                if item.locationValidation.get("invalid"):
+                    invalid_element = lxml.etree.SubElement(validation_element, 'invalid')
+                    invalid_element.text = item.locationValidation.get("invalid")
+                
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')
