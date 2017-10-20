@@ -411,6 +411,9 @@ class FindServiceInner(object):
         source_maps = CivicAddressSourceMapCollection(config=jsons)
 
         civvy_obj = civic_request.location.location
+        validate_location = False
+        if  hasattr(civic_request,'validateLocation'):
+            validate_location = civic_request.validateLocation
 
         # Create the query executor for the PostgreSQL database.
         host = self._find_service_config._config.get('Database', 'host', as_object=False, required=True)
@@ -440,7 +443,7 @@ class FindServiceInner(object):
         if civvy_obj.a6:
             civic_dict['a6'] = civvy_obj.a6
         if civvy_obj.rd:
-            civic_dict['prd'] = civvy_obj.rd
+            civic_dict['rd'] = civvy_obj.rd
         if civvy_obj.pod:
             civic_dict['pod'] = civvy_obj.pod
         if civvy_obj.sts:
@@ -480,6 +483,17 @@ class FindServiceInner(object):
                 spatial_ref,
                 return_shape=return_shape
             )
+            if validate_location:
+                location_validation = {}
+                invalid_properties = [prop.value for prop in first_civic_point.invalid_civic_address_properties]
+                if len(invalid_properties)>0:
+                    location_validation['invalid'] = " ".join(invalid_properties)
+                valid_properties = [prop.value for prop in
+                                      first_civic_point.valid_civic_address_properties]
+                if len(valid_properties) > 0:
+                    location_validation['valid'] = " ".join(valid_properties)
+                mappings[0]['locationValidation'] = location_validation
+
         else:
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
             if civic_request.service.lower() == ADD_DATA_SERVICE.lower():
@@ -1133,7 +1147,6 @@ class FindServiceOuter(object):
         response.mappings = self._build_mapping_list(mappings, include_boundary_value)
 
         nonlostdata = self._build_warnings(mappings, nonlostdata)
-
         response.nonlostdata = nonlostdata
         return response
 
@@ -1240,6 +1253,9 @@ class FindServiceOuter(object):
                 resp_mapping.boundary_value = mapping['ST_AsGML_1']
             else:
                 resp_mapping.boundary_value = ""
+
+        if "locationValidation" in mapping:
+            resp_mapping.locationValidation = mapping.get("locationValidation")
 
         resp_mapping.last_updated = mapping.get('updatedate','')
         resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
