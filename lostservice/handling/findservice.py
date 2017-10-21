@@ -900,7 +900,8 @@ class FindServiceInner(object):
                     polygontxt = etree.tostring(node)
                     count = count + 1
             # If we need to do simplification, let's do it now as the last step, before we move on.
-            if self._find_service_config.do_polygon_simplification(): # IT'S SO SIMPLE
+            simplify = self._find_service_config.do_polygon_simplification()
+            if simplify: # IT'S SO SIMPLE
                 mapping = self._geomutil.simplify_polygon(
                     mapping_object=mapping,
                     tolerance=self._find_service_config.simplification_tolerance())
@@ -909,12 +910,14 @@ class FindServiceInner(object):
                 # TODO Multipolygons - Not supported currently so just return unedited GML
                 return mapping
 
-            modified_root = etree.XML(polygontxt)
-            modified_root.set('srsName', attr_srs.get('srsName', 'EPSG:4326'))
-            modified_root = self._clear_attributes(modified_root)
+            # We already edited the GML from simplification. Let's not do it again.
+            if simplify is False:
+                modified_root = etree.XML(polygontxt)
+                modified_root.set('srsName', attr_srs.get('srsName', 'EPSG:4326'))
+                modified_root = self._clear_attributes(modified_root)
 
-            # Update value with new GML
-            mapping['ST_AsGML_1'] = etree.tostring(modified_root).decode("utf-8")
+                # Update value with new GML
+                mapping['ST_AsGML_1'] = etree.tostring(modified_root).decode("utf-8")
 
         return mapping
 
