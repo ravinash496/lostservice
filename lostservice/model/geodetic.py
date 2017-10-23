@@ -8,6 +8,7 @@
 Models for different types of geodetic locations.
 """
 
+from typing import List
 from abc import ABCMeta, abstractmethod
 from osgeo import ogr
 from osgeo import osr
@@ -36,7 +37,7 @@ class Geodetic2D(object):
         """
         super(Geodetic2D, self).__init__()
         self._spatial_ref: str = spatial_ref
-        self._spatial_ref_id: int = self._trim_srid_urn(spatial_ref) if spatial_ref is not None else None
+        self._spatial_ref_id: int = Geodetic2D.trim_srid_urn(spatial_ref) if spatial_ref is not None else None
         self._shapely_internal: BaseGeometry = None
 
     @property
@@ -51,7 +52,7 @@ class Geodetic2D(object):
     @spatial_ref.setter
     def spatial_ref(self, value: str) -> None:
         self._spatial_ref = value
-        self._spatial_ref_id = self._trim_srid_urn(value)
+        self._spatial_ref_id = Geodetic2D.trim_srid_urn(value)
 
     @property
     def sr_id(self) -> int:
@@ -73,7 +74,8 @@ class Geodetic2D(object):
         """
         pass
 
-    def _trim_srid_urn(self, srid_urn: str) -> int:
+    @staticmethod
+    def trim_srid_urn(srid_urn: str) -> int:
         """
         Get's the SRID from the given SR URN.
 
@@ -84,7 +86,8 @@ class Geodetic2D(object):
         """
         return int(srid_urn.split('::')[1])
 
-    def _get_ogr_sr(self, srid: int) -> osr.SpatialReference:
+    @staticmethod
+    def get_ogr_sr(srid: int) -> osr.SpatialReference:
         """
         Get's an OGR SpatialReference for the current object.
 
@@ -93,7 +96,7 @@ class Geodetic2D(object):
         :return: A SpatialReference instance for the given SRID.
         :rtype: :py:class:`osr.SpatialReference`
         """
-        spatial_reference = osr.SpatialReference()
+        spatial_reference: osr.SpatialReference = osr.SpatialReference()
         spatial_reference.ImportFromEPSG(srid)
         return spatial_reference
 
@@ -105,10 +108,10 @@ class Geodetic2D(object):
         :rtype: :py:class:`ogr.Geometry`
         """
         if self._shapely_internal is None:
-            self.build_shapely_geometry()
+            self._shapely_internal = self.build_shapely_geometry()
 
         ogr_geom: ogr.Geometry = ogr.CreateGeometryFromWkt(self._shapely_internal.wkt)
-        ogr_geom.AssignSpatialReference(self._get_ogr_sr(self.sr_id))
+        ogr_geom.AssignSpatialReference(Geodetic2D.get_ogr_sr(self.sr_id))
 
         if project_to and project_to != self.sr_id:
             ogr_geom = reproject_geom(ogr_geom, self.sr_id, project_to)
@@ -119,20 +122,22 @@ class Geodetic2D(object):
         """
         Get the geometry as a geoalchemy WKBElement.
 
+        :param project_to: Option SRID to project to if different than the native projection.
+        :type project_to: ``int``
         :return: The geometry as a WKBELement.
         :rtype: :py:class:`WKBElement`
         """
         if self._shapely_internal is None:
-            self.build_shapely_geometry()
+            self._shapely_internal = self.build_shapely_geometry()
 
-        wkb = None
+        wkb: WKBElement = None
         if project_to and project_to != self.sr_id:
             ogr_geom: ogr.Geometry = ogr.CreateGeometryFromWkt(self._shapely_internal.wkt)
-            ogr_geom.AssignSpatialReference(self._get_ogr_sr(self.sr_id))
+            ogr_geom.AssignSpatialReference(Geodetic2D.get_ogr_sr(self.sr_id))
             ogr_geom = reproject_geom(ogr_geom, self.sr_id, project_to)
-            wkb = from_shape(loads(ogr_geom.ExportToWkt(), project_to))
+            wkb = from_shape(loads(ogr_geom.ExportToWkt()), project_to)
         else:
-            wkb = from_shape(self._shapely_internal, self.sr_id())
+            wkb = from_shape(self._shapely_internal, self.sr_id)
 
         return wkb
 
@@ -154,8 +159,8 @@ class Point(Geodetic2D):
         :type lon: ``float``
         """
         super(Point, self).__init__(spatial_ref)
-        self._lat = lat
-        self._lon = lon
+        self._lat: float = lat
+        self._lon: float = lon
 
     @property
     def latitude(self) -> float:
@@ -215,10 +220,10 @@ class Circle(Geodetic2D):
         :type uom: ``str``
         """
         super(Circle, self).__init__(spatial_ref)
-        self._lat = lat
-        self._lon = lon
-        self._radius = radius
-        self._uom = uom
+        self._lat: float = lat
+        self._lon: float = lon
+        self._radius: float = radius
+        self._uom: str = uom
 
     @property
     def latitude(self) -> float:
@@ -234,7 +239,7 @@ class Circle(Geodetic2D):
         self._lat = value
 
     @property
-    def longitude(self):
+    def longitude(self) -> float:
         """
         The longitude.
 
@@ -243,11 +248,11 @@ class Circle(Geodetic2D):
         return self._lon
 
     @longitude.setter
-    def longitude(self, value):
+    def longitude(self, value: float):
         self._lon = value
 
     @property
-    def radius(self):
+    def radius(self) -> float:
         """
         The radius.
 
@@ -256,11 +261,11 @@ class Circle(Geodetic2D):
         return self._radius
 
     @radius.setter
-    def radius(self, value):
+    def radius(self, value: float):
         self._radius = value
 
     @property
-    def uom(self):
+    def uom(self) -> str:
         """
         The unit of measure identifier.
 
@@ -269,7 +274,7 @@ class Circle(Geodetic2D):
         return self._uom
 
     @uom.setter
-    def uom(self, value):
+    def uom(self, value: str):
         self._uom = value
 
     def build_shapely_geometry(self) -> BaseGeometry:
@@ -282,14 +287,14 @@ class Circle(Geodetic2D):
         """
         # Get the UTMSRID so we can transform the center point to a coordinate system where distance is
         # measured in meters.
-        utmsrid = getutmsrid(self.longitude, self.latitude, self.sr_id)
+        utmsrid: int = getutmsrid(self.longitude, self.latitude, self.sr_id)
         # Create the OGR Point
-        center = ogr.Geometry(ogr.wkbPoint)
+        center: ogr.Geometry = ogr.Geometry(ogr.wkbPoint)
         center.AddPoint(self.longitude, self.latitude)
         # Project the point from its native projection to the UTM system.
         center = reproject_geom(center, self.sr_id, utmsrid)
         # Buffer the point with the radius to get a polygon of the circle.
-        circle = center.Buffer(self.radius)
+        circle: ogr.Geometry = center.Buffer(self.radius)
         # Project the circle back to the original system.
         circle = reproject_geom(circle, utmsrid, self.sr_id)
         # Return a shapely object constructed from the WKT of the OGR polygon
@@ -301,10 +306,10 @@ class Ellipse(Geodetic2D):
     A class for representing Ellipse geometries.
     """
 
-    def __init__(self, spatial_ref=None, lat=None, lon=None,
-                 majorAxis=None, majorAxisuom=None,
-                 minorAxis=None, minorAxisuom=None,
-                 orinetation=None, orinetationuom=None  ):
+    def __init__(self, spatial_ref: str=None, lat: float=None, lon: float=None,
+                 majorAxis: float=None, majorAxisuom: str=None,
+                 minorAxis: float=None, minorAxisuom: str=None,
+                 orinetation: float=None, orinetationuom: str=None):
         """
         Constructor for Ellipse geometries.
 
@@ -328,17 +333,17 @@ class Ellipse(Geodetic2D):
         :type orinetationuom: ``str``
         """
         super(Ellipse, self).__init__(spatial_ref)
-        self._lat = lat
-        self._lon = lon
-        self._majorAxis = majorAxis
-        self._majorAxisuom = majorAxisuom
-        self._minorAxis = minorAxis
-        self._minorAxisuom = minorAxisuom
-        self._orinetation = orinetation
-        self._orinetationuom = orinetationuom
+        self._lat: float = lat
+        self._lon: float = lon
+        self._majorAxis: float = majorAxis
+        self._majorAxisuom: str = majorAxisuom
+        self._minorAxis: float = minorAxis
+        self._minorAxisuom: str = minorAxisuom
+        self._orientation: float = orinetation
+        self._orientationuom: str = orinetationuom
 
     @property
-    def latitude(self):
+    def latitude(self) -> float:
         """
         The latitude.
 
@@ -347,11 +352,11 @@ class Ellipse(Geodetic2D):
         return self._lat
 
     @latitude.setter
-    def latitude(self, value):
+    def latitude(self, value: float):
         self._lat = value
 
     @property
-    def longitude(self):
+    def longitude(self) -> float:
         """
         The longitude.
 
@@ -360,37 +365,37 @@ class Ellipse(Geodetic2D):
         return self._lon
 
     @longitude.setter
-    def longitude(self, value):
+    def longitude(self, value: float):
         self._lon = value
 
     @property
-    def majorAxis(self):
+    def majorAxis(self) -> float:
         """
         The _majorAxis.
 
         :rtype: ``float``
         """
-        return self.__majorAxis
+        return self._majorAxis
 
     @majorAxis.setter
-    def majorAxis(self, value):
-        self.__majorAxis = value
+    def majorAxis(self, value: float):
+        self._majorAxis = value
 
     @property
-    def majorAxisuom(self):
+    def majorAxisuom(self) -> str:
         """
         The unit of measure identifier.
 
         :rtype: ``str``
         """
-        return self.__majorAxisuom
+        return self._majorAxisuom
 
     @majorAxisuom.setter
-    def majorAxisuom(self, value):
+    def majorAxisuom(self, value: str):
         self._majorAxisuom = value
 
     @property
-    def minorAxis(self):
+    def minorAxis(self) -> float:
         """
         The minorAxis.
 
@@ -399,11 +404,11 @@ class Ellipse(Geodetic2D):
         return self._minorAxis
 
     @minorAxis.setter
-    def minorAxis(self, value):
+    def minorAxis(self, value: float):
         self._minorAxis = value
 
     @property
-    def minorAxisuom(self):
+    def minorAxisuom(self) -> str:
         """
         The unit of measure identifier.
 
@@ -412,34 +417,34 @@ class Ellipse(Geodetic2D):
         return self._minorAxisuom
 
     @minorAxisuom.setter
-    def minorAxisuom(self, value):
+    def minorAxisuom(self, value: str):
         self._minorAxisuom = value
 
     @property
-    def orinetation(self):
+    def orinetation(self) -> float:
         """
         The orinetation.
 
         :rtype: ``float``
         """
-        return self._orinetation
+        return self._orientation
 
     @orinetation.setter
-    def orinetation(self, value):
-        self._orinetation = value
+    def orinetation(self, value: float):
+        self._orientation = value
 
     @property
-    def orinetationuom(self):
+    def orinetationuom(self) -> str:
         """
         The unit of measure identifier.
 
         :rtype: ``str``
         """
-        return self._orinetationuom
+        return self._orientationuom
 
     @orinetationuom.setter
-    def orinetationuom(self, value):
-        self._orinetationuom = value
+    def orinetationuom(self, value: str):
+        self._orientationuom = value
 
     def build_shapely_geometry(self) -> BaseGeometry:
         """
@@ -454,7 +459,7 @@ class Ellipse(Geodetic2D):
         utmsrid: int = getutmsrid(self.longitude, self.latitude, self.sr_id)
         # Create the OGR Point
         center: ogr.Geometry = ogr.Geometry(ogr.wkbPoint)
-        center.AssignSpatialReference(self.sr_id)
+        center.AssignSpatialReference(Geodetic2D.get_ogr_sr(self.sr_id))
         center.AddPoint(self.longitude, self.latitude)
         # Project the point from its native projection to the UTM system.
         center = reproject_geom(center, self.sr_id, utmsrid)
@@ -462,13 +467,13 @@ class Ellipse(Geodetic2D):
         circle: ogr.Geometry = center.Buffer(1)
 
         # Create the shapely object so we can do the ellipse magic.
-        proto_ellipse = loads(circle.ExportToWkt())
+        proto_ellipse: BaseGeometry = loads(circle.ExportToWkt())
         # stretch the ellipse along the major and minor axes
-        scaled_ellipse = affinity.scale(proto_ellipse, self.majorAxis, self.minorAxis)
+        scaled_ellipse: BaseGeometry = affinity.scale(proto_ellipse, self.majorAxis, self.minorAxis)
 
         rotate_angle = calculate_orientation(self.orinetation)
 
-        rotated_ellipse = None
+        rotated_ellipse: BaseGeometry = None
         if rotate_angle >= 0:
             # Let rotate the ellipse (clockwise, x axis pointing right):
             rotated_ellipse = affinity.rotate(scaled_ellipse, rotate_angle, use_radians=True)
@@ -480,7 +485,7 @@ class Ellipse(Geodetic2D):
 
         # Now build an OGR geometry so we can reproject.
         ogr_ellipse: ogr.Geometry = ogr.CreateGeometryFromWkt(rotated_ellipse.wkt)
-        ogr_ellipse.AssignSpatialReference(utmsrid)
+        ogr_ellipse.AssignSpatialReference(Geodetic2D.get_ogr_sr(utmsrid))
         ogr_ellipse = reproject_geom(ogr_ellipse, utmsrid, self.sr_id)
 
         return loads(ogr_ellipse.ExportToWkt())
@@ -492,80 +497,80 @@ class Arcband(Geodetic2D):
 
     """
 
-    def __init__(self, spatial_ref=None, lat=None, lon=None,
-                 inner_radius=None, inner_radius_uom=None,
-                 outer_radius=None, outer_radios_uom=None,
-                 start_angle=None, start_angle_uom=None,
-                 opening_angle=None, opening_angle_uom=None):
+    def __init__(self, spatial_ref: str=None, lat: float=None, lon: float=None,
+                 inner_radius: float=None, inner_radius_uom: str=None,
+                 outer_radius: float=None, outer_radios_uom: str=None,
+                 start_angle: float=None, start_angle_uom: str=None,
+                 opening_angle: float=None, opening_angle_uom: str=None):
         """
         Constructor for arcband geometries.
 
-        :param spatial_ref:
-        :param lat:
-        :param lon:
-        :param inner_radius:
-        :param inner_radius_uom:
-        :param outer_radius:
-        :param outer_radios_uom:
-        :param start_angle:
-        :param start_angle_uom:
-        :param opening_angle:
-        :param opening_angle_uom:
+        :param spatial_ref:  The geometry spatial reference URN.
+        :param lat: Latitude
+        :param lon: Longitude
+        :param inner_radius: Inner radius of the arc.
+        :param inner_radius_uom: Inner radius units of measure.
+        :param outer_radius: Outer radius of the arc.
+        :param outer_radios_uom: Outer radius units of measure
+        :param start_angle: The offset angle to the beginning of the arc with 0 being north.
+        :param start_angle_uom: The offset angle units of measure.
+        :param opening_angle: The sweep angle of the arc.
+        :param opening_angle_uom: The sweep angle units of measure.
         """
 
         super(Arcband, self).__init__(spatial_ref)
-        self._lat = lat
-        self._lon = lon
-        self._inner_radius = inner_radius
-        self._inner_radius_uom = inner_radius_uom
-        self._outer_radius = outer_radius
-        self._outer_radius_uom = outer_radios_uom
-        self._start_angle = start_angle
-        self._start_angle_uom = start_angle_uom
-        self._opening_angle = opening_angle
-        self._opening_angle_uom = opening_angle_uom
+        self._lat: float = lat
+        self._lon: float = lon
+        self._inner_radius: float = inner_radius
+        self._inner_radius_uom: str = inner_radius_uom
+        self._outer_radius: float = outer_radius
+        self._outer_radius_uom: str = outer_radios_uom
+        self._start_angle: float = start_angle
+        self._start_angle_uom: str = start_angle_uom
+        self._opening_angle: float = opening_angle
+        self._opening_angle_uom: str = opening_angle_uom
 
     @property
-    def latitude(self):
+    def latitude(self) -> float:
         """
         Center point latitude.
 
-        :rtype: ``str``
+        :rtype: ``float``
         """
         return self._lat
 
     @latitude.setter
-    def latitude(self, value):
+    def latitude(self, value: float):
         self._lat = value
 
     @property
-    def longitude(self):
+    def longitude(self) -> float:
         """
         Center point longitude.
 
-        :rtype: ``str``
+        :rtype: ``float``
         """
         return self._lon
 
     @longitude.setter
-    def longitude(self, value):
+    def longitude(self, value: float):
         self._lon = value
 
     @property
-    def inner_radius(self):
+    def inner_radius(self) -> float:
         """
         Inner radius.
 
-        :rtype: ``str``
+        :rtype: ``float``
         """
         return self._inner_radius
 
     @inner_radius.setter
-    def inner_radius(self, value):
+    def inner_radius(self, value: float):
         self._inner_radius = value
 
     @property
-    def inner_radius_uom(self):
+    def inner_radius_uom(self) -> str:
         """
         Inner radius unit of measure.
 
@@ -574,24 +579,24 @@ class Arcband(Geodetic2D):
         return self._inner_radius_uom
 
     @inner_radius_uom.setter
-    def inner_radius_uom(self, value):
+    def inner_radius_uom(self, value: str):
         self._inner_radius_uom = value
 
     @property
-    def outer_radius(self):
+    def outer_radius(self) -> float:
         """
         Outer radius.
 
-        :rtype: ``str``
+        :rtype: ``float``
         """
         return self._outer_radius
 
     @outer_radius.setter
-    def outer_radius(self, value):
+    def outer_radius(self, value: float):
         self._outer_radius = value
 
     @property
-    def outer_radius_uom(self):
+    def outer_radius_uom(self) -> str:
         """
         Outer radius unit of measure.
 
@@ -600,24 +605,24 @@ class Arcband(Geodetic2D):
         return self._outer_radius_uom
 
     @outer_radius_uom.setter
-    def outer_radius_uom(self, value):
+    def outer_radius_uom(self, value: str):
         self._outer_radius_uom = value
 
     @property
-    def start_angle(self):
+    def start_angle(self) -> float:
         """
         Start angle in units clockwise from north.
 
-        :rtype: ``str``
+        :rtype: ``float``
         """
         return self._start_angle
 
     @start_angle.setter
-    def start_angle(self, value):
+    def start_angle(self, value: float):
         self._start_angle = value
 
     @property
-    def start_angle_uom(self):
+    def start_angle_uom(self) -> str:
         """
         Start angle units of measure
 
@@ -626,24 +631,24 @@ class Arcband(Geodetic2D):
         return self._start_angle_uom
 
     @start_angle_uom.setter
-    def start_angle_uom(self, value):
+    def start_angle_uom(self, value: str):
         self._start_angle_uom = value
 
     @property
-    def opening_angle(self):
+    def opening_angle(self) -> float:
         """
         Opening angle in units clockwise from start angle.
 
-        :rtype: ``str``
+        :rtype: ``float``
         """
         return self._opening_angle
 
     @opening_angle.setter
-    def opening_angle(self, value):
+    def opening_angle(self, value: float):
         self._opening_angle = value
 
     @property
-    def opening_angle_uom(self):
+    def opening_angle_uom(self) -> str:
         """
         Opening angle units of measure
 
@@ -652,7 +657,7 @@ class Arcband(Geodetic2D):
         return self._opening_angle_uom
 
     @opening_angle_uom.setter
-    def opening_angle_uom(self, value):
+    def opening_angle_uom(self, value: str):
         self._opening_angle_uom = value
 
     def build_shapely_geometry(self) -> BaseGeometry:
@@ -668,16 +673,16 @@ class Arcband(Geodetic2D):
         utmsrid: int = getutmsrid(self.longitude, self.latitude, self.sr_id)
         # Create the OGR Point
         center: ogr.Geometry = ogr.Geometry(ogr.wkbPoint)
-        center.AssignSpatialReference(self._spatial_ref_id)
+        center.AssignSpatialReference(Geodetic2D.get_ogr_sr(self.sr_id))
         center.AddPoint(self.longitude, self.latitude)
         # Project the point from its native projection to the UTM system.
-        center = reproject_geom(center, self._spatial_ref_id, utmsrid)
+        center = reproject_geom(center, self.sr_id, utmsrid)
 
         # adjust for the fact that we're not doing standard geometry - back up 90 degress
         # to start from north.
-        start_angle = 90 - self.start_angle
+        start_angle: float = 90 - self.start_angle
         # find the end angle, which is the sweep relative to the start angle going clockwise so we subtract.
-        end_angle = start_angle - self.opening_angle
+        end_angle: float = start_angle - self.opening_angle
 
         # plot a line for the outer arc.
         outer_arc_x, outer_arc_y = \
@@ -705,11 +710,11 @@ class Arcband(Geodetic2D):
         ring_coordinates = np.column_stack([band_x, band_y])
 
         # Build the shapely linear ring . . .
-        line_string = shp_geom.LinearRing(ring_coordinates)
+        line_string: shp_geom.LinearRing = shp_geom.LinearRing(ring_coordinates)
         # so we can build a shapely polygon . . .
-        arc_band_polygon = shp_geom.Polygon(line_string)
+        arc_band_polygon: shp_geom.Polygon = shp_geom.Polygon(line_string)
         # so we can create the OGR geometry . . .
-        arcband = ogr.CreateGeometryFromWkb(arc_band_polygon.wkb)
+        arcband: ogr.Geometry = ogr.CreateGeometryFromWkb(arc_band_polygon.wkb)
         # so we can reproject back to the original coordinate system
         arcband = reproject_geom(arcband, utmsrid, self._spatial_ref_id)
         # so we can build and return a shapely geometry.  (Whew!)
@@ -720,7 +725,7 @@ class Polygon(Geodetic2D):
     """
     A class for polygon geometries.
     """
-    def __init__(self, spatial_ref=None, vertices=None):
+    def __init__(self, spatial_ref: str=None, vertices: List[List[float]]=None):
         """
         Constructor.
 
@@ -733,7 +738,7 @@ class Polygon(Geodetic2D):
         self._vertices = vertices if vertices is not None else []
 
     @property
-    def vertices(self):
+    def vertices(self) -> List[List[float]]:
         """
         The vertices of the polygon.
 
@@ -742,7 +747,7 @@ class Polygon(Geodetic2D):
         return self._vertices
 
     @vertices.setter
-    def vertices(self, value):
+    def vertices(self, value: List[List[float]]):
         self._vertices = value
 
     def build_shapely_geometry(self) -> BaseGeometry:

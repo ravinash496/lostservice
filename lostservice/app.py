@@ -18,6 +18,7 @@ import socket
 import uuid
 from lxml import etree
 from injector import Module, provider, Injector, singleton
+import civvy.db.postgis.query as civvy_pg
 import lostservice.configuration as config
 import lostservice.logger.auditlog as auditlog
 import lostservice.logger.transactionaudit as txnaudit
@@ -54,6 +55,22 @@ class LostBindingModule(Module):
         :rtype: :py:class:`lostservice.logging.auditlog.AuditLog`
         """
         return auditlog.AuditLog()
+
+    @singleton
+    @provider
+    def provide_pg_query_executor(self, config: config.Configuration) -> civvy_pg.PgQueryExecutor:
+        """
+        Provider function for a PGQueryExecutor.
+
+        :param config: The config object.
+        :return:
+        """
+        host = self.get('Database', 'host')
+        port = self.get('Database', 'port')
+        db_name = self.get('Database', 'dbname')
+        username = self.get('Database', 'username')
+        password = self.get('Database', 'password')
+        return civvy_pg.PgQueryExecutor(host=host, port=port, database=db_name, user=username, password=password)
 
     @provider
     def provide_db_wrapper(self, config: config.Configuration) -> gisdb.GisDbInterface:
