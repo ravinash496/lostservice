@@ -23,14 +23,14 @@ class CivicCoverageResolver(base.CoverageBase):
     """
 
     @inject
-    def __init__(self, config: base.CoverageConfigWrapper, query_executor: civvy_pg.PgQueryExecutor):
+    def __init__(self, cov_config: base.CoverageConfigWrapper, query_executor: civvy_pg.PgQueryExecutor):
         """
         Constructor
 
-        :param config: A reference to the CoverageConfig.
+        :param cov_config: A reference to the CoverageConfig.
         :param query_executor: An instance of a PgQueryExecutor that will perform the query.
         """
-        super().__init__(config, query_executor)
+        super().__init__(cov_config, query_executor)
         self._civic_address = None
 
     def _build_where_clause(self, field_name: str=None, value: str=None, appending: bool=False):
@@ -44,7 +44,8 @@ class CivicCoverageResolver(base.CoverageBase):
         """
         where_clause = ''
         if field_name:
-            where_clause += ' AND '
+            if appending:
+                where_clause += ' AND '
 
             if value:
                 where_clause += "(({0} IS NULL) OR ({0} = {1}))".format(field_name, value)

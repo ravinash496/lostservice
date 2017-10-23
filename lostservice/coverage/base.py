@@ -92,15 +92,15 @@ class CoverageBase(object):
 
     __metaclass__ = ABCMeta
 
-    @inject
-    def __init__(self, config: CoverageConfigWrapper, query_executor: civvy_pg.PgQueryExecutor):
+    def __init__(self, cov_config: CoverageConfigWrapper, query_executor: civvy_pg.PgQueryExecutor):
         """
         Constructor
 
-        :param config: A reference to the CoverageConfig.
+        :param cov_config: A reference to the CoverageConfig.
         :param query_executor: An instance of a PgQueryExecutor that will perform the query.
         """
-        self._config = config
+        super().__init__()
+        self._config = cov_config
         self._query_executor = query_executor
 
     @abstractmethod

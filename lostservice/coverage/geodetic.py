@@ -16,21 +16,21 @@ import lostservice.exception as exp
 import lostservice.model.geodetic as model
 
 
-class CivicCoverageResolver(base.CoverageBase):
+class GeodeticCoverageResolver(base.CoverageBase):
     """
     Class that implements geodetic coverage resolution
 
     """
 
     @inject
-    def __init__(self, config: base.CoverageConfigWrapper, query_executor: civvy_pg.PgQueryExecutor):
+    def __init__(self, cov_config: base.CoverageConfigWrapper, query_executor: civvy_pg.PgQueryExecutor):
         """
         Constructor
 
-        :param config: A reference to the CoverageConfig.
+        :param cov_config: A reference to the CoverageConfig.
         :param query_executor: An instance of a PgQueryExecutor that will perform the query.
         """
-        super().__init__(config, query_executor)
+        super().__init__(cov_config, query_executor)
 
     def build_coverage_query(self, geometry_model: model.Geodetic2D) -> str:
         """
