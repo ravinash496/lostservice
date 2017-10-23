@@ -278,7 +278,7 @@ class RedirectException(LostException):
         :param nested: An optional nested exception.
         :type nested: :py:class:`Exception`
         """
-        super(ServiceNotImplementedException, self).__init__(message, None)
+        super().__init__(message, None)
         self._target = target
 
     @property
@@ -288,6 +288,13 @@ class RedirectException(LostException):
 
         """
         return self._target
+
+    @property
+    def message(self) -> str:
+        """
+        The message.
+        """
+        return self._message
 
     def error_tag(self):
         return 'redirect'
@@ -304,4 +311,4 @@ def build_redirect_response(exception: RedirectException, source_uri) -> str:
     format_string = \
         """<?xml version="1.0" encoding="UTF-8"?><redirect xmlns="urn:ietf:params:xml:ns:lost1" source="{0}" target="{1}" message="{2}" />"""
 
-    return format_string.format(source_uri, exception.target, str(exception))
+    return format_string.format(source_uri, exception.target, exception.message)

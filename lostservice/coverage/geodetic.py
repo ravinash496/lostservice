@@ -44,14 +44,14 @@ class GeodeticCoverageResolver(base.CoverageBase):
 
         sql_str = (
             """
-            select depth, serviceurn, source, ST_Area(ST_Intersection(ST_GeomFromText('{0}', 4326), wkb_geometry))
-            from {0} 
-            where ST_Intersects(ST_GeomFromText('{1}', 4326), wkb_geometry)
+            select depth, serviceurn, lostserver, ST_Area(ST_Intersection(ST_GeomFromText('{0}', 4326), wkb_geometry))
+            from {1} 
+            where ST_Intersects(ST_GeomFromText('{0}', 4326), wkb_geometry)
             order by depth, st_area asc
             """
         )
 
-        return sql_str.format(table_name, wkt)
+        return sql_str.format(wkt, table_name)
 
     def build_response(self, result: Iterator[dict]) -> str:
         """

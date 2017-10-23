@@ -73,7 +73,7 @@ class CoverageResolverWrapper(object):
             else:
                 authority = self.resolve_geodetic(model)
 
-            if authority.lower != self._server_name:
+            if authority.lower() != self._server_name:
                 # if the authority does not match the name of the current server, raise a RedirectException
                 raise exp.RedirectException('Server is not authoritative for the given location.', authority)
             else:

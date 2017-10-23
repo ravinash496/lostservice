@@ -48,7 +48,7 @@ class CivicCoverageResolver(base.CoverageBase):
                 where_clause += ' AND '
 
             if value:
-                where_clause += "(({0} IS NULL) OR ({0} = {1}))".format(field_name, value)
+                where_clause += "(({0} IS NULL) OR ({0} = '{1}'))".format(field_name, value)
             else:
                 where_clause += "({0} IS NULL)".format(field_name)
 
@@ -68,11 +68,11 @@ class CivicCoverageResolver(base.CoverageBase):
         where_clause = ''
 
         where_clause += self._build_where_clause('country', civic_addr.country)
-        where_clause += self._build_where_clause('a1', civic_addr.a1)
-        where_clause += self._build_where_clause('a2', civic_addr.a2)
-        where_clause += self._build_where_clause('a3', civic_addr.a3)
-        where_clause += self._build_where_clause('a4', civic_addr.a4)
-        where_clause += self._build_where_clause('a5', civic_addr.a5)
+        where_clause += self._build_where_clause('a1', civic_addr.a1, appending=True)
+        where_clause += self._build_where_clause('a2', civic_addr.a2, appending=True)
+        where_clause += self._build_where_clause('a3', civic_addr.a3, appending=True)
+        where_clause += self._build_where_clause('a4', civic_addr.a4, appending=True)
+        where_clause += self._build_where_clause('a5', civic_addr.a5, appending=True)
 
         sql_query = "SELECT * FROM {0} WHERE ".format(table_name) + where_clause
 
@@ -86,18 +86,18 @@ class CivicCoverageResolver(base.CoverageBase):
         :return: The depth.
         """
         depth = 0
-        if self._civic_addr:
-            if self._civic_addr.a5:
+        if self._civic_address:
+            if self._civic_address.a5:
                 depth = 6
-            elif self._civic_addr.a4:
+            elif self._civic_address.a4:
                 depth = 5
-            elif self._civic_addr.a3:
+            elif self._civic_address.a3:
                 depth = 4
-            elif self._civic_addr.a2:
+            elif self._civic_address.a2:
                 depth = 3
-            elif self._civic_addr.a1:
+            elif self._civic_address.a1:
                 depth = 2
-            elif self._civic_addr.country:
+            elif self._civic_address.country:
                 depth = 1
 
         return depth
@@ -110,17 +110,17 @@ class CivicCoverageResolver(base.CoverageBase):
         :return: The number of nulls.
         """
         null_count = 0
-        if match['a5']:
+        if not match['a5']:
             null_count += 1
-        elif match['a4']:
+        if not match['a4']:
             null_count += 1
-        elif match['a3']:
+        if not match['a3']:
             null_count += 1
-        elif match['a2']:
+        if not match['a2']:
             null_count += 1
-        elif match['a1']:
+        if not match['a1']:
             null_count += 1
-        elif match['country']:
+        if not match['country']:
             null_count += 1
 
         match['null_count'] = null_count
