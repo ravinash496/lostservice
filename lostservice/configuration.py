@@ -10,6 +10,9 @@ Configuration related classes and functions.
 
 import os
 import configparser
+import logging
+import sys
+from logging.config import dictConfig
 from lostservice.exception import InternalErrorException
 
 _DBHOSTNAME = 'DBHOSTNAME'
@@ -25,6 +28,47 @@ _LOGDBPORT = 'LOGDBPORT'
 _LOGDBNAME = 'LOGDBNAME'
 _LOGDBUSER = 'LOGDBUSER'
 _LOGDBPASSWORD = 'LOGDBPASSWORD'
+
+
+def general_logger():
+    logging_config = dict(
+        version=1,
+        formatters={
+            'verbose': {
+                'format': ("[%(asctime)s].%(msecs)03d %(levelname)s: "
+                           "[%(name)s: %(filename)s:: %(funcName)s(): %(lineno)s] %(message)s"),
+                'datefmt': "%Y-%m-%d %H:%M:%S",
+            },
+            'simple': {
+                'format': '%(levelname)s %(message)s',
+            },
+        },
+        handlers={
+            'lostservice': {'class': 'logging.handlers.RotatingFileHandler',
+                            'formatter': 'verbose',
+                            'level': logging.DEBUG,
+                            'filename': 'lostservice.log',
+                            'maxBytes': 52428800,
+                            'backupCount': 7},
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+                'formatter': 'verbose',
+                'stream': sys.stdout,
+            },
+        },
+        loggers={
+            'lostservice_logger': {
+                'handlers': ['lostservice', 'console'],
+                'level': logging.DEBUG
+            }
+        }
+    )
+
+    dictConfig(logging_config)
+    # Logger names
+    logger = logging.getLogger('lostservice_logger')
+    return logger
 
 
 class ConfigurationException(InternalErrorException):
@@ -43,7 +87,7 @@ class Configuration(object):
     A wrapper for reading from and writing to a configuration file.
 
     """
-    
+
     def __init__(self, custom_config=None, default_config=None):
         """
         Constructor
@@ -194,7 +238,7 @@ class Configuration(object):
         :rtype: ``list``
         """
         return list(set(self._custom_config_parser.sections() + self._default_config_parser.sections()))
-    
+
     def set_option(self, section, option, value):
         """
         Sets an option on a given section with the given value.  
@@ -212,7 +256,7 @@ class Configuration(object):
         """
         if section not in self.get_sections():
             self._custom_config_parser.add_section(section)
-        
+
         self._custom_config_parser.set(section, option, value)
 
     def _update_config_from_env(self):
@@ -303,4 +347,6 @@ class Configuration(object):
         if self._logging_db_connection_string is None:
             self._logging_db_connection_string = self._rebuild_db_connection_string('LoggingDB')
         return self._logging_db_connection_string
+
+
 

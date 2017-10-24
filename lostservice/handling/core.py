@@ -22,6 +22,8 @@ from lostservice.model.location import Ellipse
 from lostservice.model.location import Point
 from lostservice.model.location import Polygon
 from lostservice.model.location import CivicAddress
+from lostservice.configuration import general_logger
+logger = general_logger()
 
 class ListServicesHandler(Handler):
     """
@@ -120,6 +122,7 @@ class FindServiceHandler(Handler):
         elif type(request.location.location) is CivicAddress:
             response = self._outer.find_service_for_civicaddress(request)
         else:
+            logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
 
         return response
@@ -223,6 +226,7 @@ class ListServicesByLocationHandler(Handler):
         elif type(request.location.location) is CivicAddress:
             response = self._outer.list_services_by_location_for_civicaddress(request)
         else:
+            logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
 
         return response
