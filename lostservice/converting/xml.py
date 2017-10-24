@@ -76,7 +76,7 @@ class XmlConverter(Converter):
         """
         retval = None
         if node is None or xpath is None:
-            logger.info('Invalid xpath request.')
+            logger.warning('Invalid xpath request.')
             raise BadRequestException('Invalid xpath request.')
 
         child = node.xpath(xpath, namespaces=_namespace_map)
@@ -329,7 +329,7 @@ class PolygonXmlConverter(XmlConverter):
             raise BadRequestException('Invalid polygon input.')
 
         if not model.vertices:
-            logger.info('Invalid polygon input.')
+            logger.warning('Invalid polygon input.')
             raise BadRequestException('Invalid polygon input.')
 
         return model
@@ -494,7 +494,7 @@ class LocationXmlConverter(XmlConverter):
         elif 'ArcBand' == qname.localname:
             parser = ArcbandXmlConverter()
         else:
-            logger.info('Invalid geometry: {0}'.format(qname))
+            logger.warning('Invalid geometry: {0}'.format(qname))
             raise BadRequestException('Invalid geometry: {0}'.format(qname))
 
         retval = parser.parse(data)
@@ -523,7 +523,7 @@ class LocationXmlConverter(XmlConverter):
             civic_parser = CivicXmlConverter()
             location.location = civic_parser.parse(data[0])
         else:
-            logger.info('{0} is not a valid location profile.'.format(location.profile), None)
+            logger.warning('{0} is not a valid location profile.'.format(location.profile), None)
             raise LocationProfileException('{0} is not a valid location profile.'.format(location.profile), None)
 
         return location
@@ -635,7 +635,7 @@ class FindServiceXmlConverter(XmlConverter):
         :rtype: :py:class:`_ElementTree`
         """
         if data.mappings is None or len(data.mappings) == 0:
-            logger.info('Could not find an answer to the request.', None)
+            logger.warning('Could not find an answer to the request.', None)
             raise NotFoundException('Could not find an answer to the request.', None)
 
         # create the root element of the xml response.

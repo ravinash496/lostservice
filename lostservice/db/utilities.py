@@ -56,8 +56,7 @@ def _get_serviceurn(tablename, engine):
             urn = rows[0]['serviceurn']
 
     except SQLAlchemyError as ex:
-        logger.info('Failed to extract mapping for table {0}'.format(tablename), ex)
-        logger.error(ex)
+        logger.error('Failed to extract mapping for table {0}'.format(tablename), ex)
         raise MappingDiscoveryException('Failed to extract mapping for table {0}'.format(tablename), ex)
     except MappingDiscoveryException:
         raise
@@ -93,7 +92,7 @@ def get_urn_table_mappings(engine):
                 mappings[urn] = tablename
 
             if not mappings:
-                logger.debug('No service boundary tables were found in the database.')
+                logger.warning('No service boundary tables were found in the database.')
                 raise MappingDiscoveryException('No service boundary tables were found in the database.')
 
     except SQLAlchemyError as ex:
