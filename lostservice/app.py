@@ -12,9 +12,11 @@ import os
 import argparse
 import logging
 from logging.handlers import RotatingFileHandler
+from logging.config import dictConfig
 import datetime
 import pytz
 import socket
+import sys
 import uuid
 from lxml import etree
 from injector import Module, provider, Injector, singleton
@@ -26,6 +28,8 @@ import lostservice.db.gisdb as gisdb
 import lostservice.queryrunner as queryrunner
 import lostservice.logger.nenalogging as nenalog
 import lostservice.exception as exp
+from lostservice.configuration import general_logger
+logger = general_logger()
 
 
 class LostBindingModule(Module):
@@ -208,8 +212,8 @@ class LostApplication(object):
         :return: The LoST query response XML.
         :rtype: ``str``
         """
-        self._logger.info('Starting LoST query execution . . .')
-        self._logger.debug(data)
+        logger.info('Starting LoST query execution . . .')
+        logger.debug(data)
 
         conf = self._di_container.get(config.Configuration)
         parsed_request = None
@@ -243,13 +247,13 @@ class LostApplication(object):
             # Send Logs to configured NENA Logging Services
             nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
-            self._logger.debug(response)
-            self._logger.info('Finished LoST query execution . . .')
+            logger.debug(response)
+            logger.info('Finished LoST query execution . . .')
 
         except Exception as e:
             endtime = datetime.datetime.now(tz=pytz.utc)
             self._audit_diagnostics(activity_id, e)
-            self._logger.error(e)
+            logger.error(e)
             source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
             if isinstance(e, etree.LxmlError):
                 response = exp.build_error_response(exp.BadRequestException('Malformed request xml.', None), source_uri)
