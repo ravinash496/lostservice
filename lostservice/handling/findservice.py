@@ -330,7 +330,7 @@ class FindServiceInner(object):
         if service_urn in self._mappings:
             return self._mappings[service_urn]
         else:
-            logger.warning('Service URN {0} not supported.'.format(service_urn), None)
+            logger.warning('Service URN {0} not supported.'.format(service_urn))
             raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
 
     def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
