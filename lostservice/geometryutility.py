@@ -304,37 +304,9 @@ class GeometryUtility(object):
         # now that we've simplified, we will want to project back to WKID: 4326
         ogr_wgs_84 = self.project(ogr_simplified, 4326)
         # Geesh, we're not done yet! Let's take this pretty geometry and export it to GML.
-        ogr_as_gml = ogr_wgs_84.ExportToGML()
-        # Take this GML output, and transform it to the schema we are using some magic
-        simplified_gml = self.transform_gml_names(ogr_as_gml)
+        ogr_as_gml = ogr_wgs_84.ExportToGML(options=['FORMAT=GML3'])
+
         #Wait, all of this actually worked? Well I suppose we should put it into the return object then.
-        mapping_object['ST_AsGML_1'] = simplified_gml
+        mapping_object['ST_AsGML_1'] = ogr_as_gml
         # WE OUTTA HERE!
         return mapping_object
-
-    def transform_gml_names(self, source_gml):
-        """
-
-        :param source_gml: The source GML we need to do some transposition on
-        :return: magical new GML that fits schema of non-simplified results.
-
-        Note: This whole thing makes me feel dirty, and I wish there was an easier way, but I couldn't find one.
-        """
-        # Created a few statics for the more descriptive ones for replacing.
-        GML_POS_LIST = '<gml:posList srsDimension="2">'
-        GML_EXTERIOR = 'exterior'
-        my_regex_coordinates = re.compile('<gml:coordinates>', flags=re.IGNORECASE)
-        my_regex_boundary = re.compile('outerBoundaryIs', flags=re.IGNORECASE)
-        my_regex_coord_text = re.compile('coordinates', flags=re.IGNORECASE) # I'm here twice because I cam be!
-        my_regex_polygon = re.compile('MultiPolygon', flags=re.IGNORECASE)
-        my_regex_polymember = re.compile('polygonMember', flags=re.IGNORECASE)
-
-        # Ok, let's start replacing!
-        retval = my_regex_coordinates.sub(GML_POS_LIST, source_gml)
-        retval = my_regex_boundary.sub(GML_EXTERIOR, retval)
-        retval = my_regex_polygon.sub('MultiSurface', retval)
-        retval = my_regex_coord_text.sub('posList', retval)
-        retval = my_regex_polymember.sub('surfaceMember', retval)
-
-        # Whew, we're done.
-        return retval
