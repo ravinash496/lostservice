@@ -23,6 +23,9 @@ from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Polygon
 from lostservice.model.civic import CivicAddress
 import lostservice.coverage.resolver as cov
+from lostservice.configuration import general_logger
+
+logger = general_logger()
 
 
 class ListServicesHandler(Handler):
@@ -128,6 +131,7 @@ class FindServiceHandler(Handler):
         elif type(request.location.location) is CivicAddress:
             response = self._outer.find_service_for_civicaddress(request)
         else:
+            logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
 
         return response
@@ -236,6 +240,7 @@ class ListServicesByLocationHandler(Handler):
         elif type(request.location.location) is CivicAddress:
             response = self._outer.list_services_by_location_for_civicaddress(request)
         else:
+            logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
 
         return response

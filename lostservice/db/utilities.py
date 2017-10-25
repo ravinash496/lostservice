@@ -10,6 +10,8 @@ General database utility functions
 from sqlalchemy import MetaData, Table
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import select, or_
+from lostservice.configuration import general_logger
+logger = general_logger()
 
 
 class MappingDiscoveryException(Exception):
@@ -54,6 +56,7 @@ def _get_serviceurn(tablename, engine):
             urn = rows[0]['serviceurn']
 
     except SQLAlchemyError as ex:
+        logger.error('Failed to extract mapping for table {0}'.format(tablename), ex)
         raise MappingDiscoveryException('Failed to extract mapping for table {0}'.format(tablename), ex)
     except MappingDiscoveryException:
         raise
@@ -89,12 +92,15 @@ def get_urn_table_mappings(engine):
                 mappings[urn] = tablename
 
             if not mappings:
+                logger.warning('No service boundary tables were found in the database.')
                 raise MappingDiscoveryException('No service boundary tables were found in the database.')
 
     except SQLAlchemyError as ex:
+        logger.error('Encountered an error when attempting to discover the service boundary tables.', ex)
         raise MappingDiscoveryException(
             'Encountered an error when attempting to discover the service boundary tables.', ex)
-    except MappingDiscoveryException:
+    except MappingDiscoveryException as ex:
+        logger.error(ex)
         raise
 
     return mappings

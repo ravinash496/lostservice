@@ -21,6 +21,8 @@ from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
 import json
+from lostservice.configuration import general_logger
+logger = general_logger()
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -328,6 +330,7 @@ class FindServiceInner(object):
         if service_urn in self._mappings:
             return self._mappings[service_urn]
         else:
+            logger.warning('Service URN {0} not supported.'.format(service_urn))
             raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
 
     def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
@@ -791,6 +794,7 @@ class FindServiceInner(object):
                 i = len(mappings)
                 del mappings[1:i]  # removes items starting at 1 until the end of the list
             elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError:
+                logger.warning('Multiple results matched request location.')
                 raise InternalErrorException('Multiple results matched request location.')
 
         return mappings

@@ -31,6 +31,10 @@ from lostservice.model.requests import ListServicesByLocationRequest
 from lostservice.model.requests import ListServicesRequest
 from lostservice.model.responses import AdditionalDataResponseMapping, ResponseMapping
 
+from lostservice.configuration import general_logger
+logger = general_logger()
+
+
 LOST_PREFIX = 'lost'
 LOST_URN = 'urn:ietf:params:xml:ns:lost1'
 CIVIC_ADDRESS_PREFIX = 'civ'
@@ -75,6 +79,7 @@ class XmlConverter(Converter):
         """
         retval = None
         if node is None or xpath is None:
+            logger.warning('Invalid xpath request.')
             raise BadRequestException('Invalid xpath request.')
 
         child = node.xpath(xpath, namespaces=_namespace_map)
@@ -205,7 +210,8 @@ class PointXmlConverter(XmlConverter):
             lat, lon = position.split()
             point.latitude = float(lat)
             point.longitude = float(lon)
-        except (Exception, TypeError):
+        except (Exception, TypeError) as ex:
+            logger.error('Invalid point input.', ex)
             raise BadRequestException('Invalid point input.')
 
         return point
@@ -258,7 +264,8 @@ class CircleXmlConverter(XmlConverter):
 
             circle.radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'radius')))
             circle.uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'radius', 'uom'))
-        except (Exception, TypeError):
+        except (Exception, TypeError) as ex:
+            logger.error('Invalid circle input.', ex)
             raise BadRequestException('Invalid circle input.')
 
         return circle
@@ -320,10 +327,12 @@ class PolygonXmlConverter(XmlConverter):
                         point = [float(lon), float(lat)]
                         model.vertices.append(point)
 
-        except (Exception, IndexError, TypeError):
+        except (Exception, IndexError, TypeError) as ex:
+            logger.error('Invalid polygon input.', ex)
             raise BadRequestException('Invalid polygon input.')
 
         if not model.vertices:
+            logger.warning('Invalid polygon input.')
             raise BadRequestException('Invalid polygon input.')
 
         return model
@@ -382,7 +391,8 @@ class EllipseXmlConverter(XmlConverter):
             ellipse.semiMajorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
             ellipse.semiMinorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
             ellipse.orientationuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'orientation', 'uom'))
-        except (Exception, TypeError):
+        except (Exception, TypeError) as ex:
+            logger.error('Invalid ellipse input.', ex)
             raise BadRequestException('Invalid ellipse input.')
 
         return ellipse
@@ -436,7 +446,8 @@ class ArcbandXmlConverter(XmlConverter):
             arcband.start_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'startAngle', 'uom'))
             arcband.opening_angle = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'openingAngle')))
             arcband.opening_angle_uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'openingAngle', 'uom'))
-        except (Exception, TypeError):
+        except (Exception, TypeError) as ex:
+            logger.error('Invalid arcband input.', ex)
             raise BadRequestException('Invalid arcband input.')
 
         return arcband
@@ -486,6 +497,7 @@ class LocationXmlConverter(XmlConverter):
         elif 'ArcBand' == qname.localname:
             parser = ArcbandXmlConverter()
         else:
+            logger.warning('Invalid geometry: {0}'.format(qname))
             raise BadRequestException('Invalid geometry: {0}'.format(qname))
 
         retval = parser.parse(data)
@@ -505,7 +517,8 @@ class LocationXmlConverter(XmlConverter):
             location.id = data.attrib['id']
             location.profile = data.attrib['profile']
         except Exception as ex:
-            raise BadRequestException('Invalid location input.')
+            logger.error(ex)
+            raise BadRequestException('Invalid location input.', ex)
 
         if 'geodetic-2d' == location.profile:
             location.location = self._parse_geodetic(data[0])
@@ -513,6 +526,7 @@ class LocationXmlConverter(XmlConverter):
             civic_parser = CivicXmlConverter()
             location.location = civic_parser.parse(data[0])
         else:
+            logger.warning('{0} is not a valid location profile.'.format(location.profile), None)
             raise LocationProfileException('{0} is not a valid location profile.'.format(location.profile), None)
 
         return location
@@ -605,9 +619,11 @@ class FindServiceXmlConverter(XmlConverter):
                                 GML_URN not in element.tag) and (
                             CIVIC_ADDRESS_URN not in element.tag):
                         request.nonlostdata.append(element)
-        except (BadRequestException, LocationProfileException):
+        except (BadRequestException, LocationProfileException) as ex:
+            logger.error(ex)
             raise
-        except Exception:
+        except Exception as ex:
+            logger.error('Invalid request.', ex)
             raise BadRequestException('Invalid request.')
 
         return request
@@ -622,6 +638,7 @@ class FindServiceXmlConverter(XmlConverter):
         :rtype: :py:class:`_ElementTree`
         """
         if data.mappings is None or len(data.mappings) == 0:
+            logger.warning('Could not find an answer to the request.', None)
             raise NotFoundException('Could not find an answer to the request.', None)
 
         # create the root element of the xml response.
