@@ -47,7 +47,7 @@ class GeodeticCoverageResolver(base.CoverageBase):
             select depth, serviceurn, lostserver, ST_Area(ST_Intersection(ST_GeomFromText('{0}', 4326), wkb_geometry))
             from {1} 
             where ST_Intersects(ST_GeomFromText('{0}', 4326), wkb_geometry)
-            order by depth, st_area asc
+            order by depth desc, st_area desc
             """
         )
 
