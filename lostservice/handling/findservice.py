@@ -330,7 +330,7 @@ class FindServiceInner(object):
         if service_urn in self._mappings:
             return self._mappings[service_urn]
         else:
-            logger.warning('Service URN {0} not supported.'.format(service_urn), None)
+            logger.debug('Service URN {0} not supported.'.format(service_urn), None)
             raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
 
     def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
@@ -794,7 +794,7 @@ class FindServiceInner(object):
                 i = len(mappings)
                 del mappings[1:i]  # removes items starting at 1 until the end of the list
             elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError:
-                logger.warning('Multiple results matched request location.')
+                logger.info('Multiple results matched request location.')
                 raise InternalErrorException('Multiple results matched request location.')
 
         return mappings
@@ -1290,4 +1290,3 @@ class FindServiceOuter(object):
             include_boundary_value = True
 
         return include_boundary_value
-
