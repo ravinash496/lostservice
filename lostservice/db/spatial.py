@@ -185,9 +185,16 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
         s = select(
             [the_table],
             func.ST_Intersects(
-                func.ST_Buffer(func.ST_Transform(
-                    func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance),
-                the_table.c.wkb_geometry.ST_Transform(utmsrid)))
+                func.ST_Buffer(
+                    func.ST_Transform(
+                        func.ST_SetSRID(geom, 4326),
+                        utmsrid
+                    ),
+                    buffer_distance
+                ),
+                the_table.c.wkb_geometry.ST_Transform(utmsrid)
+            )
+        )
 
         results = _execute_query(engine, s)
         return results

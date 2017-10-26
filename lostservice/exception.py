@@ -263,3 +263,52 @@ class ServiceNotImplementedException(LostException):
 
     def error_tag(self):
         return 'serviceNotImplemented'
+
+
+class RedirectException(LostException):
+    """
+    Exception class for cases when we must redirect.
+    """
+    def __init__(self, message, target=None):
+        """
+        Constructor
+
+        :param message: A text message associated with the exception.
+        :type message: ``str``
+        :param nested: An optional nested exception.
+        :type nested: :py:class:`Exception`
+        """
+        super().__init__(message, None)
+        self._target = target
+
+    @property
+    def target(self) -> str:
+        """
+        The target.
+
+        """
+        return self._target
+
+    @property
+    def message(self) -> str:
+        """
+        The message.
+        """
+        return self._message
+
+    def error_tag(self):
+        return 'redirect'
+
+
+def build_redirect_response(exception: RedirectException, source_uri) -> str:
+    """
+    Creates a redirect response.
+
+    :param exception: The redirect exception.
+    :param source_uri: The uri of the source of the redirect.
+    :return: The full content of the redirect response.
+    """
+    format_string = \
+        """<?xml version="1.0" encoding="UTF-8"?><redirect xmlns="urn:ietf:params:xml:ns:lost1" source="{0}" target="{1}" message="{2}" />"""
+
+    return format_string.format(source_uri, exception.target, exception.message)

@@ -16,14 +16,17 @@ from lostservice.handler import Handler
 from lostservice.handling.findservice import FindServiceOuter
 from lostservice.handling.findservice import FindServiceInner
 from lostservice.handling.listServicesByLocation import ListServiceBylocationOuter
-from lostservice.model.location import Arcband
-from lostservice.model.location import Circle
-from lostservice.model.location import Ellipse
-from lostservice.model.location import Point
-from lostservice.model.location import Polygon
-from lostservice.model.location import CivicAddress
+from lostservice.model.geodetic import Arcband
+from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
+from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Polygon
+from lostservice.model.civic import CivicAddress
+import lostservice.coverage.resolver as cov
 from lostservice.configuration import general_logger
+
 logger = general_logger()
+
 
 class ListServicesHandler(Handler):
     """
@@ -83,7 +86,7 @@ class FindServiceHandler(Handler):
     """
 
     @inject
-    def __init__(self, outer: FindServiceOuter):
+    def __init__(self, outer: FindServiceOuter, cov_resolver: cov.CoverageResolverWrapper):
         """
         Constructor
 
@@ -93,7 +96,7 @@ class FindServiceHandler(Handler):
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
         """
         # TODO - clean this up since handlers shouldn't have direct references to config or the db any more.
-        super(FindServiceHandler, self).__init__(None, None)
+        super(FindServiceHandler, self).__init__(None, None, cov_resolver=cov_resolver)
         self._outer = outer
 
     def handle_request(self, request, context):
@@ -108,6 +111,12 @@ class FindServiceHandler(Handler):
         :return: The response.
         :rtype: :py:class:`FindServiceResponse`
         """
+
+        try:
+            self.check_coverage(request.location.location)
+        except Exception:
+            raise
+
         response = None
         if type(request.location.location) is Point:
             response = self._outer.find_service_for_point(request)
@@ -187,7 +196,7 @@ class ListServicesByLocationHandler(Handler):
     """
 
     @inject
-    def __init__(self, outer: ListServiceBylocationOuter):
+    def __init__(self, outer: ListServiceBylocationOuter, cov_resolver: cov.CoverageResolverWrapper):
         """
         Constructor
 
@@ -197,7 +206,7 @@ class ListServicesByLocationHandler(Handler):
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
         """
         # TODO - clean this up since handlers shouldn't have direct references to config or the db any more.
-        super(ListServicesByLocationHandler, self).__init__(None, None)
+        super(ListServicesByLocationHandler, self).__init__(None, None, cov_resolver=cov_resolver)
         self._outer = outer
 
     def handle_request(self, request, context):
@@ -212,6 +221,11 @@ class ListServicesByLocationHandler(Handler):
         :return: The response.
         :rtype: :py:class:`ListServicesByLocationResponse`
         """
+        try:
+            self.check_coverage(request.location.location)
+        except Exception:
+            raise
+
         response = None
         if type(request.location.location) is Point:
             response = self._outer.list_services_by_location_for_point(request)

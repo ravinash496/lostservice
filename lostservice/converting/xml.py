@@ -8,29 +8,32 @@
 Xml conversion classes.
 """
 
-from lxml import etree
-import lxml
 import collections
+import io
+
+import lxml
+import numpy
+from lxml import etree
+
 from lostservice.converter import Converter
-from lostservice.exception import LocationProfileException, InvalidLocationException, BadRequestException
+from lostservice.exception import LocationProfileException, BadRequestException
 from lostservice.exception import NotFoundException
-from lostservice.model.location import CivicAddress
-from lostservice.model.location import Circle
-from lostservice.model.location import Ellipse
-from lostservice.model.location import Point
-from lostservice.model.location import Arcband
+from lostservice.model.civic import CivicAddress
+from lostservice.model.geodetic import Arcband
+from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
+from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Polygon
 from lostservice.model.location import Location
-from lostservice.model.location import Polygon
 from lostservice.model.requests import FindServiceRequest
-from lostservice.model.requests import ListServicesRequest
 from lostservice.model.requests import GetServiceBoundaryRequest
 from lostservice.model.requests import ListServicesByLocationRequest
+from lostservice.model.requests import ListServicesRequest
 from lostservice.model.responses import AdditionalDataResponseMapping, ResponseMapping
-import io
+
 from lostservice.configuration import general_logger
 logger = general_logger()
 
-import numpy
 
 LOST_PREFIX = 'lost'
 LOST_URN = 'urn:ietf:params:xml:ns:lost1'
@@ -259,7 +262,7 @@ class CircleXmlConverter(XmlConverter):
             circle.latitude = float(lat)
             circle.longitude = float(lon)
 
-            circle.radius = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'radius'))
+            circle.radius = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'radius')))
             circle.uom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'radius', 'uom'))
         except (Exception, TypeError) as ex:
             logger.error('Invalid circle input.', ex)
@@ -381,10 +384,10 @@ class EllipseXmlConverter(XmlConverter):
             ellipse.latitude = float(lat)
             ellipse.longitude = float(lon)
 
-            ellipse.semiMajorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis'))
-            ellipse.semiMinorAxis = self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis'))
-            ellipse.orientation = float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
-            #ellipse.orientation = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
+            ellipse.semiMajorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis')))
+            ellipse.semiMinorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis')))
+            ellipse.orientation = \
+                float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
             ellipse.semiMajorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
             ellipse.semiMinorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
             ellipse.orientationuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'orientation', 'uom'))
