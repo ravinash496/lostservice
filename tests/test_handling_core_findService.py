@@ -15,7 +15,8 @@ import lostservice.model.location
 class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
-    def test_handle_point(self, mock_outer):
+    @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
+    def test_handle_point(self, mock_outer, mock_cov):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_point = MagicMock()
@@ -23,11 +24,14 @@ class FindServiceTest(unittest.TestCase):
         expected = lostservice.model.responses.FindServiceResponse()
         mock_outer.find_service_for_point.return_value = expected
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer)
+        mock_cov.check_coverage = MagicMock()
+        mock_cov.check_coverage.return_value = 'some.server.name'
+
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Point()
+        model.location.location = lostservice.model.geodetic.Point()
 
         try:
             actual = target.handle_request(model, {})
@@ -39,18 +43,22 @@ class FindServiceTest(unittest.TestCase):
             self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
-    def test_handle_circle(self, mock_outer):
+    @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
+    def test_handle_circle(self, mock_outer, mock_cov):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_circle = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
         mock_outer.find_service_for_circle.return_value = expected
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer)
+        mock_cov.check_coverage = MagicMock()
+        mock_cov.check_coverage.return_value = 'some.server.name'
+
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Circle()
+        model.location.location = lostservice.model.geodetic.Circle()
 
         try:
             actual = target.handle_request(model, {})
@@ -62,18 +70,22 @@ class FindServiceTest(unittest.TestCase):
             self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
-    def test_handle_ellipse(self, mock_outer):
+    @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
+    def test_handle_ellipse(self, mock_outer, mock_cov):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_ellipse = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
         mock_outer.find_service_for_ellipse.return_value = expected
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer)
+        mock_cov.check_coverage = MagicMock()
+        mock_cov.check_coverage.return_value = 'some.server.name'
+
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Ellipse()
+        model.location.location = lostservice.model.geodetic.Ellipse()
 
         try:
             actual = target.handle_request(model, {})
@@ -85,18 +97,22 @@ class FindServiceTest(unittest.TestCase):
             self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
-    def test_handle_arcband(self, mock_outer):
+    @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
+    def test_handle_arcband(self, mock_outer, mock_cov):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_arcband = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
         mock_outer.find_service_for_arcband.return_value = expected
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer)
+        mock_cov.check_coverage = MagicMock()
+        mock_cov.check_coverage.return_value = 'some.server.name'
+
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Arcband()
+        model.location.location = lostservice.model.geodetic.Arcband()
 
         try:
             actual = target.handle_request(model, {})
@@ -108,18 +124,22 @@ class FindServiceTest(unittest.TestCase):
             self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
-    def test_handle_polygon(self, mock_outer):
+    @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
+    def test_handle_polygon(self, mock_outer, mock_cov):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_polygon = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
         mock_outer.find_service_for_polygon.return_value = expected
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer)
+        mock_cov.check_coverage = MagicMock()
+        mock_cov.check_coverage.return_value = 'some.server.name'
+
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
-        model.location.location = lostservice.model.location.Polygon()
+        model.location.location = lostservice.model.geodetic.Polygon()
 
         try:
             actual = target.handle_request(model, {})
@@ -131,12 +151,16 @@ class FindServiceTest(unittest.TestCase):
             self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
-    def test_handle_failure(self, mock_outer):
+    @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
+    def test_handle_failure(self, mock_outer, mock_cov):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_polygon = MagicMock()
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer)
+        mock_cov.check_coverage = MagicMock()
+        mock_cov.check_coverage.return_value = 'some.server.name'
+
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()

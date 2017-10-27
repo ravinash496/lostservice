@@ -21,6 +21,8 @@ from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
 import json
+from lostservice.configuration import general_logger
+logger = general_logger()
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -328,6 +330,7 @@ class FindServiceInner(object):
         if service_urn in self._mappings:
             return self._mappings[service_urn]
         else:
+            logger.warning('Service URN {0} not supported.'.format(service_urn))
             raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
 
     def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
@@ -791,6 +794,7 @@ class FindServiceInner(object):
                 i = len(mappings)
                 del mappings[1:i]  # removes items starting at 1 until the end of the list
             elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError:
+                logger.warning('Multiple results matched request location.')
                 raise InternalErrorException('Multiple results matched request location.')
 
         return mappings
@@ -900,7 +904,8 @@ class FindServiceInner(object):
                     polygontxt = etree.tostring(node)
                     count = count + 1
             # If we need to do simplification, let's do it now as the last step, before we move on.
-            if self._find_service_config.do_polygon_simplification(): # IT'S SO SIMPLE
+            simplify = self._find_service_config.do_polygon_simplification()
+            if simplify: # IT'S SO SIMPLE
                 mapping = self._geomutil.simplify_polygon(
                     mapping_object=mapping,
                     tolerance=self._find_service_config.simplification_tolerance())
@@ -909,12 +914,14 @@ class FindServiceInner(object):
                 # TODO Multipolygons - Not supported currently so just return unedited GML
                 return mapping
 
-            modified_root = etree.XML(polygontxt)
-            modified_root.set('srsName', attr_srs.get('srsName', 'EPSG:4326'))
-            modified_root = self._clear_attributes(modified_root)
+            # We already edited the GML from simplification. Let's not do it again.
+            if simplify is False:
+                modified_root = etree.XML(polygontxt)
+                modified_root.set('srsName', attr_srs.get('srsName', 'EPSG:4326'))
+                modified_root = self._clear_attributes(modified_root)
 
-            # Update value with new GML
-            mapping['ST_AsGML_1'] = etree.tostring(modified_root).decode("utf-8")
+                # Update value with new GML
+                mapping['ST_AsGML_1'] = etree.tostring(modified_root).decode("utf-8")
 
         return mapping
 

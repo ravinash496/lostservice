@@ -24,7 +24,8 @@ from osgeo import ogr
 import math
 import lostservice.geometry as gc_geom
 from lostservice.exception import InternalErrorException
-
+from lostservice.configuration import general_logger
+logger = general_logger()
 
 class SpatialQueryException(InternalErrorException):
     """
@@ -59,6 +60,7 @@ def _execute_query(engine, query):
             result.close()
 
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Spatial query failed with an error.', ex)
 
@@ -101,9 +103,11 @@ def _get_containing_boundary_for_geom(engine, table_name, geom):
         retval = _execute_query(engine, s)
 
     except SQLAlchemyError as ex:
+        logger.error("Unable to construct contains query", ex)
         raise SpatialQueryException(
             'Unable to construct contains query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return retval
@@ -141,14 +145,17 @@ def _get_nearest_point(long, lat, engine, table_name, geom, buffer_distance=None
 
         retval = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct contains query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
     return retval
 
 
 def _get_additional_data_for_geometry(engine, geom, table_name):
+
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
@@ -161,9 +168,11 @@ def _get_additional_data_for_geometry(engine, geom, table_name):
         results = _execute_query(engine, s)
         return results
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct intersection query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
 
@@ -176,16 +185,25 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
         s = select(
             [the_table],
             func.ST_Intersects(
-                func.ST_Buffer(func.ST_Transform(
-                    func.ST_SetSRID(geom, 4326), utmsrid), buffer_distance),
-                the_table.c.wkb_geometry.ST_Transform(utmsrid)))
+                func.ST_Buffer(
+                    func.ST_Transform(
+                        func.ST_SetSRID(geom, 4326),
+                        utmsrid
+                    ),
+                    buffer_distance
+                ),
+                the_table.c.wkb_geometry.ST_Transform(utmsrid)
+            )
+        )
 
         results = _execute_query(engine, s)
         return results
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct intersection query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return None
@@ -246,9 +264,11 @@ def _get_intersecting_boundaries_for_geom(engine, table_name, geom, return_inter
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct intersection query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return results
@@ -298,9 +318,11 @@ def _get_intersecting_boundaries_for_geom_value(engine, table_name, geom, return
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct intersection query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return results
@@ -515,9 +537,11 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
         )
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct ellipse intersection query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
     return results
 
@@ -738,6 +762,7 @@ def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
+
     trimmed_srid = int(srid.split('::')[1])
 
     p= []
@@ -783,9 +808,11 @@ def get_boundaries_for_previous_id(pid, engine, boundary_table):
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct boundaries query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return results
@@ -825,9 +852,11 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
         retval = _execute_query(engine, s)
 
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct contains query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return retval
@@ -973,9 +1002,11 @@ def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, b
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct ellipse intersection query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
     return results
 
@@ -1011,9 +1042,11 @@ def get_intersecting_list_service_with_buffer(long, lat, engine, table_name, geo
         retval = _execute_query(engine, s)
 
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct contains query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return retval
@@ -1055,9 +1088,11 @@ def _get_intersecting_list_service_for_geom(engine, table_name, geom, return_int
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct intersection query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as ex:
+        logger.error(ex)
         raise
 
     return results

@@ -31,7 +31,7 @@ class CircleTest(unittest.TestCase):
         self.assertEqual(result.latitude, 45.4430670070877)
         self.assertEqual(result.longitude, -68.4977255651657)
         self.assertEqual(result.uom, 'urn:ogc:def:uom:EPSG::9001')
-        self.assertEqual(result.radius, '6105.41237061098')
+        self.assertEqual(result.radius, 6105.41237061098)
 
 
 if __name__ == '__main__':
