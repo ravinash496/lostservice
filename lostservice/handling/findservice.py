@@ -14,7 +14,7 @@ from injector import inject
 from lostservice.configuration import Configuration
 from lostservice.exception import InternalErrorException
 from lostservice.model.responses import FindServiceResponse, ResponseMapping, AdditionalDataResponseMapping
-from lostservice.exception import ServiceNotImplementedException
+from lostservice.exception import ServiceNotImplementedException, LoopException
 import lostservice.geometry as geom
 from lostservice.geometryutility import GeometryUtility
 from lostservice.db.gisdb import GisDbInterface
@@ -980,6 +980,10 @@ class FindServiceOuter(object):
         self._inner = inner
         self._find_service_config = config
 
+    def _check_is_loopback(self, path):
+        if self._find_service_config.source_uri() in path:
+            raise LoopException("LoopError")
+
     def find_service_for_point(self, request):
         """
         Find service for a point.
@@ -989,6 +993,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
+        self._check_is_loopback(request.path)
         include_boundary_value = self._apply_override_policy(request)
 
         mappings = self._inner.find_service_for_point(
@@ -1012,6 +1017,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
+        self._check_is_loopback(request.path)
         include_boundary_value = self._apply_override_policy(request)
 
         mappings = self._inner.find_service_for_civicaddress(
@@ -1034,6 +1040,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
+        self._check_is_loopback(request.path)
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_circle(
             request.service,
@@ -1059,6 +1066,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
+        self._check_is_loopback(request.path)
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_ellipse(
             request.service,
@@ -1085,6 +1093,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
+        self._check_is_loopback(request.path)
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_arcband(
             request.service,
@@ -1112,6 +1121,7 @@ class FindServiceOuter(object):
         :return: A findService response.
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`
         """
+        self._check_is_loopback(request.path)
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_polygon(
             request.service,
