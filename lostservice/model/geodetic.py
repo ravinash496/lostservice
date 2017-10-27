@@ -758,4 +758,6 @@ class Polygon(Geodetic2D):
         :return: A shapely geometry specific to the derived type.
         :rtype: :py:class:`BaseGeometry`
         """
-        return shp_geom.LinearRing(self.vertices)
+
+        ring: shp_geom.LinearRing = shp_geom.LinearRing(self.vertices)
+        return shp_geom.Polygon(ring)

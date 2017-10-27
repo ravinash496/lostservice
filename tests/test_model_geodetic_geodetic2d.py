@@ -76,6 +76,9 @@ class Geodetic2DTest(unittest.TestCase):
         self.assertEqual(actual.srid, 2163)
 
 
+if __name__ == '__main__':
+    unittest.main()
+
 
 
 
