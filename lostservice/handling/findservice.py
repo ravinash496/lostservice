@@ -795,7 +795,7 @@ class FindServiceInner(object):
                 i = len(mappings)
                 del mappings[1:i]  # removes items starting at 1 until the end of the list
             elif point_multiple_match_policy == PointMultipleMatchPolicyEnum.ReturnError:
-                logger.info('Multiple results matched request location.')
+                logger.warning('Multiple results matched request location.')
                 raise InternalErrorException('Multiple results matched request location.')
 
         return mappings
