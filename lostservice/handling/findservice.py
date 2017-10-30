@@ -330,7 +330,6 @@ class FindServiceInner(object):
         if service_urn in self._mappings:
             return self._mappings[service_urn]
         else:
-
             logger.warning('Service URN {0} not supported.'.format(service_urn))
             raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
 
