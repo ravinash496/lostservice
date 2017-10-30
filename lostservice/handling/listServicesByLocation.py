@@ -291,7 +291,7 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given arcband.
         :rtype: ``list`` of ``dict``
         """
-        arcband = geom.generate_arcband(longitude, latitude, start_angle, opening_angle, inner_radius, outer_radius)
+        arcband = geom.generate_arcband(longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
         return self.list_services_by_location_for_polygon(service, points, spatial_ref, return_shape)
 
