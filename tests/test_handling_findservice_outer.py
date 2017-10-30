@@ -538,6 +538,19 @@ class FindServiceOuterTest(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    def test_loop_error(self, mock_config):
+
+        mock_config.source_uri = MagicMock()
+        mock_config.source_uri.return_value = 'authoritative.example'
+
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, None)
+
+        try:
+            path = ['authoritative.example']
+            target._check_is_loopback(path)
+        except Exception as e:
+            self.assertEqual(str(e),'<loop message="LoopError" xml:lang="en"/>')
 
 if __name__ == '__main__':
     unittest.main()
