@@ -33,7 +33,7 @@ class CivicCoverageResolver(base.CoverageBase):
         super().__init__(cov_config, query_executor)
         self._civic_address = None
 
-    def _build_where_clause(self, field_name: str=None, value: str=None, appending: bool=False):
+    def _build_where_clause(self, field_name: str=None, value: str=None, appending: bool=False) -> str:
         """
         Builds a where clause for the given target and value.
 
@@ -110,17 +110,17 @@ class CivicCoverageResolver(base.CoverageBase):
         :return: The number of nulls.
         """
         null_count = 0
-        if not match['a5']:
+        if 'a5' not in match or not match['a5']:
             null_count += 1
-        if not match['a4']:
+        if 'a4' not in match or not match['a4']:
             null_count += 1
-        if not match['a3']:
+        if 'a3' not in match or not match['a3']:
             null_count += 1
-        if not match['a2']:
+        if 'a2' not in match or not match['a2']:
             null_count += 1
-        if not match['a1']:
+        if 'a1' not in match or not match['a1']:
             null_count += 1
-        if not match['country']:
+        if 'country' not in match or not match['country']:
             null_count += 1
 
         match['null_count'] = null_count
@@ -138,52 +138,52 @@ class CivicCoverageResolver(base.CoverageBase):
         match_depth = 0
 
         if civic_depth == 6:
-            if match['a5']:
+            if 'a5' in match and match['a5']:
                 match_depth = 6
-            elif match['a4']:
+            elif 'a4' in match and match['a4']:
                 match_depth = 5
-            elif match['a3']:
+            elif 'a3' in match and match['a3']:
                 match_depth = 4
-            elif match['a2']:
+            elif 'a2' in match and match['a2']:
                 match_depth = 3
-            elif match['a1']:
+            elif 'a1' in match and match['a1']:
                 match_depth = 2
-            elif match['country']:
+            elif 'country' in match and match['country']:
                 match_depth = 1
         elif civic_depth == 5:
-            if match['a4']:
+            if 'a4' in match and match['a4']:
                 match_depth = 5
-            elif match['a3']:
+            elif 'a3' in match and match['a3']:
                 match_depth = 4
-            elif match['a2']:
+            elif 'a2' in match and match['a2']:
                 match_depth = 3
-            elif match['a1']:
+            elif 'a1' in match and match['a1']:
                 match_depth = 2
-            elif match['country']:
+            elif 'country' in match and match['country']:
                 match_depth = 1
         elif civic_depth == 4:
-            if match['a3']:
+            if 'a3' in match and match['a3']:
                 match_depth = 4
-            elif match['a2']:
+            elif 'a2' in match and match['a2']:
                 match_depth = 3
-            elif match['a1']:
+            elif 'a1' in match and match['a1']:
                 match_depth = 2
-            elif match['country']:
+            elif 'country' in match and match['country']:
                 match_depth = 1
         elif civic_depth == 3:
-            if match['a2']:
+            if 'a2' in match and match['a2']:
                 match_depth = 3
-            elif match['a1']:
+            elif 'a1' in match and match['a1']:
                 match_depth = 2
-            elif match['country']:
+            elif 'country' in match and match['country']:
                 match_depth = 1
         elif civic_depth == 2:
-            if match['a1']:
+            if 'a1' in match and match['a1']:
                 match_depth = 2
-            elif match['country']:
+            elif 'country' in match and match['country']:
                 match_depth = 1
         elif civic_depth == 1:
-            if match['country']:
+            if 'country' in match and match['country']:
                 match_depth = 1
 
         match['match_depth'] = match_depth
@@ -203,13 +203,13 @@ class CivicCoverageResolver(base.CoverageBase):
             self._get_match_null_count(match)
 
         # Sort the matches by match depth.
-        sorted_matches = sorted(matches, key=lambda k: k['match_depth'])
+        sorted_matches = sorted(matches, key=lambda k: k['match_depth'], reverse=True)
         # Pull of the value of the best match.
         best_match_value = sorted_matches[0]['match_depth']
         # Now filter the list to only those that have a match depth equal to the best.
         best_matches = filter(lambda m: m['match_depth'] == best_match_value, sorted_matches)
         # Sort all of the tied best matches based on lowest null count.
-        sorted_best_matches = sorted(best_matches, key=lambda k: k['null_count'], reverse=True)
+        sorted_best_matches = sorted(best_matches, key=lambda k: k['null_count'])
         # Return the best one.
         return sorted_best_matches[0]
 
