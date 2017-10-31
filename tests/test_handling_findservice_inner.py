@@ -834,7 +834,7 @@ class FindServiceInnerTest(unittest.TestCase):
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
 
         with self.assertRaises(lostservice.exception.ServiceNotImplementedException):
-            actual = target._get_esb_table('whatever');
+            actual = target._get_esb_table('whatever')
 
     # Some refactoring would have to take palace in the find_service_for_civicaddress function
     # mainly the locator would have to be injected somehow so database query's could be avoided.
