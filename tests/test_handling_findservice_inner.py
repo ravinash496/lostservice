@@ -834,7 +834,7 @@ class FindServiceInnerTest(unittest.TestCase):
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
 
         with self.assertRaises(lostservice.exception.ServiceNotImplementedException):
-            actual = target._get_esb_table('whatever');
+            actual = target._get_esb_table('whatever')
 
 
 if __name__ == '__main__':

@@ -20,6 +20,7 @@ import sys
 import uuid
 from lxml import etree
 from injector import Module, provider, Injector, singleton
+import civvy.db.postgis.query as civvy_pg
 import lostservice.configuration as config
 import lostservice.logger.auditlog as auditlog
 import lostservice.logger.transactionaudit as txnaudit
@@ -58,6 +59,21 @@ class LostBindingModule(Module):
         :rtype: :py:class:`lostservice.logging.auditlog.AuditLog`
         """
         return auditlog.AuditLog()
+
+    @provider
+    def provide_pg_query_executor(self, config: config.Configuration) -> civvy_pg.PgQueryExecutor:
+        """
+        Provider function for a PGQueryExecutor.
+
+        :param config: The config object.
+        :return:
+        """
+        host = config.get('Database', 'host')
+        port = config.get('Database', 'port')
+        db_name = config.get('Database', 'dbname')
+        username = config.get('Database', 'username')
+        password = config.get('Database', 'password')
+        return civvy_pg.PgQueryExecutor(host=host, port=port, database=db_name, user=username, password=password)
 
     @provider
     def provide_db_wrapper(self, config: config.Configuration) -> gisdb.GisDbInterface:
@@ -255,7 +271,9 @@ class LostApplication(object):
             self._audit_diagnostics(activity_id, e)
             logger.error(e)
             source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
-            if isinstance(e, etree.LxmlError):
+            if isinstance(e, exp.RedirectException):
+                response = exp.build_redirect_response(e, source_uri)
+            elif isinstance(e, etree.LxmlError):
                 response = exp.build_error_response(exp.BadRequestException('Malformed request xml.', None), source_uri)
             else:
                 response = exp.build_error_response(e, source_uri)

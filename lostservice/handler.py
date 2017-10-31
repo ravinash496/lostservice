@@ -6,13 +6,20 @@
 
 Base class for all handlers and common exceptions.
 """
+import lostservice.configuration as conf
+import lostservice.db.gisdb as gisdb
+import lostservice.coverage.resolver as cov
+import lostservice.model.civic as civ_model
+import lostservice.model.geodetic as geo_model
 
 
 class Handler(object):
     """
     Base class for all types of handlers
     """
-    def __init__(self, config, db_wrapper):
+    def __init__(self, config: conf.Configuration,
+                 db_wrapper: gisdb.GisDbInterface,
+                 cov_resolver: cov.CoverageResolverWrapper=None):
         """
         Constructor
 
@@ -24,6 +31,16 @@ class Handler(object):
         super(Handler, self).__init__()
         self._config = config
         self._db_wrapper = db_wrapper
+        self._cov_resolver = cov_resolver
+
+    def check_coverage(self, model: object):
+        """
+        Performs the coverage check if necessary.
+
+        :param model: The location model instance.
+        """
+        if self._cov_resolver:
+            self._cov_resolver.check_coverage(model)
 
     def handle_request(self, request, context):
         """

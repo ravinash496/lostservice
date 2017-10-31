@@ -12,6 +12,7 @@ import pytz
 from enum import Enum
 from injector import inject
 from lostservice.configuration import Configuration
+from lostservice.exception import LoopException
 from lostservice.model.responses import ResponseMapping, ListServicesByLocationResponse
 import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
@@ -290,7 +291,7 @@ class ListServiceByLocationInner(object):
         :return: The service mappings for the given arcband.
         :rtype: ``list`` of ``dict``
         """
-        arcband = geom.generate_arcband(longitude, latitude, start_angle, opening_angle, inner_radius, outer_radius)
+        arcband = geom.generate_arcband(longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
         return self.list_services_by_location_for_polygon(service, points, spatial_ref, return_shape)
 
@@ -338,6 +339,9 @@ class ListServiceBylocationOuter(object):
         """
         self._inner = inner
         self._list_service_config = config
+    def _check_is_loopback(self, path):
+        if self._list_service_config.source_uri() in path:
+            raise LoopException("LoopError")
 
     def list_services_by_location_for_point(self, request):
         """
@@ -348,6 +352,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
+        self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_point(
             request.service,
             request.location.location.longitude,
@@ -362,6 +367,7 @@ class ListServiceBylocationOuter(object):
         :param request:
         :return:
         """
+        self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_civicaddress(request)
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
@@ -374,6 +380,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
+        self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_circle(
             request.service,
             request.location.location.longitude,
@@ -392,6 +399,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
+        self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_ellipse(
             request.service,
             request.location.location.longitude,
@@ -411,6 +419,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
+        self._check_is_loopback(request.path)
         mappings = self._inner.list_service_by_location_for_arcband(
             request.service,
             request.location.location.longitude,
@@ -431,6 +440,7 @@ class ListServiceBylocationOuter(object):
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
         """
+        self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_polygon(
             request.service,
             request.location.location.vertices,
