@@ -297,6 +297,18 @@ class FindServiceConfigWrapper(object):
 
         return float(tolerance)
 
+    def find_civic_address_minimum_score(self):
+        """
+        Gets the minumum score before find service returns notFound error.
+
+        :return: ``float``
+        """
+        minimum = self._config.get('Service', 'find_civic_address_minimum_score', as_object=False, required=False)
+        if minimum is None:
+            minimum = .05
+
+        return float(minimum)
+
 class FindServiceInner(object):
     """
     A class to handle the actual implementation of the various findService requests, responsible for making calls to
@@ -474,8 +486,8 @@ class FindServiceInner(object):
         mappings = None
         if len(locator_results)>0:
             first_civic_point=locator_results[0]
-            if first_civic_point.score >= .05:
-                raise NotFoundException('Score:{0} too high'.format(first_civic_point.score), None)
+            if first_civic_point.score >= self._find_service_config.find_civic_address_minimum_score():
+                raise NotFoundException('The server could not find an answer to the query.', None)
 
             civvy_geometry = first_civic_point.geometry
             spatial_reference = civvy_geometry.GetSpatialReference()
