@@ -384,12 +384,12 @@ class EllipseXmlConverter(XmlConverter):
             ellipse.latitude = float(lat)
             ellipse.longitude = float(lon)
 
-            ellipse.semiMajorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis')))
-            ellipse.semiMinorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis')))
+            ellipse.majorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMajorAxis')))
+            ellipse.minorAxis = float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'semiMinorAxis')))
             ellipse.orientation = \
                 float(0.0174532925) * float(self._run_xpath(data, node_template.format(PIDFLO_PREFIX, 'orientation')))
-            ellipse.semiMajorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
-            ellipse.semiMinorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
+            ellipse.majorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMajorAxis', 'uom'))
+            ellipse.minorAxisuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'semiMinorAxis', 'uom'))
             ellipse.orientationuom = self._run_xpath(data, uom_template.format(PIDFLO_PREFIX, 'orientation', 'uom'))
         except (Exception, TypeError) as ex:
             logger.error('Invalid ellipse input.', ex)
