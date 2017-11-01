@@ -14,7 +14,7 @@ from injector import inject
 from lostservice.configuration import Configuration
 from lostservice.exception import InternalErrorException
 from lostservice.model.responses import FindServiceResponse, ResponseMapping, AdditionalDataResponseMapping
-from lostservice.exception import ServiceNotImplementedException, LoopException
+from lostservice.exception import ServiceNotImplementedException, LoopException, NotFoundException
 import lostservice.geometry as geom
 from lostservice.geometryutility import GeometryUtility
 from lostservice.db.gisdb import GisDbInterface
@@ -474,6 +474,9 @@ class FindServiceInner(object):
         mappings = None
         if len(locator_results)>0:
             first_civic_point=locator_results[0]
+            if first_civic_point.score >= .05:
+                raise NotFoundException('Score:{0} too high'.format(first_civic_point.score), None)
+
             civvy_geometry = first_civic_point.geometry
             spatial_reference = civvy_geometry.GetSpatialReference()
             epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
@@ -1080,8 +1083,8 @@ class FindServiceOuter(object):
             request.location.location.longitude,
             request.location.location.latitude,
             request.location.location.spatial_ref,
-            float(request.location.location.semiMajorAxis),
-            float(request.location.location.semiMinorAxis),
+            float(request.location.location.majorAxis),
+            float(request.location.location.minorAxis),
             float(request.location.location.orientation),
             include_boundary_value
         )
