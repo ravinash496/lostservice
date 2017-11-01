@@ -1080,8 +1080,8 @@ class FindServiceOuter(object):
             request.location.location.longitude,
             request.location.location.latitude,
             request.location.location.spatial_ref,
-            float(request.location.location.semiMajorAxis),
-            float(request.location.location.semiMinorAxis),
+            float(request.location.location.majorAxis),
+            float(request.location.location.minorAxis),
             float(request.location.location.orientation),
             include_boundary_value
         )
