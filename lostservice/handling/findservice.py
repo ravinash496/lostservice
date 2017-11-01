@@ -496,6 +496,11 @@ class FindServiceInner(object):
                 if len(valid_properties) > 0:
                     location_validation['valid'] = " ".join(valid_properties)
                 mappings[0]['locationValidation'] = location_validation
+                unchecked_properties = [prop.value for prop in first_civic_point.unchecked_civic_address_properties]
+                if len(unchecked_properties) > 0:
+                    location_validation['unchecked'] = " ".join(unchecked_properties)
+                mappings[0]['locationValidation'] = location_validation
+
 
         else:
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
