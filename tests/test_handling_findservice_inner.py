@@ -10,7 +10,7 @@ import lostservice.handling.findservice
 import lostservice.model.requests
 import lostservice.model.responses
 import lostservice.model.location
-
+import lostservice.exception
 
 class FindServiceInnerTest(unittest.TestCase):
 
@@ -836,6 +836,17 @@ class FindServiceInnerTest(unittest.TestCase):
         with self.assertRaises(lostservice.exception.ServiceNotImplementedException):
             actual = target._get_esb_table('whatever')
 
+    # Some refactoring would have to take palace in the find_service_for_civicaddress function
+    # mainly the locator would have to be injected somehow so database query's could be avoided.
+    # @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    # @patch('lostservice.db.gisdb.GisDbInterface')
+    # def test_find_service_notFound_exception(self, mock_config, mock_db):
+    #     mock_db.get_urn_table_mappings = MagicMock()
+    #     target = lostservice.handling.findservice.FindServiceInner()
+    #     b'<findService xmlns="urn:ietf:params:xml:ns:lost1" serviceBoundary="reference">\r\n   <location id="2c103e36-aefe-46e1-a064-4b55706805ca" profile="civic">\r\n      <civ:civicAddress xmlns:civ="urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr">\r\n         <civ:country>US</civ:country>\r\n         <civ:A1>MN</civ:A1>\r\n         <civ:A2>Stearns</civ:A2>\r\n         <civ:RD>21st Avenue</civ:RD>\r\n         <civ:STS>Avenue</civ:STS>\r\n         <civ:HNO>822</civ:HNO>\r\n         <civ:PC>56303</civ:PC>\r\n      </civ:civicAddress>\r\n   </location>\r\n   <service>urn:nena:service:sos</service>\r\n</findService>'
+    #
+    #     with self.assertRaises(lostservice.exception.NotFoundException):
+    #         actual = target.find_service_for_civicaddress();
 
 if __name__ == '__main__':
     unittest.main()

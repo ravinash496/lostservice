@@ -405,8 +405,8 @@ class ListServiceBylocationOuter(object):
             request.location.location.longitude,
             request.location.location.latitude,
             request.location.location.spatial_ref,
-            float(request.location.location.semiMajorAxis),
-            float(request.location.location.semiMinorAxis),
+            float(request.location.location.majorAxis),
+            float(request.location.location.minorAxis),
             float(request.location.location.orientation))
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
