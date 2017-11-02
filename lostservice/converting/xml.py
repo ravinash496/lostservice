@@ -699,7 +699,10 @@ class FindServiceXmlConverter(XmlConverter):
                 if item.locationValidation.get("invalid"):
                     invalid_element = lxml.etree.SubElement(validation_element, 'invalid')
                     invalid_element.text = item.locationValidation.get("invalid")
-                
+                if item.locationValidation.get("unchecked"):
+                    unchecked_element = lxml.etree.SubElement(validation_element,'unchecked')
+                    unchecked_element.text = item.locationValidation.get("unchecked")
+
 
         # add the path element
         path_element = lxml.etree.SubElement(xml_response, 'path')
