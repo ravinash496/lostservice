@@ -297,6 +297,17 @@ class FindServiceConfigWrapper(object):
 
         return float(tolerance)
 
+    def offset_distance(self):
+        """
+        Gets the offset distance to set road centerline points from the center... line.
+        :return:  ``int``
+        """
+        offset = self._config.get('Policy', 'offset_distance_from_centerline',as_object=False, required=False)
+        if offset is None:
+            offset = 10
+
+        return (offset)
+
 class FindServiceInner(object):
     """
     A class to handle the actual implementation of the various findService requests, responsible for making calls to
@@ -424,12 +435,13 @@ class FindServiceInner(object):
         username = self._find_service_config._config.get('Database', 'username', as_object=False, required=True)
         password = self._find_service_config._config.get('Database', 'password', as_object=False, required=True)
         query_executor = PgQueryExecutor(database=db_name,host=host, user=username, password=password)
-
-        # Now let's create the locator and supply it with the common default strategies.
+        rcl_offset_distance = self._find_service_config.offset_distance()
+        # Now let's create the locator and supply it with the common default strategies, and the offset
+        # for roadcenterline results.
         locator = Locator(strategies=[
             PgPointsAggregateLocatorStrategy(query_executor=query_executor),
             PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
-        ], source_maps=source_maps)
+        ], source_maps=source_maps, offset_distance=rcl_offset_distance)
 
         civic_dict = {}
         civic_dict['country'] = civvy_obj.country
@@ -470,7 +482,7 @@ class FindServiceInner(object):
         civic_address = CivicAddress(**civic_dict)
 
         # Let's get the results for this civic address.
-        locator_results = locator.locate_civic_address(civic_address=civic_address)
+        locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=rcl_offset_distance)
         mappings = None
         if len(locator_results)>0:
             first_civic_point=locator_results[0]
