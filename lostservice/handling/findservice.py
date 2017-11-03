@@ -297,17 +297,28 @@ class FindServiceConfigWrapper(object):
 
         return float(tolerance)
 
-    def find_civic_address_minimum_score(self):
+    def find_civic_address_maximum_score(self):
         """
-        Gets the minumum score before find service returns notFound error.
+        Gets the maximum score before find service returns notFound error.
 
         :return: ``float``
         """
-        minimum = self._config.get('Service', 'find_civic_address_minimum_score', as_object=False, required=False)
-        if minimum is None:
-            minimum = .05
+        maximum = self._config.get('Service', 'find_civic_address_maximum_score', as_object=False, required=False)
+        if maximum is None:
+            maximum = .05
 
-        return float(minimum)
+        return float(maximum)
+
+    def settings_for_default_route(self, urn):
+        """
+        Get the default route (uri) for the given urn if it exists
+
+        :param service: The urn to find
+        :return:  uri
+        """
+        jsons = self._config.get('Policy', 'default_routing_civic_policy', as_object=True, required=False)
+        return jsons
+
 
 class FindServiceInner(object):
     """
@@ -486,7 +497,10 @@ class FindServiceInner(object):
         mappings = None
         if len(locator_results)>0:
             first_civic_point=locator_results[0]
-            if first_civic_point.score >= self._find_service_config.find_civic_address_minimum_score():
+            if first_civic_point.score >= self._find_service_config.find_civic_address_maximum_score():
+                #the civvy has not returned anything we should use so check for default routes
+                # if there are none then throw a NotFoundException (return a notFound LoST error
+                theDefaultUri = self._get_default_civic_route(civic_request.service)
                 raise NotFoundException('The server could not find an answer to the query.', None)
 
             civvy_geometry = first_civic_point.geometry
@@ -982,6 +996,16 @@ class FindServiceInner(object):
             expires_string = 'NO-EXPIRATION'
 
         return expires_string
+
+    def _get_default_civic_route(self, service_urn):
+        """
+        Returns a uri if there is a match in the config file for the passed in urn
+        :param service_urn:
+        :return:
+        """
+        #first see if there are any matching configured urn's in the config
+        defaultRoutes = self._find_service_config.settings_for_default_route(service_urn)
+        return "not implemented yet"
 
 
 class FindServiceOuter(object):
