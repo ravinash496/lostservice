@@ -23,6 +23,7 @@ from shapely.geometry import Polygon
 import json
 from lostservice.configuration import general_logger
 logger = general_logger()
+from civvy.db.postgis.query import PgQueryExecutor
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -297,6 +298,7 @@ class FindServiceConfigWrapper(object):
 
         return float(tolerance)
 
+
 class FindServiceInner(object):
     """
     A class to handle the actual implementation of the various findService requests, responsible for making calls to
@@ -304,7 +306,10 @@ class FindServiceInner(object):
 
     """
     @inject
-    def __init__(self, config: FindServiceConfigWrapper, db_wrapper: GisDbInterface):
+    def __init__(self,
+                 config: FindServiceConfigWrapper,
+                 db_wrapper: GisDbInterface,
+                 query_executor: PgQueryExecutor=None):
         """
         Constructor
 
@@ -313,10 +318,12 @@ class FindServiceInner(object):
         :param db_wrapper: The db wrapper class instance.
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
         """
+        # TODO: There shouldn't be a default for query_executor, this was to facilitate not breaking existing unit tests for now.
         self._find_service_config = config
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
         self._geomutil = GeometryUtility()
+        self._query_executor = query_executor
 
     def _get_esb_table(self, service_urn):
         """
@@ -405,7 +412,6 @@ class FindServiceInner(object):
         from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
         from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
         from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
-        from civvy.db.postgis.query import PgQueryExecutor
 
         # The locator needs some information about the underlying data store.
         jsons = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
@@ -415,20 +421,13 @@ class FindServiceInner(object):
 
         civvy_obj = civic_request.location.location
         validate_location = False
-        if  hasattr(civic_request,'validateLocation'):
+        if hasattr(civic_request,'validateLocation'):
             validate_location = civic_request.validateLocation
-
-        # Create the query executor for the PostgreSQL database.
-        host = self._find_service_config._config.get('Database', 'host', as_object=False, required=True)
-        db_name = self._find_service_config._config.get('Database', 'dbname', as_object=False, required=True)
-        username = self._find_service_config._config.get('Database', 'username', as_object=False, required=True)
-        password = self._find_service_config._config.get('Database', 'password', as_object=False, required=True)
-        query_executor = PgQueryExecutor(database=db_name,host=host, user=username, password=password)
 
         # Now let's create the locator and supply it with the common default strategies.
         locator = Locator(strategies=[
-            PgPointsAggregateLocatorStrategy(query_executor=query_executor),
-            PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
+            PgPointsAggregateLocatorStrategy(query_executor=self._query_executor),
+            PgStreetsAggregateLocatorStrategy(query_executor=self._query_executor)
         ], source_maps=source_maps)
 
         civic_dict = {}

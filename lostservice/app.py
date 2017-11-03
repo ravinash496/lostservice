@@ -20,6 +20,8 @@ import sys
 import uuid
 from lxml import etree
 from injector import Module, provider, Injector, singleton
+from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
 import civvy.db.postgis.query as civvy_pg
 import lostservice.configuration as config
 import lostservice.logger.auditlog as auditlog
@@ -60,6 +62,7 @@ class LostBindingModule(Module):
         """
         return auditlog.AuditLog()
 
+    @singleton
     @provider
     def provide_pg_query_executor(self, config: config.Configuration) -> civvy_pg.PgQueryExecutor:
         """
@@ -75,15 +78,16 @@ class LostBindingModule(Module):
         password = config.get('Database', 'password')
         return civvy_pg.PgQueryExecutor(host=host, port=port, database=db_name, user=username, password=password)
 
+    @singleton
     @provider
-    def provide_db_wrapper(self, config: config.Configuration) -> gisdb.GisDbInterface:
+    def provide_sqlalchemy_engine(self, config: config.Configuration) -> Engine:
         """
-        Provider function for the database interface.
+        Provider function for SQLAlchemhy Engine.
 
-        :return: An instance of the db interface object.
-        :rtype: :py:class:`lostservice.db.gisdb.GisDbInterface`
+        :param config:
+        :return:
         """
-        return gisdb.GisDbInterface(config)
+        return create_engine(config.get_gis_db_connection_string())
 
 
 class WebRequestContext(object):
