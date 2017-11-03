@@ -22,8 +22,9 @@ from lxml import etree
 from shapely.geometry import Polygon
 import json
 from lostservice.configuration import general_logger
-logger = general_logger()
 from civvy.db.postgis.query import PgQueryExecutor
+
+logger = general_logger()
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -48,15 +49,18 @@ class PointMultipleMatchPolicyEnum(Enum):
     ReturnLimitWarning = 2
     ReturnError = 3
 
+
 class ServiceBoundaryGeodeticOverridePolicyEnum(Enum):
     MatchRequest = 1
     ReturnReference = 2
     ReturnValue = 3
     ReturnNothing = 4
 
+
 class ServiceBoundaryCivicOverridePolicyEnum(Enum):
     MatchRequest = 1
     # TODO
+
 
 class FindServiceConfigWrapper(object):
     """
@@ -298,6 +302,38 @@ class FindServiceConfigWrapper(object):
 
         return float(tolerance)
 
+    def find_civic_address_maximum_score(self):
+        """
+        Gets the maximum score before find service returns notFound error.
+
+        :return: ``float``
+        """
+        maximum = self._config.get('Service', 'find_civic_address_maximum_score', as_object=False, required=False)
+        if maximum is None:
+            maximum = .05
+
+        return float(maximum)
+
+    def settings_for_default_route(self, urn):
+        """
+        Get the default route (uri) for the given urn if it exists
+
+        :param service: The urn to find
+        :return:  uri
+        """
+        jsons = self._config.get('Policy', 'default_routing_civic_policy', as_object=True, required=False)
+        return jsons
+
+    def offset_distance(self):
+        """
+        Gets the offset distance to set road centerline points from the center... line.
+        :return:  ``int``
+        """
+        offset = self._config.get('Policy', 'offset_distance_from_centerline', as_object=False, required=False)
+        if offset is None:
+            offset = 10
+        return offset
+
 
 class FindServiceInner(object):
     """
@@ -317,6 +353,8 @@ class FindServiceInner(object):
         :type config: :py:class:`lostservice.handling.FindServiceConfigWrapper`
         :param db_wrapper: The db wrapper class instance.
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
+        :param query_executor: A query executor with pooled connections.
+        :type query_executor: :py:class:civvy.db.postgis.query.PgQueryExecutor`
         """
         # TODO: There shouldn't be a default for query_executor, this was to facilitate not breaking existing unit tests for now.
         self._find_service_config = config
@@ -424,11 +462,13 @@ class FindServiceInner(object):
         if hasattr(civic_request,'validateLocation'):
             validate_location = civic_request.validateLocation
 
+        rcl_offset_distance = self._find_service_config.offset_distance()
+
         # Now let's create the locator and supply it with the common default strategies.
         locator = Locator(strategies=[
             PgPointsAggregateLocatorStrategy(query_executor=self._query_executor),
             PgStreetsAggregateLocatorStrategy(query_executor=self._query_executor)
-        ], source_maps=source_maps)
+        ], source_maps=source_maps, offset_distance=rcl_offset_distance)
 
         civic_dict = {}
         civic_dict['country'] = civvy_obj.country
@@ -469,12 +509,15 @@ class FindServiceInner(object):
         civic_address = CivicAddress(**civic_dict)
 
         # Let's get the results for this civic address.
-        locator_results = locator.locate_civic_address(civic_address=civic_address)
+        locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=rcl_offset_distance)
         mappings = None
-        if len(locator_results)>0:
-            first_civic_point=locator_results[0]
-            if first_civic_point.score >= .05:
-                raise NotFoundException('Score:{0} too high'.format(first_civic_point.score), None)
+        if len(locator_results) > 0:
+            first_civic_point = locator_results[0]
+            if first_civic_point.score >= self._find_service_config.find_civic_address_maximum_score():
+                #the civvy has not returned anything we should use so check for default routes
+                # if there are none then throw a NotFoundException (return a notFound LoST error
+                theDefaultUri = self._get_default_civic_route(civic_request.service)
+                raise NotFoundException('The server could not find an answer to the query.', None)
 
             civvy_geometry = first_civic_point.geometry
             spatial_reference = civvy_geometry.GetSpatialReference()
@@ -974,6 +1017,16 @@ class FindServiceInner(object):
             expires_string = 'NO-EXPIRATION'
 
         return expires_string
+
+    def _get_default_civic_route(self, service_urn):
+        """
+        Returns a uri if there is a match in the config file for the passed in urn
+        :param service_urn:
+        :return:
+        """
+        #first see if there are any matching configured urn's in the config
+        defaultRoutes = self._find_service_config.settings_for_default_route(service_urn)
+        return "not implemented yet"
 
 
 class FindServiceOuter(object):
