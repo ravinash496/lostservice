@@ -22,6 +22,8 @@ from lxml import etree
 from shapely.geometry import Polygon
 import json
 from lostservice.configuration import general_logger
+from civvy.db.postgis.query import PgQueryExecutor
+
 logger = general_logger()
 
 
@@ -47,15 +49,18 @@ class PointMultipleMatchPolicyEnum(Enum):
     ReturnLimitWarning = 2
     ReturnError = 3
 
+
 class ServiceBoundaryGeodeticOverridePolicyEnum(Enum):
     MatchRequest = 1
     ReturnReference = 2
     ReturnValue = 3
     ReturnNothing = 4
 
+
 class ServiceBoundaryCivicOverridePolicyEnum(Enum):
     MatchRequest = 1
     # TODO
+
 
 class FindServiceConfigWrapper(object):
     """
@@ -319,6 +324,16 @@ class FindServiceConfigWrapper(object):
         jsons = self._config.get('Policy', 'default_routing_civic_policy', as_object=True, required=False)
         return jsons
 
+    def offset_distance(self):
+        """
+        Gets the offset distance to set road centerline points from the center... line.
+        :return:  ``int``
+        """
+        offset = self._config.get('Policy', 'offset_distance_from_centerline', as_object=False, required=False)
+        if offset is None:
+            offset = 10
+        return offset
+
 
 class FindServiceInner(object):
     """
@@ -327,7 +342,10 @@ class FindServiceInner(object):
 
     """
     @inject
-    def __init__(self, config: FindServiceConfigWrapper, db_wrapper: GisDbInterface):
+    def __init__(self,
+                 config: FindServiceConfigWrapper,
+                 db_wrapper: GisDbInterface,
+                 query_executor: PgQueryExecutor=None):
         """
         Constructor
 
@@ -335,11 +353,15 @@ class FindServiceInner(object):
         :type config: :py:class:`lostservice.handling.FindServiceConfigWrapper`
         :param db_wrapper: The db wrapper class instance.
         :type db_wrapper: :py:class:`lostservice.db.gisdb.GisDbInterface`
+        :param query_executor: A query executor with pooled connections.
+        :type query_executor: :py:class:civvy.db.postgis.query.PgQueryExecutor`
         """
+        # TODO: There shouldn't be a default for query_executor, this was to facilitate not breaking existing unit tests for now.
         self._find_service_config = config
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
         self._geomutil = GeometryUtility()
+        self._query_executor = query_executor
 
     def _get_esb_table(self, service_urn):
         """
@@ -428,7 +450,6 @@ class FindServiceInner(object):
         from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
         from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
         from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
-        from civvy.db.postgis.query import PgQueryExecutor
 
         # The locator needs some information about the underlying data store.
         jsons = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
@@ -438,21 +459,15 @@ class FindServiceInner(object):
 
         civvy_obj = civic_request.location.location
         validate_location = False
-        if  hasattr(civic_request,'validateLocation'):
+        if hasattr(civic_request,'validateLocation'):
             validate_location = civic_request.validateLocation
 
-        # Create the query executor for the PostgreSQL database.
-        host = self._find_service_config._config.get('Database', 'host', as_object=False, required=True)
-        db_name = self._find_service_config._config.get('Database', 'dbname', as_object=False, required=True)
-        username = self._find_service_config._config.get('Database', 'username', as_object=False, required=True)
-        password = self._find_service_config._config.get('Database', 'password', as_object=False, required=True)
-        query_executor = PgQueryExecutor(database=db_name,host=host, user=username, password=password)
         rcl_offset_distance = self._find_service_config.offset_distance()
-        # Now let's create the locator and supply it with the common default strategies, and the offset
-        # for roadcenterline results.
+
+        # Now let's create the locator and supply it with the common default strategies.
         locator = Locator(strategies=[
-            PgPointsAggregateLocatorStrategy(query_executor=query_executor),
-            PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
+            PgPointsAggregateLocatorStrategy(query_executor=self._query_executor),
+            PgStreetsAggregateLocatorStrategy(query_executor=self._query_executor)
         ], source_maps=source_maps, offset_distance=rcl_offset_distance)
 
         civic_dict = {}
@@ -496,8 +511,8 @@ class FindServiceInner(object):
         # Let's get the results for this civic address.
         locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=rcl_offset_distance)
         mappings = None
-        if len(locator_results)>0:
-            first_civic_point=locator_results[0]
+        if len(locator_results) > 0:
+            first_civic_point = locator_results[0]
             if first_civic_point.score >= self._find_service_config.find_civic_address_maximum_score():
                 #the civvy has not returned anything we should use so check for default routes
                 # if there are none then throw a NotFoundException (return a notFound LoST error
