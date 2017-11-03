@@ -124,8 +124,8 @@ class FindServiceOuterTest(unittest.TestCase):
         model.location.location.longitude = 0.0
         model.location.location.latitude = 0.0
         model.location.location.spatial_ref = 'bar::4321'
-        model.location.location.semiMajorAxis = '1.1'
-        model.location.location.semiMinorAxis = '2.2'
+        model.location.location.majorAxis = '1.1'
+        model.location.location.minorAxis = '2.2'
         model.location.location.orientation = '3.3'
         model.location.location.uom = 'baz'
         model.nonlostdata = ['non-lost-data', 'more-non-lost-data']
@@ -139,8 +139,8 @@ class FindServiceOuterTest(unittest.TestCase):
                                                                    model.location.location.longitude,
                                                                    model.location.location.latitude,
                                                                    model.location.location.spatial_ref,
-                                                                   float(model.location.location.semiMajorAxis),
-                                                                   float(model.location.location.semiMinorAxis),
+                                                                   float(model.location.location.majorAxis),
+                                                                   float(model.location.location.minorAxis),
                                                                    float(model.location.location.orientation),
                                                                    True)
 

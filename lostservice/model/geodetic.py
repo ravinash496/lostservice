@@ -421,7 +421,7 @@ class Ellipse(Geodetic2D):
         self._minorAxisuom = value
 
     @property
-    def orinetation(self) -> float:
+    def orientation(self) -> float:
         """
         The orinetation.
 
@@ -429,12 +429,12 @@ class Ellipse(Geodetic2D):
         """
         return self._orientation
 
-    @orinetation.setter
-    def orinetation(self, value: float):
+    @orientation.setter
+    def orientation(self, value: float):
         self._orientation = value
 
     @property
-    def orinetationuom(self) -> str:
+    def orientationuom(self) -> str:
         """
         The unit of measure identifier.
 
@@ -442,8 +442,8 @@ class Ellipse(Geodetic2D):
         """
         return self._orientationuom
 
-    @orinetationuom.setter
-    def orinetationuom(self, value: str):
+    @orientationuom.setter
+    def orientationuom(self, value: str):
         self._orientationuom = value
 
     def build_shapely_geometry(self) -> BaseGeometry:
@@ -471,7 +471,7 @@ class Ellipse(Geodetic2D):
         # stretch the ellipse along the major and minor axes
         scaled_ellipse: BaseGeometry = affinity.scale(proto_ellipse, self.majorAxis, self.minorAxis)
 
-        rotate_angle = calculate_orientation(self.orinetation)
+        rotate_angle = calculate_orientation(self.orientation)
 
         rotated_ellipse: BaseGeometry = None
         if rotate_angle >= 0:
