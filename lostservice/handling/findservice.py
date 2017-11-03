@@ -297,16 +297,28 @@ class FindServiceConfigWrapper(object):
 
         return float(tolerance)
 
-    def offset_distance(self):
+    def find_civic_address_maximum_score(self):
         """
-        Gets the offset distance to set road centerline points from the center... line.
-        :return:  ``int``
-        """
-        offset = self._config.get('Policy', 'offset_distance_from_centerline',as_object=False, required=False)
-        if offset is None:
-            offset = 10
+        Gets the maximum score before find service returns notFound error.
 
-        return (offset)
+        :return: ``float``
+        """
+        maximum = self._config.get('Service', 'find_civic_address_maximum_score', as_object=False, required=False)
+        if maximum is None:
+            maximum = .05
+
+        return float(maximum)
+
+    def settings_for_default_route(self, urn):
+        """
+        Get the default route (uri) for the given urn if it exists
+
+        :param service: The urn to find
+        :return:  uri
+        """
+        jsons = self._config.get('Policy', 'default_routing_civic_policy', as_object=True, required=False)
+        return jsons
+
 
 class FindServiceInner(object):
     """
@@ -486,8 +498,11 @@ class FindServiceInner(object):
         mappings = None
         if len(locator_results)>0:
             first_civic_point=locator_results[0]
-            if first_civic_point.score >= .05:
-                raise NotFoundException('Score:{0} too high'.format(first_civic_point.score), None)
+            if first_civic_point.score >= self._find_service_config.find_civic_address_maximum_score():
+                #the civvy has not returned anything we should use so check for default routes
+                # if there are none then throw a NotFoundException (return a notFound LoST error
+                theDefaultUri = self._get_default_civic_route(civic_request.service)
+                raise NotFoundException('The server could not find an answer to the query.', None)
 
             civvy_geometry = first_civic_point.geometry
             spatial_reference = civvy_geometry.GetSpatialReference()
@@ -511,6 +526,11 @@ class FindServiceInner(object):
                 if len(valid_properties) > 0:
                     location_validation['valid'] = " ".join(valid_properties)
                 mappings[0]['locationValidation'] = location_validation
+                unchecked_properties = [prop.value for prop in first_civic_point.unchecked_civic_address_properties]
+                if len(unchecked_properties) > 0:
+                    location_validation['unchecked'] = " ".join(unchecked_properties)
+                mappings[0]['locationValidation'] = location_validation
+
 
         else:
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
@@ -982,6 +1002,16 @@ class FindServiceInner(object):
             expires_string = 'NO-EXPIRATION'
 
         return expires_string
+
+    def _get_default_civic_route(self, service_urn):
+        """
+        Returns a uri if there is a match in the config file for the passed in urn
+        :param service_urn:
+        :return:
+        """
+        #first see if there are any matching configured urn's in the config
+        defaultRoutes = self._find_service_config.settings_for_default_route(service_urn)
+        return "not implemented yet"
 
 
 class FindServiceOuter(object):
