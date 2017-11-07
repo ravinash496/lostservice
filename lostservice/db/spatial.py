@@ -27,6 +27,7 @@ from lostservice.exception import InternalErrorException
 from lostservice.configuration import general_logger
 logger = general_logger()
 
+
 class SpatialQueryException(InternalErrorException):
     """
     Raised when something goes wrong in the process of executing a spatial query.
@@ -58,6 +59,7 @@ def _execute_query(engine, query):
                 row_copy = dict(zip(row.keys(), row))
                 retval.append(row_copy)
             result.close()
+            conn.close()
 
     except SQLAlchemyError as ex:
         logger.error(ex)
