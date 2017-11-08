@@ -23,6 +23,7 @@ from shapely.geometry import Polygon
 import json
 from lostservice.configuration import general_logger
 logger = general_logger()
+from lostservice.model.geodetic import Point
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -333,7 +334,7 @@ class FindServiceInner(object):
             logger.warning('Service URN {0} not supported.'.format(service_urn))
             raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
 
-    def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
+    def find_service_for_point(self, service_urn, geoditic_location, return_shape=False):
         """
         Find services for the given point.
 
@@ -360,9 +361,7 @@ class FindServiceInner(object):
             esb_table = self._get_esb_table(service_urn)
 
         results = self._db_wrapper.get_containing_boundary_for_point(
-            longitude,
-            latitude,
-            spatial_ref,
+            geoditic_location,
             esb_table,
             add_data_requested=ADD_DATA_REQUESTED,
             buffer_distance=buffer_distance)
@@ -377,9 +376,7 @@ class FindServiceInner(object):
                 proximity_buffer = self._find_service_config.expanded_search_buffer()
 
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                    longitude,
-                    latitude,
-                    spatial_ref,
+                    geoditic_location,
                     proximity_buffer,
                     None,  # TODO, what is our UOM for buffers, assert meters?
                     esb_table,
@@ -1013,9 +1010,7 @@ class FindServiceOuter(object):
 
         mappings = self._inner.find_service_for_point(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,
