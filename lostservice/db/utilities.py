@@ -54,6 +54,8 @@ def _get_serviceurn(tablename, engine):
                 raise MappingDiscoveryException(
                     'Table {0} contained more than one service urn: {1}'.format(tablename, rows))
             urn = rows[0]['serviceurn']
+            result.close()
+            conn.close()
 
     except SQLAlchemyError as ex:
         logger.error('Failed to extract mapping for table {0}'.format(tablename), ex)
@@ -90,6 +92,9 @@ def get_urn_table_mappings(engine):
                 tablename = row['table_name']
                 urn = _get_serviceurn(tablename, engine)
                 mappings[urn] = tablename
+
+            result.close()
+            conn.close()
 
             if not mappings:
                 logger.warning('No service boundary tables were found in the database.')

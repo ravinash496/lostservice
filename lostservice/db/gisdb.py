@@ -10,6 +10,7 @@ Database wrapper class(es)
 
 from injector import inject
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from lostservice.configuration import Configuration
 import lostservice.db.spatial as spatialdb
 import lostservice.db.utilities as dbutilities
@@ -20,7 +21,7 @@ class GisDbInterface(object):
     Wrapper class for DB functions.
     """
     @inject
-    def __init__(self, config: Configuration):
+    def __init__(self, config: Configuration, engine: Engine):
         """
         Constructor.
 
@@ -28,16 +29,7 @@ class GisDbInterface(object):
         :type config: :py:class:`lostservice.configuration.Configuration`
         """
         self._config = config
-        self._engine = self._create_engine_internal()
-
-    def _create_engine_internal(self):
-        """
-        Internal method to create the SQLAlchemy engine which can be mocked for testing.
-
-        :return: SQLAlchemy database engine.
-        :rtype: :py:class:`sqlalchemy.engine.Engine`
-        """
-        return create_engine(self._config.get_gis_db_connection_string())
+        self._engine = engine
 
     def get_urn_table_mappings(self):
         """
