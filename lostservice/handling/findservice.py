@@ -15,6 +15,7 @@ from lostservice.configuration import Configuration
 from lostservice.exception import InternalErrorException
 from lostservice.model.responses import FindServiceResponse, ResponseMapping, AdditionalDataResponseMapping
 from lostservice.exception import ServiceNotImplementedException, LoopException, NotFoundException
+from lostservice.configuration import ConfigurationException
 import lostservice.geometry as geom
 from lostservice.geometryutility import GeometryUtility
 from lostservice.db.gisdb import GisDbInterface
@@ -23,8 +24,7 @@ from shapely.geometry import Polygon
 import json
 from lostservice.configuration import general_logger
 from civvy.db.postgis.query import PgQueryExecutor
-
-from typing import Dict
+from typing import Dict, Union
 import uuid
 logger = general_logger()
 
@@ -304,7 +304,7 @@ class FindServiceConfigWrapper(object):
 
         return float(tolerance)
 
-    def find_civic_address_maximum_score(self):
+    def find_civic_address_maximum_score(self) -> float:
         """
         Gets the maximum score before find service returns notFound error.
 
@@ -316,16 +316,59 @@ class FindServiceConfigWrapper(object):
 
         return float(maximum)
 
-    def settings_for_default_route(self) -> Dict:
+    def settings_for_default_route(self) -> Union[Dict,None]:
         """
         Get the default route settings
         :return:  default route settings
         """
         settings = self._config.get('Policy', 'default_routing_civic_policy', as_object=True, required=False)
 
-        #do some basic error checking
-        #settings should be a dictionary with the first key 'default_routes'
-        #raise ConfigurationException('No configuration file was specified')
+        # it's ok not to have any settings
+        if settings is None:
+            return settings
+
+        # if they have settings in lostservice.ini do some basic error checking
+        # settings should be a dictionary with the first key == 'default_routes'
+        # the value of settings['default_routes] should be a list of dictionaries
+        # where each dictionary has three keys; 'OverrideRoute', 'urn' and 'uri'
+        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
+        if 'default_routes' in settings:
+            # first key is 'default_routes' , so far so good
+            list_settings = settings['default_routes']
+            if isinstance( list_settings ,list):
+                # the value of the first key is a list
+                for setting in list_settings:
+                    # check that this is a dictionary with three keys
+                    if isinstance(setting,dict):
+                        # it's a dictionary, now check that it has the right keys
+                        if not 'mode' in setting:
+                            # doesn't have the 'mode' key
+                            err_msg = 'You must specify the mode for each item.'
+                            raise ConfigurationException('{0} : {1}'.format(base_msg,err_msg))
+                        else:
+                            # it has the 'mode'
+                            # check it it's set to a valid value
+                            if setting['mode'] != 'OverrideRoute':
+                                err_msg = 'Unsupported mode: {0}'.format(setting['mode'])
+                                raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+                        if not 'urn' in setting:
+                            err_msg = 'You must specify the urn for each item.'
+                            raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+                        if not 'uri' in setting:
+                            err_msg = 'You must specify the uri for each item.'
+                            raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+                    else:
+                        # the value of each the setting is not a dictionary, that's bad
+                        err_msg = 'Each entry in the default_routes list must be an object '
+                        raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+            else:
+                err_msg = 'The first value must be an array of default route objects.'
+                raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+        else:
+            err_msg = 'The first object name for the default_routing_civic_policy must be default_routes.'
+            raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+
+
         return settings
 
     def offset_distance(self):
@@ -518,30 +561,27 @@ class FindServiceInner(object):
         if len(locator_results) > 0:
             first_civic_point = locator_results[0]
             if first_civic_point.score >= self._find_service_config.find_civic_address_maximum_score():
-                #the civvy has not returned anything we should use so check for default routes
+                # The civvy has not returned anything we should use so check for default routes
                 # if there are none then throw a NotFoundException (return a notFound LoST error
                 default_route_uri = self._get_default_civic_route(civic_request.service)
                 if default_route_uri is None:
                     raise NotFoundException('The server could not find an answer to the query.', None)
                 else:
-                    #create a default mapping given just a uri
+                    # Create a default mapping given just a uri
                     new_dict = {}
-                    new_dict['serviceurn']=civic_request.service
-                    new_dict['routeuri']=default_route_uri
-                    new_dict['displayname']=''
+                    new_dict['serviceurn'] = civic_request.service
+                    new_dict['routeuri'] = default_route_uri
+                    new_dict['displayname'] = ''
                     new_dict['gcunqid'] = str(uuid.uuid4())
                     new_dict['servicenum'] = ''
                     new_dict['updatedate'] = str(datetime.datetime.utcnow())
 
-                    #try adding an item to the mapping, that's not really a mapping
+                    # Try adding an item to the mapping, that's not really a mapping
                     new_dict['default_route_used']=True
 
                     default_mapping = []
                     default_mapping.append(new_dict)
                     return default_mapping
-
-
-
 
             civvy_geometry = first_civic_point.geometry
             spatial_reference = civvy_geometry.GetSpatialReference()
@@ -569,7 +609,6 @@ class FindServiceInner(object):
                 if len(unchecked_properties) > 0:
                     location_validation['unchecked'] = " ".join(unchecked_properties)
                 mappings[0]['locationValidation'] = location_validation
-
 
         else:
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
@@ -1042,7 +1081,7 @@ class FindServiceInner(object):
 
         return expires_string
 
-    def _get_default_civic_route(self, service_urn):
+    def _get_default_civic_route(self, service_urn) -> str:
         """
         Returns a uri if there is a match in the config file for the passed in urn
         :param service_urn:
@@ -1326,7 +1365,7 @@ class FindServiceOuter(object):
 
         return False
 
-    def _check_using_default_route(selfs,mappings):
+    def _check_using_default_route(self, mappings) -> bool:
         """"
         Check for default_route_used  flag , which triggers building a warning
         :param mappings
