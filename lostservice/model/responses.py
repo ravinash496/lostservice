@@ -23,30 +23,15 @@ class Response(object):
 class ResponseMapping(object):
     """
     A container for a single response mapping.
-
-    <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
-        <displayName xml:lang="en">Lincoln Ambulance</displayName>
-        <service>urn:nena:service:sos.EMS</service>
-        <serviceBoundaryReference source="authoritative.example" key="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}"/>
-        <uri>SIP:+2075555883@lincolnambulance.ngesi.maine.gov</uri>
-        <serviceNumber>2075555883</serviceNumber>
-    </mapping>
-
-    Contains the following:
-    source (attribute) - the URI of the service that found the mapping (source_uri from config)
-    sourceID (attribute) - the unique id of the mapping (gcunqid)
-    lastUpdated (attribute) - time of last update for the mapping (updatedate)
-    expires (attribute) - policy based expiration (see core.py ~line 157)
-    displayName (element) - the human readable name (from displayname)
-    service (element) - the service URN of the request (see section 5.4 of RFC 5222 for special handling)
-    serviceBoundary (element) - full boundary information when asked for by value
-    - OR -
-    serviceBoundaryReference (element) - contains the source and key attributes
-    serviceNumber (element) - the phone number (servicenum)
-    uri (element) - the service uri (from routeuri)
-
-
     """
+    # <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
+    #     <displayName xml:lang="en">Lincoln Ambulance</displayName>
+    #     <service>urn:nena:service:sos.EMS</service>
+    #     <serviceBoundaryReference source="authoritative.example" key="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}"/>
+    #     <uri>SIP:+2075555883@lincolnambulance.ngesi.maine.gov</uri>
+    #     <serviceNumber>2075555883</serviceNumber>
+    # </mapping>
+
     def __init__(self,
                  source=None,
                  source_id=None,
@@ -58,17 +43,16 @@ class ResponseMapping(object):
                  route_uri=None,
                  boundary_value=None):
         """
-        Constructor.
 
-        :param source:
-        :param source_id:
-        :param last_updated:
-        :param expires:
-        :param display_name:
-        :param service_urn:
-        :param service_number:
-        :param route_uri:
-        :param boundary_value:
+        :param source: the URI of the service that found the mapping (source_uri from config).
+        :param source_id: the unique id of the mapping (gcunqid).
+        :param last_updated: time of last update for the mapping (updatedate).
+        :param expires: policy based expiration.
+        :param display_name: the human readable name (from displayname).
+        :param service_urn: the service URN of the request (see section 5.4 of RFC 5222 for special handling).
+        :param service_number: the phone number (servicenum).
+        :param route_uri: the service uri (from routeuri).
+        :param boundary_value: full boundary information when asked for by value
         """
         super(ResponseMapping, self).__init__()
         self._source = source
@@ -202,20 +186,11 @@ class ResponseMapping(object):
 class AdditionalDataResponseMapping(object):
     """
     A container for a single Additional Data response mapping.
-
-    <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
-        <service>urn:nena:service:adddatauri</service>
-        <adddatauri>http://pv-qps-2/testdoc609784.doc</adddatauri>
-    </mapping>
-
-    Contains the following:
-    source (attribute) - the URI of the service that found the mapping (source_uri from config)
-    sourceID (attribute) - the unique id of the mapping (gcunqid)
-    lastUpdated (attribute) - time of last update for the mapping (updatedate)
-    expires (attribute) - policy based expiration (see core.py ~line 157)
-    service (element) - the service URN of the request (see section 5.4 of RFC 5222 for special handling)
-    adddatauri (element) - the additional data uri
     """
+    # <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
+    #   <service>urn:nena:service:adddatauri</service>
+    #   <adddatauri>http://pv-qps-2/testdoc609784.doc</adddatauri>
+    # </mapping>
     def __init__(self,
                  source=None,
                  source_id=None,
@@ -224,15 +199,13 @@ class AdditionalDataResponseMapping(object):
                  service_urn=None,
                  adddatauri=None):
         """
-        Constructor.
 
-        :param source:
-        :param source_id:
-        :param last_updated:
-        :param expires:
-        :param service_urn:
-        :param boundary_value:
-        :param adddatauri:
+        :param source: The URI of the service that is found in the mapping.(source_uri from config).
+        :param source_id: The unique ID of the mapping(gcunqid).
+        :param last_updated: Time of last update for the mapping(updatedate).
+        :param expires: Policy based expiration.
+        :param service_urn: The Service URN of the request. See section 5.4 of RCC 5222 for special handling.
+        :param adddatauri: The additional data URI.
         """
         super(AdditionalDataResponseMapping, self).__init__()
         self._source = source

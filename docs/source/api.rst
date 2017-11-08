@@ -37,16 +37,6 @@ lostservice.configuration
     :show-inheritance:
     :synopsis: configuration api
 
--------------------------
-lostservice.context
--------------------------
-.. automodule:: lostservice.context
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance:
-    :synopsis: context api for services
-
 ---------------------
 lostservice.converter
 ---------------------

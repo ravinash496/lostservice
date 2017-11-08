@@ -448,7 +448,9 @@ def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_ta
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
 
 
-def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
+def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, engine,
+                                           return_intersection_area=False, return_shape=False,
+                                           proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
@@ -466,13 +468,12 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
     :type engine: :py:class:`sqlalchemy.engine.Engine`
-    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons
-    :type return_intersection_area bool
-     :param return_shape: Flag which triggers the return of the shape in GML.
-    :type return_shape bool
+    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons.
+    :type return_intersection_area: `bool`
+    :param return_shape: Flag which triggers the return of the shape in GML.
+    :type return_shape: `bool`
     :return: A list of dictionaries containing the contents of returned rows.
     """
-
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
     long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
@@ -483,10 +484,13 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
     # Now execute the query.
     if return_shape == True:
         if proximity_search == True:
-            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle, proximity_buffer, return_intersection_area)
+            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
+                                                           proximity_buffer, return_intersection_area)
         else:
             # Call Overload to return the GML representation of the shape
-            return _get_intersecting_boundaries_for_geom_value(engine, boundary_table, wkb_circle, return_intersection_area)
+            return _get_intersecting_boundaries_for_geom_value(engine, boundary_table,
+                                                               wkb_circle,
+                                                               return_intersection_area)
     else:
         if proximity_search == True:
             return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
@@ -725,8 +729,8 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
     :type engine: :py:class:`sqlalchemy.engine.Engine`
-    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons
-    :type return_intersection_area bool
+    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons.
+    :type return_intersection_area: `bool`
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
@@ -749,8 +753,8 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
 
 def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_distance):
     """
-    Executes an addtional data query for a polygon.
 
+    Executes an addtional data query for a polygon.
     :param points: A list of vertices in (x,y) format.
     :type points: `list`
     :param srid: The spatial reference Id of the vertices.
@@ -764,7 +768,6 @@ def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-
     trimmed_srid = int(srid.split('::')[1])
 
     p= []
@@ -906,10 +909,10 @@ def get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boun
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
     :type engine: :py:class:`sqlalchemy.engine.Engine`
-    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons
-    :type return_intersection_area bool
+    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons.
+    :type return_intersection_area: `bool`
      :param return_shape: Flag which triggers the return of the shape in GML.
-    :type return_shape bool
+    :type return_shape: `bool`
     :return: A list of dictionaries containing the contents of returned rows.
     """
 
@@ -937,8 +940,8 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
     :type engine: :py:class:`sqlalchemy.engine.Engine`
-    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons
-    :type return_intersection_area bool
+    :param return_intersection_area: Flag which triggers an area calculation on the Intersecting polygons.
+    :type return_intersection_area: `bool`
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID

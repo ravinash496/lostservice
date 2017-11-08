@@ -560,7 +560,7 @@ class PathXmlConverter(XmlConverter):
         :param data: The path node.
         :type data: :py:class:`_ElementTree`
         :return: A Path instance.
-        :rtype: :py:list:`source`
+        :rtype: list of object `source`
         """
 
         source_list = []
