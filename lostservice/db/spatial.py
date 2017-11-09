@@ -331,7 +331,7 @@ def _get_intersecting_boundaries_for_geom_value(engine, table_name, geom, return
     return results
 
 
-def get_containing_boundary_for_point(point: geoditic_point, boundary_table, engine, add_data_required=False, buffer_distance=None):
+def get_containing_boundary_for_point(point: geodetic_point, boundary_table, engine, add_data_required=False, buffer_distance=None):
     """
     Executes a contains query for a point.
 
