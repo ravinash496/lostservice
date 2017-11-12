@@ -66,7 +66,7 @@ class GisDbInterface(object):
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_containing_boundary_for_circle(location, radius, uom, boundary_table, self._engine)
+        return spatialdb.get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_table, self._engine)
 
     def get_intersecting_boundaries_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area = False, return_shape = False, proximity_search = False, proximity_buffer = 0):
         """
