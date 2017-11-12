@@ -468,7 +468,9 @@ class FindServiceInner(object):
                 proximity_buffer = self._find_service_config.expanded_search_buffer()
 
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                    geodetic_location,
+                    geodetic_location.longitude,
+                    geodetic_location.latitude,
+                    geodetic_location.spatial_ref,
                     proximity_buffer,
                     None,  # TODO, what is our UOM for buffers, assert meters?
                     esb_table,
