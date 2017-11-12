@@ -347,7 +347,7 @@ def get_containing_boundary_for_point(point: geodetic_point, boundary_table, eng
     wkb_pt = point.to_wkbelement(project_to=4326)
     # Run the query.
     if add_data_required:
-        return _get_nearest_point(geodetic_point.longitude, geodetic_point.latitude, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
+        return _get_nearest_point(point.longitude, point.latitude, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
 def _transform_circle(long, lat, srid, radius, uom):
@@ -404,7 +404,7 @@ def _transform_circle(long, lat, srid, radius, uom):
     return wkb_circle
 
 
-def get_containing_boundary_for_circle(point: geodetic_point, radius, uom, boundary_table, engine):
+def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_table, engine):
     """
     Executes a contains query for a circle.
 
@@ -422,8 +422,9 @@ def get_containing_boundary_for_circle(point: geodetic_point, radius, uom, bound
     """
 
     # Pull out just the number from the SRID
-    long, lat = gc_geom.reproject_point(geodetic_point.longitude, geodetic_point.latitude,
-                                        geodetic_point.spatial_ref,4326)
+    trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat,
+                                        trimmed_srid,4326)
 
     # Get a version of the circle we can use.
     wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
@@ -432,7 +433,7 @@ def get_containing_boundary_for_circle(point: geodetic_point, radius, uom, bound
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
 
 
-def get_intersecting_boundaries_for_circle(point: geodetic_point, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
+def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
@@ -458,8 +459,9 @@ def get_intersecting_boundaries_for_circle(point: geodetic_point, radius, uom, b
     """
 
     # Pull out just the number from the SRID
-    long, lat = gc_geom.reproject_point(geodetic_point.longitude, geodetic_point.latitude,
-                                        geodetic_point.spatial_ref, 4326)
+    trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat,
+                                        trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
     wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
@@ -848,7 +850,7 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
     return retval
 
 
-def get_list_service_for_point(long, lat, srid, boundary_table, engine):
+def get_list_service_for_point(point: geodetic_point, boundary_table, engine):
     """
 
     :param long: 
@@ -859,8 +861,8 @@ def get_list_service_for_point(long, lat, srid, boundary_table, engine):
     :return: 
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    trimmed_srid = int(point.spatial_ref.split('::')[1])
+    long, lat = gc_geom.reproject_point(point.longitude, point.latitude, trimmed_srid, 4326)
 
     # Create a Shapely Point
     pt = Point(long, lat)

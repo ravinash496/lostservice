@@ -39,9 +39,7 @@ class FindServiceOuterTest(unittest.TestCase):
             actual = target.find_service_for_point(model)
             mock_inner.find_service_for_point.assert_called_once()
             mock_inner.find_service_for_point.assert_called_with(model.service,
-                                                                 model.location.location.longitude,
-                                                                 model.location.location.latitude,
-                                                                 model.location.location.spatial_ref,
+                                                                 model.location.location,
                                                                  False)
             self.assertListEqual(actual.path, ['path.one', 'path.two', 'foo'])
             self.assertListEqual(actual.nonlostdata, [])

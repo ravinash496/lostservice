@@ -585,11 +585,13 @@ class FindServiceInner(object):
             epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
             srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
             spatial_ref = "{0}::{1}".format(epsg, srid)
+            point = Point()
+            point.latitude = civvy_geometry.GetY()
+            point.longitude = civvy_geometry.GetX()
+            point.spatial_ref = spatial_ref
             mappings = self.find_service_for_point(
                 civic_request.service,
-                civvy_geometry.GetX(),
-                civvy_geometry.GetY(),
-                spatial_ref,
+                point,
                 return_shape=return_shape
             )
             if validate_location:

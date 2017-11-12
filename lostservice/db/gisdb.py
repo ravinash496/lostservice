@@ -52,7 +52,7 @@ class GisDbInterface(object):
         """
         return spatialdb.get_containing_boundary_for_point(location, boundary_table, self._engine, add_data_required=add_data_requested, buffer_distance=buffer_distance)
 
-    def get_containing_boundary_for_circle(self, location, radius, uom, boundary_table):
+    def get_containing_boundary_for_circle(self, long, lat, srid, radius, uom, boundary_table):
         """
         Executes a contains query for a circle.
 
@@ -68,7 +68,7 @@ class GisDbInterface(object):
         """
         return spatialdb.get_containing_boundary_for_circle(location, radius, uom, boundary_table, self._engine)
 
-    def get_intersecting_boundaries_for_circle(self, location, radius, uom, boundary_table, return_area = False, return_shape = False, proximity_search = False, proximity_buffer = 0):
+    def get_intersecting_boundaries_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area = False, return_shape = False, proximity_search = False, proximity_buffer = 0):
         """
         Executes an intersection query for a circle.
 
@@ -88,7 +88,7 @@ class GisDbInterface(object):
         :type boundary_table: `bool`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_boundaries_for_circle(location, radius, uom, boundary_table, self._engine, return_area, return_shape, proximity_search, proximity_buffer)
+        return spatialdb.get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, self._engine, return_area, return_shape, proximity_search, proximity_buffer)
 
     def get_containing_boundary_for_polygon(self, points, srid, boundary_table):
         """
@@ -142,7 +142,7 @@ class GisDbInterface(object):
     def get_additional_data_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table, buffer_distance):
         return spatialdb.get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation,buffer_distance, boundary_table, self._engine)
 
-    def get_list_services_for_point(self, long, lat, srid, boundary_table):
+    def get_list_services_for_point(self, location, boundary_table):
         """
         Executes a contains query for a point.
 
@@ -156,7 +156,7 @@ class GisDbInterface(object):
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_list_service_for_point(long, lat, srid, boundary_table, self._engine)
+        return spatialdb.get_list_service_for_point(location, boundary_table, self._engine)
 
     def get_intersecting_list_service_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area=False,
                                                  return_shape=False, proximity_search=False, proximity_buffer=0):
