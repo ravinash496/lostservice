@@ -46,7 +46,7 @@ class GisDbInterface(object):
         Executes a contains query for a point.
 
         :param location: location object.
-        :type location: :py:class:Geodetic2D
+        :type location :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
@@ -148,7 +148,7 @@ class GisDbInterface(object):
         Executes a contains query for a point.
 
         :param location: location object
-        :type location: :py:class:Geodetic2D
+        :type location :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
