@@ -19,6 +19,7 @@ from lostservice.db.gisdb import GisDbInterface
 from lxml import etree
 from shapely.geometry import Polygon
 import json
+from lostservice.model.geodetic import Point
 
 
 class ListServiceBYLocationConfigWrapper(object):
@@ -83,18 +84,14 @@ class ListServiceByLocationInner(object):
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
 
-    def list_services_by_location_for_point(self, service, longitude, latitude, spatial_ref):
+    def list_services_by_location_for_point(self, service, location):
         """
         List services for the given point.
 
         :param service: The identifier for the service to look up.
         :type service: ``str``
-        :param longitude: Longitude of the point to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the point to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the point to search.
-        :type spatial_ref: ``str``
+        :param location: location object.
+        :type location: `location object`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given point.
@@ -102,12 +99,12 @@ class ListServiceByLocationInner(object):
         """
         if service is not None:
             esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
-            result = self._db_wrapper.get_list_services_for_point(longitude, latitude, spatial_ref, esb_table)
+            result = self._db_wrapper.get_list_services_for_point(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
         elif service is None:
             esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
-            result = self._db_wrapper.get_list_services_for_point(longitude, latitude, spatial_ref, esb_table)
+            result = self._db_wrapper.get_list_services_for_point(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
@@ -191,6 +188,10 @@ class ListServiceByLocationInner(object):
                 epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
                 srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
                 spatial_ref = "{0}::{1}".format(epsg, srid)
+                point = Point()
+                point.latitude = civvy_geometry.GetY()
+                point.longitude = civvy_geometry.GetX()
+                point.spatial_ref = spatial_ref
                 mappings = self.list_services_by_location_for_point(
                     civic_request.service,
                     civvy_geometry.GetX(),
@@ -355,9 +356,7 @@ class ListServiceBylocationOuter(object):
         self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_point(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref
+            request.location.location
         )
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
