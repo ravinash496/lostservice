@@ -847,41 +847,6 @@ class FindServiceInnerTest(unittest.TestCase):
         with self.assertRaises(lostservice.exception.ServiceNotImplementedException):
             actual = target._get_esb_table('whatever')
 
-    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
-    @patch('lostservice.db.gisdb.GisDbInterface')
-    def test__get_default_civic_route(self, mock_config, mock_db):
-        mock_config.settings_for_default_route = MagicMock()
-        mock_config.settings_for_default_route.return_value = {'default_routes': [
-            {'mode': 'OverrideRoute', 'urn': 'urn:nena:service:sos', 'uri': 'sip:sos@oakgrove.ngesi.maine.gov'},
-            {'mode': 'OverrideRoute', 'urn': 'urn:nena:service:sos.police',
-             'uri': 'sip:sos@portlandpd.ngesi.maine.gov'}]}
-
-        mock_db.get_urn_table_mappings = MagicMock()
-        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
-
-        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
-        actual = target._get_default_civic_route('urn:nena:service:sos')
-
-        self.assertEqual(actual, 'sip:sos@oakgrove.ngesi.maine.gov')
-
-    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
-    @patch('lostservice.db.gisdb.GisDbInterface')
-    def test__get_default_civic_route_no_match(self, mock_config, mock_db):
-        mock_config.settings_for_default_route = MagicMock()
-        mock_config.settings_for_default_route.return_value = {'default_routes': [
-            {'mode': 'OverrideRoute', 'urn': 'urn:nena:service:sos', 'uri': 'sip:sos@oakgrove.ngesi.maine.gov'},
-            {'mode': 'OverrideRoute', 'urn': 'urn:nena:service:sos.police',
-             'uri': 'sip:sos@portlandpd.ngesi.maine.gov'}]}
-
-        mock_db.get_urn_table_mappings = MagicMock()
-        mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
-
-        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
-        actual = target._get_default_civic_route('urn:nena:service:sos.ambulance')
-
-        self.assertEqual(actual, None)
-
-
     # Some refactoring would have to take palace in the find_service_for_civicaddress function
     # mainly the locator would have to be injected somehow so database query's could be avoided.
     # @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
