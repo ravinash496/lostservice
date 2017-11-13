@@ -13,20 +13,26 @@ Download and install GitHub (Windows) from [here](https://desktop.github.com)
 ### Set up your project python environment.  
 `cd <project folder>`  
 `virtualenv --python c:\Users\<your user>\AppData\Local\Programs\Python\Python36\python.exe lost-env`  
-`.\lost-env\Scripts\activate`  
+`.\lost-env\Scripts\activate`
+
+### Install Prerequisite Packages
+_Linux_
+
 `pip install -r requirements.txt`  
 
-There are some packages that depend on binaries that can't be pulled in directly with pip.
-In that case, there are python wheels you will need to download and install:  
+_Windows_
+
+`win-requirements.bat`
+
+### For Windows Only
+The batch file above should install all of the dependencies for the project. If it does not, chances are it failed on installing some of the wheels, which you will now have to do manually. The wheels can be found in the dependencies directory of the repository:  
 
 Shapely:  
-Windows:  
-[Shapely-1.5.17-cp36-cp36m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#shapely)  
+
 `pip install Shapely-1.5.17-cp36-cp36m-win_amd64.whl`  
 
 LibXML Parsing:  
-Windows:  
-[lxml-3.7.3-cp36-cp36m-win_amd64.whl](https://pypi.python.org/packages/cb/18/5e1a771220b23640b984765133414070c2f52da7102987b3377a51ccfa2c/lxml-3.7.3-cp36-cp36m-win_amd64.whl#md5=f8b0b8e0363305ecba33925d31d27631)  
+
 `pip install lxml-3.7.3-cp36-cp36m-win_amd64.whl`  
 
 ### Installing Packages from Scratch
