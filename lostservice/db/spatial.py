@@ -853,23 +853,15 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
 def get_list_service_for_point(point: geodetic_point, boundary_table, engine):
     """
 
-    :param long: 
-    :param lat: 
-    :param srid: 
-    :param boundary_table: 
-    :param engine: 
+    :param point: location object
+    :type point: `location`
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
     :return: 
     """
-    # Pull out just the number from the SRID
-    trimmed_srid = int(point.spatial_ref.split('::')[1])
-    long, lat = gc_geom.reproject_point(point.longitude, point.latitude, trimmed_srid, 4326)
-
-    # Create a Shapely Point
-    pt = Point(long, lat)
-
-
-    # Get a GeoAlchemy WKBElement from the point.
-    wkb_pt = from_shape(pt, 4326)
+    wkb_pt = point.to_wkbelement(project_to=4326)
     # Run the query.
     return (_get_list_service_for_geom(engine, i, wkb_pt) for i in boundary_table)
 
