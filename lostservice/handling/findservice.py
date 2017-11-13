@@ -432,12 +432,8 @@ class FindServiceInner(object):
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param longitude: Longitude of the point to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the point to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the point to search.
-        :type spatial_ref: ``str``
+        :param location: location object.
+        :type location: `location object`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given point.
