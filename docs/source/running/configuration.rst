@@ -1,4 +1,4 @@
-.. Title
+.. _configuration:
 
 Configuration
 =============
