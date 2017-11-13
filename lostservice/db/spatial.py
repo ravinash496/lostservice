@@ -25,6 +25,7 @@ import math
 import lostservice.geometry as gc_geom
 from lostservice.exception import InternalErrorException
 from lostservice.configuration import general_logger
+from lostservice.model.geodetic import Point as geodetic_point
 logger = general_logger()
 
 
@@ -330,16 +331,12 @@ def _get_intersecting_boundaries_for_geom_value(engine, table_name, geom, return
     return results
 
 
-def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine, add_data_required=False, buffer_distance=None):
+def get_containing_boundary_for_point(point: geodetic_point, boundary_table, engine, add_data_required=False, buffer_distance=None):
     """
     Executes a contains query for a point.
 
-    :param long: The long coordinate of the point.
-    :type long: `float`
-    :param lat: The lat coordinate of the point.
-    :type lat: `float`
-    :param srid: The spatial reference Id of the point.
-    :type srid: `str`
+    :param point: location object
+    :type point: `location`
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -347,19 +344,10 @@ def get_containing_boundary_for_point(long, lat, srid, boundary_table, engine, a
     :return: A list of dictionaries containing the contents of returned rows.
     """
 
-
-    # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
-
-    # Create a Shapely Point
-    pt = Point(long, lat)
-
-    # Get a GeoAlchemy WKBElement from the point.
-    wkb_pt = from_shape(pt, 4326)
+    wkb_pt = point.to_wkbelement(project_to=4326)
     # Run the query.
     if add_data_required:
-        return _get_nearest_point(long, lat, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
+        return _get_nearest_point(point.longitude, point.latitude, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
 def _transform_circle(long, lat, srid, radius, uom):
@@ -420,12 +408,8 @@ def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_ta
     """
     Executes a contains query for a circle.
 
-    :param long: The x coordinate of the center.
-    :type long: `float`
-    :param lat: The lat coordinate of the center.
-    :type lat: `float`
-    :param srid: The spatial reference id of the center point.
-    :type srid: `str`
+    :param point: location object.
+    :type point: `object`
     :param radius: The radius of the circle.
     :type radius: `float`
     :param uom: The unit of measure of the radius.
@@ -438,8 +422,9 @@ def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_ta
     """
 
     # Pull out just the number from the SRID
-    trimmed_srid = srid.split('::')[1]
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    trimmed_srid = int(srid.split('::')[1])
+    long, lat = gc_geom.reproject_point(long, lat,
+                                        trimmed_srid,4326)
 
     # Get a version of the circle we can use.
     wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
@@ -476,7 +461,8 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
     """
     # Pull out just the number from the SRID
     trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    long, lat = gc_geom.reproject_point(long, lat,
+                                        trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
     wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
@@ -867,26 +853,18 @@ def get_intersecting_boundaries_with_buffer(long, lat, engine, table_name, geom,
     return retval
 
 
-def get_list_service_for_point(long, lat, srid, boundary_table, engine):
+def get_list_service_for_point(point: geodetic_point, boundary_table, engine):
     """
 
-    :param long: 
-    :param lat: 
-    :param srid: 
-    :param boundary_table: 
-    :param engine: 
+    :param point: location object
+    :type point: `location`
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
     :return: 
     """
-    # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
-
-    # Create a Shapely Point
-    pt = Point(long, lat)
-
-
-    # Get a GeoAlchemy WKBElement from the point.
-    wkb_pt = from_shape(pt, 4326)
+    wkb_pt = point.to_wkbelement(project_to=4326)
     # Run the query.
     return (_get_list_service_for_geom(engine, i, wkb_pt) for i in boundary_table)
 

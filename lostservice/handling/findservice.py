@@ -25,6 +25,7 @@ from lostservice.configuration import general_logger
 from civvy.db.postgis.query import PgQueryExecutor
 
 logger = general_logger()
+from lostservice.model.geodetic import Point
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -370,18 +371,14 @@ class FindServiceInner(object):
             logger.warning('Service URN {0} not supported.'.format(service_urn))
             raise ServiceNotImplementedException('Service URN {0} not supported.'.format(service_urn), None)
 
-    def find_service_for_point(self, service_urn, longitude, latitude, spatial_ref, return_shape=False):
+    def find_service_for_point(self, service_urn, geodetic_location, return_shape=False):
         """
         Find services for the given point.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param longitude: Longitude of the point to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the point to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the point to search.
-        :type spatial_ref: ``str``
+        :param location: location object.
+        :type location: `location object`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given point.
@@ -397,9 +394,7 @@ class FindServiceInner(object):
             esb_table = self._get_esb_table(service_urn)
 
         results = self._db_wrapper.get_containing_boundary_for_point(
-            longitude,
-            latitude,
-            spatial_ref,
+            geodetic_location,
             esb_table,
             add_data_requested=ADD_DATA_REQUESTED,
             buffer_distance=buffer_distance)
@@ -414,9 +409,9 @@ class FindServiceInner(object):
                 proximity_buffer = self._find_service_config.expanded_search_buffer()
 
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                    longitude,
-                    latitude,
-                    spatial_ref,
+                    geodetic_location.longitude,
+                    geodetic_location.latitude,
+                    geodetic_location.spatial_ref,
                     proximity_buffer,
                     None,  # TODO, what is our UOM for buffers, assert meters?
                     esb_table,
@@ -513,11 +508,13 @@ class FindServiceInner(object):
             epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
             srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
             spatial_ref = "{0}::{1}".format(epsg, srid)
+            point = Point()
+            point.latitude = civvy_geometry.GetY()
+            point.longitude = civvy_geometry.GetX()
+            point.spatial_ref = spatial_ref
             mappings = self.find_service_for_point(
                 civic_request.service,
-                civvy_geometry.GetX(),
-                civvy_geometry.GetY(),
-                spatial_ref,
+                point,
                 return_shape=return_shape
             )
             if validate_location:
@@ -1041,9 +1038,7 @@ class FindServiceOuter(object):
 
         mappings = self._inner.find_service_for_point(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,

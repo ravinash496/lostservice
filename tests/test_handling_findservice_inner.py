@@ -11,6 +11,7 @@ import lostservice.model.requests
 import lostservice.model.responses
 import lostservice.model.location
 import lostservice.exception
+from lostservice.model.geodetic import Point
 
 
 class FindServiceInnerTest(unittest.TestCase):
@@ -475,11 +476,15 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_policies = MagicMock()
         target._apply_policies.return_value = test_data
 
-        actual = target.find_service_for_point('urn1', 0.0, 1.1, 'something', False)
+        location = Point()
+        location.latitude = 0.0
+        location.longitude = 1.1
+        location.spatial_ref = 'something::1234'
+        actual = target.find_service_for_point('urn1', location, False)
         buffer_dist = mock_config.additional_data_buffer()
 
         self.assertListEqual(actual, test_data)
-        mock_db.get_containing_boundary_for_point.assert_called_with(0.0, 1.1, 'something', 'service1',
+        mock_db.get_containing_boundary_for_point.assert_called_with(location, 'service1',
                                                                      add_data_requested=False,
                                                                      buffer_distance = buffer_dist)
         mock_db.get_containing_boundary_for_point.assert_called_once()
@@ -522,7 +527,12 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_policies = MagicMock()
         target._apply_policies.return_value = test_data
 
-        actual = target.find_service_for_point('urn1', 0.0, 1.1, 'something', False)
+        location = Point()
+        location.latitude = 0.0
+        location.longitude = 1.1
+        location.spatial_ref = 'something::1234'
+
+        actual = target.find_service_for_point('urn1',location, False)
 
         self.assertListEqual(actual, test_data)
         mock_config.do_expanded_search.assert_called_once()
@@ -530,9 +540,7 @@ class FindServiceInnerTest(unittest.TestCase):
         mock_config.expanded_search_buffer.assert_called_once()
         mock_config.additional_data_uri.assert_called_once()
         mock_db.get_containing_boundary_for_point.assert_called_with(
-            0.0,
-            1.1,
-            'something',
+            location,
             'service1',
             add_data_requested=False,
             buffer_distance = 5.0)
@@ -540,7 +548,9 @@ class FindServiceInnerTest(unittest.TestCase):
 
 
 
-        mock_db.get_intersecting_boundaries_for_circle.assert_called_with(0.0, 1.1, 'something', 10, None, 'service1', True, False)
+        mock_db.get_intersecting_boundaries_for_circle.assert_called_with(1.1,0.0,
+                                                                          'something::1234',
+                                                                          10, None, 'service1', True, False)
         mock_db.get_intersecting_boundaries_for_circle.assert_called_once()
 
         target._apply_point_multiple_match_policy.assert_not_called()

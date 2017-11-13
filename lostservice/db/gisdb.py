@@ -14,6 +14,7 @@ from sqlalchemy.engine import Engine
 from lostservice.configuration import Configuration
 import lostservice.db.spatial as spatialdb
 import lostservice.db.utilities as dbutilities
+from lostservice.model.geodetic import Point
 
 
 class GisDbInterface(object):
@@ -40,32 +41,24 @@ class GisDbInterface(object):
         """
         return dbutilities.get_urn_table_mappings(self._engine)
 
-    def get_containing_boundary_for_point(self, long, lat, srid, boundary_table, add_data_requested=False, buffer_distance=None):
+    def get_containing_boundary_for_point(self, location: Point, boundary_table, add_data_requested=False, buffer_distance=None):
         """
         Executes a contains query for a point.
 
-        :param long: The long coordinate of the point.
-        :type long: `float`
-        :param lat: The lat coordinate of the point.
-        :type lat: `float`
-        :param srid: The spatial reference Id of the point.
-        :type srid: `str`
+        :param location: location object.
+        :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_containing_boundary_for_point(long, lat, srid, boundary_table, self._engine, add_data_required=add_data_requested, buffer_distance=buffer_distance)
+        return spatialdb.get_containing_boundary_for_point(location, boundary_table, self._engine, add_data_required=add_data_requested, buffer_distance=buffer_distance)
 
     def get_containing_boundary_for_circle(self, long, lat, srid, radius, uom, boundary_table):
         """
         Executes a contains query for a circle.
 
-        :param long: The long coordinate of the center.
-        :type long: `float`
-        :param lat: The y coordinate of the center.
-        :type y: `float`
-        :param srid: The spatial reference id of the center point.
-        :type srid: `str`
+        :param location: location object.
+        :type location: `location object`
         :param radius: The radius of the circle.
         :type radius: `float`
         :param uom: The unit of measure of the radius.
@@ -150,21 +143,17 @@ class GisDbInterface(object):
     def get_additional_data_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table, buffer_distance):
         return spatialdb.get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation,buffer_distance, boundary_table, self._engine)
 
-    def get_list_services_for_point(self, long, lat, srid, boundary_table):
+    def get_list_services_for_point(self, location: Point, boundary_table):
         """
         Executes a contains query for a point.
 
-        :param long: The x coordinate of the point.
-        :type long: `float`
-        :param lat: The y coordinate of the point.
-        :type lat: `float`
-        :param srid: The spatial reference Id of the point.
-        :type srid: `str`
+        :param location: location object
+        :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_list_service_for_point(long, lat, srid, boundary_table, self._engine)
+        return spatialdb.get_list_service_for_point(location, boundary_table, self._engine)
 
     def get_intersecting_list_service_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area=False,
                                                  return_shape=False, proximity_search=False, proximity_buffer=0):
