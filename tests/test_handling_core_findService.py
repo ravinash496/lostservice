@@ -16,7 +16,8 @@ class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
-    def test_handle_point(self, mock_outer, mock_cov):
+    @patch('lostservice.defaultroutes.defaultroutehandler.DefaultRouteHandler')
+    def test_handle_point(self, mock_outer, mock_cov, mock_def_route):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_point = MagicMock()
@@ -27,7 +28,7 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
@@ -44,7 +45,8 @@ class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
-    def test_handle_circle(self, mock_outer, mock_cov):
+    @patch('lostservice.defaultroutes.defaultroutehandler.DefaultRouteHandler')
+    def test_handle_circle(self, mock_outer, mock_cov, mock_def_route):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_circle = MagicMock()
@@ -54,7 +56,7 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
@@ -71,7 +73,8 @@ class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
-    def test_handle_ellipse(self, mock_outer, mock_cov):
+    @patch('lostservice.defaultroutes.defaultroutehandler.DefaultRouteHandler')
+    def test_handle_ellipse(self, mock_outer, mock_cov, mock_def_route):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_ellipse = MagicMock()
@@ -81,7 +84,7 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
@@ -98,7 +101,8 @@ class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
-    def test_handle_arcband(self, mock_outer, mock_cov):
+    @patch('lostservice.defaultroutes.defaultroutehandler.DefaultRouteHandler')
+    def test_handle_arcband(self, mock_outer, mock_cov, mock_def_route):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_arcband = MagicMock()
@@ -108,7 +112,7 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
@@ -125,7 +129,8 @@ class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
-    def test_handle_polygon(self, mock_outer, mock_cov):
+    @patch('lostservice.defaultroutes.defaultroutehandler.DefaultRouteHandler')
+    def test_handle_polygon(self, mock_outer, mock_cov, mock_def_route):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_polygon = MagicMock()
@@ -135,7 +140,7 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
@@ -152,7 +157,8 @@ class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
-    def test_handle_failure(self, mock_outer, mock_cov):
+    @patch('lostservice.defaultroutes.defaultroutehandler.DefaultRouteHandler')
+    def test_handle_failure(self, mock_outer, mock_cov, mock_def_route):
 
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_polygon = MagicMock()
@@ -160,7 +166,7 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
-        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov)
+        target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()

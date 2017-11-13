@@ -24,6 +24,8 @@ from lostservice.model.geodetic import Polygon
 from lostservice.model.civic import CivicAddress
 import lostservice.coverage.resolver as cov
 from lostservice.configuration import general_logger
+from lostservice.exception import NotFoundException
+import lostservice.defaultroutes.defaultroutehandler as def_routes
 
 logger = general_logger()
 
@@ -86,7 +88,7 @@ class FindServiceHandler(Handler):
     """
 
     @inject
-    def __init__(self, outer: FindServiceOuter, cov_resolver: cov.CoverageResolverWrapper):
+    def __init__(self, outer: FindServiceOuter, cov_resolver: cov.CoverageResolverWrapper, default_route_handler: def_routes.DefaultRouteHandler):
         """
         Constructor
 
@@ -98,6 +100,7 @@ class FindServiceHandler(Handler):
         # TODO - clean this up since handlers shouldn't have direct references to config or the db any more.
         super(FindServiceHandler, self).__init__(None, None, cov_resolver=cov_resolver)
         self._outer = outer
+        self._default_route_handler = default_route_handler
 
     def handle_request(self, request, context):
 
@@ -117,23 +120,31 @@ class FindServiceHandler(Handler):
         except Exception:
             raise
 
-        response = None
-        if type(request.location.location) is Point:
-            response = self._outer.find_service_for_point(request)
-        elif type(request.location.location) is Circle:
-            response = self._outer.find_service_for_circle(request)
-        elif type(request.location.location) is Ellipse:
-            response = self._outer.find_service_for_ellipse(request)
-        elif type(request.location.location) is Arcband:
-            response = self._outer.find_service_for_arcband(request)
-        elif type(request.location.location) is Polygon:
-            response = self._outer.find_service_for_polygon(request)
-        elif type(request.location.location) is CivicAddress:
-            response = self._outer.find_service_for_civicaddress(request)
-        else:
-            logger.error('Invalid location type.')
-            raise BadRequestException('Invalid location type.')
-
+        try:
+            response = None
+            if type(request.location.location) is Point:
+                response = self._outer.find_service_for_point(request)
+            elif type(request.location.location) is Circle:
+                response = self._outer.find_service_for_circle(request)
+            elif type(request.location.location) is Ellipse:
+                response = self._outer.find_service_for_ellipse(request)
+            elif type(request.location.location) is Arcband:
+                response = self._outer.find_service_for_arcband(request)
+            elif type(request.location.location) is Polygon:
+                response = self._outer.find_service_for_polygon(request)
+            elif type(request.location.location) is CivicAddress:
+                response = self._outer.find_service_for_civicaddress(request)
+            else:
+                logger.error('Invalid location type.')
+                raise BadRequestException('Invalid location type.')
+        except NotFoundException:
+            if type(request.location.location) is CivicAddress:
+                # check if default route exists, if not raise the same exception
+                mapping = self._default_route_handler.check_default_route(request)
+                # build the response with this mapping
+                response = self._outer._build_response(request.path, request.location.id, mapping, request.nonlostdata)
+            else:
+                raise
         return response
 
 
