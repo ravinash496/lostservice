@@ -310,7 +310,7 @@ class FindServiceConfigWrapper(object):
 
         :return:  `` bool``
         """
-        fuzzy = self._config.get('Service', 'use_fuzzy_match', as_object=False, required=False)
+        fuzzy = self._config.get('Service', 'use_fuzzy_match', as_object=True, required=False)
         if fuzzy is None:
             fuzzy = True
         return fuzzy
