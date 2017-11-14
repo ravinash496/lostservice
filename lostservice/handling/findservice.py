@@ -514,7 +514,7 @@ class FindServiceInner(object):
             civic_point = locator_results[0]  # We will always use the first result from civvy for our find service.
             # We want an exact match from our civic address query
             # or if fuzzy matching is on, we are within the score tolerance.
-            if civic_point.score == 0.0 or (civic_point <= self._find_service_config.find_civic_address_maximum_score()
+            if civic_point.score == 0.0 or (civic_point.score <= self._find_service_config.find_civic_address_maximum_score()
                                           and use_fuzzy):
                 civvy_geometry = civic_point.geometry
                 spatial_reference = civvy_geometry.GetSpatialReference()
