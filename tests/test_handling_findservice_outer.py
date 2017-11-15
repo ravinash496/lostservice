@@ -83,11 +83,7 @@ class FindServiceOuterTest(unittest.TestCase):
             actual = target.find_service_for_circle(model)
             mock_inner.find_service_for_circle.assert_called_once()
             mock_inner.find_service_for_circle.assert_called_with(model.service,
-                                                                  model.location.location.longitude,
-                                                                  model.location.location.latitude,
-                                                                  model.location.location.spatial_ref,
-                                                                  float(model.location.location.radius),
-                                                                  model.location.location.uom,
+                                                                  model.location.location,
                                                                   True)
 
             self.assertListEqual(actual.path, ['path.one', 'foo'])

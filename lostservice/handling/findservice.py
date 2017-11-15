@@ -613,27 +613,15 @@ class FindServiceInner(object):
 
     def find_service_for_circle(self,
                                 service_urn,
-                                longitude,
-                                latitude,
-                                spatial_ref,
-                                radius,
-                                radius_uom,
+                                location,
                                 return_shape=False):
         """
         Find services for the given circle.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param longitude: Longitude of the center of the circle to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the circle to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the center of the circle to search.
-        :type spatial_ref: ``str``
-        :param radius: The radius of the circle to search.
-        :type radius: ``float``
-        :param radius_uom: Unit of measure for the radius.
-        :type radius_uom: ``str``
+        :param location: Geoditic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given circle.
@@ -642,7 +630,11 @@ class FindServiceInner(object):
 
         if self._find_service_config.polygon_search_mode_policy() is PolygonSearchModePolicyEnum.SearchUsingCentroid:
             # search using a centroid.
-            return self.find_service_for_point(service_urn, longitude, latitude, spatial_ref, return_shape)
+            location_point = Point()
+            location_point.longitude = location.longitude
+            location_point.latitude = location.latitude
+            location_point.spatial_ref = location.spatial_ref
+            return self.find_service_for_point(service_urn, location_point, return_shape)
         else:
             ADD_DATA_REQUESTED = False
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
@@ -659,11 +651,7 @@ class FindServiceInner(object):
             results=[]
             if ADD_DATA_REQUESTED:
                 results = self._db_wrapper.get_additional_data_for_circle(
-                    longitude,
-                    latitude,
-                    spatial_ref,
-                    radius,
-                    radius_uom,
+                    location,
                     esb_table,
                     buffer_distance)
                 results = self._apply_addtionaldata_multiple_match_policy(results)
@@ -671,20 +659,12 @@ class FindServiceInner(object):
                     results = [{'adddatauri':''}]
             else:
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                    longitude,
-                    latitude,
-                    spatial_ref,
-                    radius,
-                    radius_uom, esb_table, return_area, return_shape)
+                    location, esb_table, return_area, return_shape)
 
                 if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
                     proximity_buffer = self._find_service_config.expanded_search_buffer()
                     results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                        longitude,
-                        latitude,
-                        spatial_ref,
-                        radius,
-                        radius_uom,
+                        location,
                         esb_table,
                         return_area,
                         return_shape,
@@ -1175,11 +1155,7 @@ class FindServiceOuter(object):
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_circle(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.radius),
-            request.location.location.uom,
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,
