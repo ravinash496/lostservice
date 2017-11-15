@@ -201,7 +201,7 @@ class ListServiceByLocationInner(object):
 
         return mappings
 
-    def list_services_by_location_for_circle(self, service, longitude, latitude, spatial_ref, radius, radius_uom,):
+    def list_services_by_location_for_circle(self, service, location):
         """
         List services for the given circle.
 
@@ -224,12 +224,12 @@ class ListServiceByLocationInner(object):
         """
         if service is not None:
             esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
-            result = self._db_wrapper.get_intersecting_list_service_for_circle(longitude, latitude, spatial_ref, radius, radius_uom, esb_table)
+            result = self._db_wrapper.get_intersecting_list_service_for_circle(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
         elif service is None:
             esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
-            result = self._db_wrapper.get_intersecting_list_service_for_circle(longitude, latitude, spatial_ref, radius, radius_uom, esb_table)
+            result = self._db_wrapper.get_intersecting_list_service_for_circle(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
@@ -382,11 +382,7 @@ class ListServiceBylocationOuter(object):
         self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_circle(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.radius),
-            request.location.location.uom)
+            request.location.location)
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
     def list_services_by_location_for_ellipse(self, request):

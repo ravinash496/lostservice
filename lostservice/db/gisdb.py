@@ -15,6 +15,7 @@ from lostservice.configuration import Configuration
 import lostservice.db.spatial as spatialdb
 import lostservice.db.utilities as dbutilities
 from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Circle
 
 
 class GisDbInterface(object):
@@ -69,27 +70,19 @@ class GisDbInterface(object):
         """
         return spatialdb.get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_table, self._engine)
 
-    def get_intersecting_boundaries_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area = False, return_shape = False, proximity_search = False, proximity_buffer = 0):
+    def get_intersecting_boundaries_for_circle(self, location: Circle, boundary_table, return_area = False, return_shape = False, proximity_search = False, proximity_buffer = 0):
         """
         Executes an intersection query for a circle.
 
-        :param long: The long coordinate of the center.
-        :type long: `float`
-        :param lat: The y coordinate of the center.
-        :type y: `float`
-        :param srid: The spatial reference id of the center point.
-        :type srid: `str`
-        :param radius: The radius of the circle.
-        :type radius: `float`
-        :param uom: The unit of measure of the radius.
-        :type uom: `str`
+        :param location: geoditic location object for Circle.
+        :type location: `geoditic location object`
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :param return_area: Flag which triggers an area calculation on the Intersecting polygons
         :type boundary_table: `bool`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, self._engine, return_area, return_shape, proximity_search, proximity_buffer)
+        return spatialdb.get_intersecting_boundaries_for_circle(location, boundary_table, self._engine, return_area, return_shape, proximity_search, proximity_buffer)
 
     def get_containing_boundary_for_polygon(self, points, srid, boundary_table):
         """
@@ -155,28 +148,20 @@ class GisDbInterface(object):
         """
         return spatialdb.get_list_service_for_point(location, boundary_table, self._engine)
 
-    def get_intersecting_list_service_for_circle(self, long, lat, srid, radius, uom, boundary_table, return_area=False,
+    def get_intersecting_list_service_for_circle(self, location: Circle, boundary_table, return_area=False,
                                                  return_shape=False, proximity_search=False, proximity_buffer=0):
         """
         Executes an intersection query for a circle.
 
-        :param long: The long coordinate of the center.
-        :type long: `float`
-        :param lat: The y coordinate of the center.
-        :type y: `float`
-        :param srid: The spatial reference id of the center point.
-        :type srid: `str`
-        :param radius: The radius of the circle.
-        :type radius: `float`
-        :param uom: The unit of measure of the radius.
-        :type uom: `str`
+        :param location: geoditic location object for Circle.
+        :type location: `geoditic location object`
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :param return_area: Flag which triggers an area calculation on the Intersecting polygons
         :type boundary_table: `bool`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boundary_table,
+        return spatialdb.get_intersecting_list_services_for_circle(location, boundary_table,
                                                                    self._engine, return_area, return_shape,
                                                                    proximity_search, proximity_buffer)
 
@@ -212,6 +197,6 @@ class GisDbInterface(object):
         return spatialdb.get_intersecting_list_service_for_polygon(points, srid, boundary_table, self._engine, False,
                                                                    proximity_search, proximity_buffer)
 
-    def get_additional_data_for_circle(self, long, lat, srid, radius, uom, boundary_table, buffer_distance):
-        return spatialdb.get_additional_data_for_circle(long, lat, srid, radius, uom, boundary_table, buffer_distance, self._engine)
+    def get_additional_data_for_circle(self, location: Circle, boundary_table, buffer_distance):
+        return spatialdb.get_additional_data_for_circle(location, boundary_table, buffer_distance, self._engine)
 

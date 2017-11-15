@@ -26,6 +26,7 @@ import lostservice.geometry as gc_geom
 from lostservice.exception import InternalErrorException
 from lostservice.configuration import general_logger
 from lostservice.model.geodetic import Point as geodetic_point
+from lostservice.model.geodetic import Circle
 logger = general_logger()
 
 
@@ -212,13 +213,13 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
     return None
 
 
-def get_additional_data_for_circle(long, lat, srid, radius, uom, table_name, buffer_distance, engine):
+def get_additional_data_for_circle(location: Circle, table_name, buffer_distance, engine):
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    trimmed_srid = int(location.spatial_ref.split('::')[1])
+    long, lat = gc_geom.reproject_point(location.longitude, location.latitude, trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
+    wkb_circle = location.to_wkbelement(project_to=4326)
     utmsrid = gc_geom.getutmsrid(long, lat)
 
     results = _get_additional_data_for_geometry(engine, wkb_circle, table_name)
@@ -433,22 +434,14 @@ def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_ta
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
 
 
-def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, engine,
+def get_intersecting_boundaries_for_circle(location: Circle, boundary_table, engine,
                                            return_intersection_area=False, return_shape=False,
                                            proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
-    :param long: The long coordinate of the center.
-    :type long: `float`
-    :param lat: The y coordinate of the center.
-    :type lat: `float`
-    :param srid: The spatial reference id of the center point.
-    :type srid: `str`
-    :param radius: The radius of the circle.
-    :type radius: `float`
-    :param uom: The unit of measure of the radius.
-    :type uom: `str`
+    :param location: geoditic location object for Circle.
+    :type location: `geoditic location object`
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -460,17 +453,15 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat,
-                                        trimmed_srid, 4326)
+
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
+    wkb_circle = location.to_wkbelement(project_to=4326)
 
     # Now execute the query.
     if return_shape == True:
         if proximity_search == True:
-            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
+            return get_intersecting_boundaries_with_buffer(location.longitude, location.latitude, engine, boundary_table, wkb_circle,
                                                            proximity_buffer, return_intersection_area)
         else:
             # Call Overload to return the GML representation of the shape
@@ -479,7 +470,7 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
                                                                return_intersection_area)
     else:
         if proximity_search == True:
-            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
+            return get_intersecting_boundaries_with_buffer(location.longitude, location.latitude, engine, boundary_table, wkb_circle,
                                                            proximity_buffer, return_intersection_area)
         else:
             return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
@@ -869,20 +860,12 @@ def get_list_service_for_point(point: geodetic_point, boundary_table, engine):
     return (_get_list_service_for_geom(engine, i, wkb_pt) for i in boundary_table)
 
 
-def get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
+def get_intersecting_list_services_for_circle(location: Circle, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
-    :param long: The long coordinate of the center.
-    :type long: `float`
-    :param lat: The y coordinate of the center.
-    :type lat: `float`
-    :param srid: The spatial reference id of the center point.
-    :type srid: `str`
-    :param radius: The radius of the circle.
-    :type radius: `float`
-    :param uom: The unit of measure of the radius.
-    :type uom: `str`
+    :param location: geoditic location object for Circle.
+    :type location: `geoditic location object`
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -894,12 +877,8 @@ def get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boun
     :return: A list of dictionaries containing the contents of returned rows.
     """
 
-    # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
-
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
+    wkb_circle = location.to_wkbelement(project_to=4326)
 
     # Now execute the query.
 
