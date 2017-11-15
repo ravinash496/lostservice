@@ -1353,7 +1353,7 @@ class FindServiceOuter(object):
 
         resp_mapping.last_updated = mapping.get('updatedate','')
         resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
-        resp_mapping.source_id = mapping.get('gcunqid',"")
+        resp_mapping.source_id = mapping.get('srcunqid',"")
 
         return resp_mapping
 
