@@ -208,16 +208,8 @@ class ListServiceByLocationInner(object):
 
         :param service: The identifier for the service to look up.
         :type service: ``str``
-        :param longitude: Longitude of the center of the circle to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the circle to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the center of the circle to search.
-        :type spatial_ref: ``str``
-        :param radius: The radius of the circle to search.
-        :type radius: ``float``
-        :param radius_uom: Unit of measure for the radius.
-        :type radius_uom: ``str``
+        :param location: location object.
+        :type location: `location object`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given circle.
@@ -375,7 +367,7 @@ class ListServiceBylocationOuter(object):
         """
         List service for a circle.
 
-        :param request:  A ListService request object with a point location.
+        :param request:  A ListService request object with a circle location.
         :type request :py:class:`lostservice.model.requests.ListServiceRequest`
         :return: A ListService response.
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
