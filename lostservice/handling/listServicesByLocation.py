@@ -85,7 +85,7 @@ class ListServiceByLocationInner(object):
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
 
-    def list_services_by_location_for_point(self, service, location, return_shape=False):
+    def list_services_by_location_for_point(self, service, location):
         """
         List services for the given point.
 
@@ -109,7 +109,7 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def list_services_by_location_for_civicaddress(self, civic_request, return_shape=False):
+    def list_services_by_location_for_civicaddress(self, civic_request):
         from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
         from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
         from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
@@ -195,9 +195,7 @@ class ListServiceByLocationInner(object):
                 point.spatial_ref = spatial_ref
                 mappings = self.list_services_by_location_for_point(
                     civic_request.service,
-                    point,
-                    return_shape=return_shape
-                )
+                    point)
 
         return mappings
 
