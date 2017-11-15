@@ -20,6 +20,7 @@ from lxml import etree
 from shapely.geometry import Polygon
 import json
 from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Circle
 
 
 class ListServiceBYLocationConfigWrapper(object):

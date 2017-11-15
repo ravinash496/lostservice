@@ -26,7 +26,7 @@ import lostservice.geometry as gc_geom
 from lostservice.exception import InternalErrorException
 from lostservice.configuration import general_logger
 from lostservice.model.geodetic import Point as geodetic_point
-from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Circle as geodetic_circle
 logger = general_logger()
 
 
@@ -213,7 +213,7 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
     return None
 
 
-def get_additional_data_for_circle(location: Circle, table_name, buffer_distance, engine):
+def get_additional_data_for_circle(location: geodetic_circle, table_name, buffer_distance, engine):
     # Pull out just the number from the SRID
     trimmed_srid = int(location.spatial_ref.split('::')[1])
     long, lat = gc_geom.reproject_point(location.longitude, location.latitude, trimmed_srid, 4326)
@@ -434,14 +434,14 @@ def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_ta
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
 
 
-def get_intersecting_boundaries_for_circle(location: Circle, boundary_table, engine,
+def get_intersecting_boundaries_for_circle(location: geodetic_circle, boundary_table, engine,
                                            return_intersection_area=False, return_shape=False,
                                            proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
-    :param location: geoditic location object for Circle.
-    :type location: `geoditic location object`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -860,12 +860,12 @@ def get_list_service_for_point(point: geodetic_point, boundary_table, engine):
     return (_get_list_service_for_geom(engine, i, wkb_pt) for i in boundary_table)
 
 
-def get_intersecting_list_services_for_circle(location: Circle, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
+def get_intersecting_list_services_for_circle(location: geodetic_circle, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
-    :param location: geoditic location object for Circle.
-    :type location: `geoditic location object`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.

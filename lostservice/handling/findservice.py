@@ -26,6 +26,7 @@ from civvy.db.postgis.query import PgQueryExecutor
 
 logger = general_logger()
 from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Circle
 
 
 class ServiceExpiresPolicyEnum(Enum):

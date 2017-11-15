@@ -74,8 +74,8 @@ class GisDbInterface(object):
         """
         Executes an intersection query for a circle.
 
-        :param location: geoditic location object for Circle.
-        :type location: `geoditic location object`
+        :param location: location object
+        :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :param return_area: Flag which triggers an area calculation on the Intersecting polygons
@@ -153,8 +153,8 @@ class GisDbInterface(object):
         """
         Executes an intersection query for a circle.
 
-        :param location: geoditic location object for Circle.
-        :type location: `geoditic location object`
+        :param location: location object
+        :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :param return_area: Flag which triggers an area calculation on the Intersecting polygons
