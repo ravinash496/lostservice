@@ -130,12 +130,7 @@ class FindServiceOuterTest(unittest.TestCase):
             actual = target.find_service_for_ellipse(model)
             mock_inner.find_service_for_ellipse.assert_called_once()
             mock_inner.find_service_for_ellipse.assert_called_with(model.service,
-                                                                   model.location.location.longitude,
-                                                                   model.location.location.latitude,
-                                                                   model.location.location.spatial_ref,
-                                                                   float(model.location.location.majorAxis),
-                                                                   float(model.location.location.minorAxis),
-                                                                   float(model.location.location.orientation),
+                                                                   model.location.location,
                                                                    True)
 
             self.assertListEqual(actual.path, ['foo'])

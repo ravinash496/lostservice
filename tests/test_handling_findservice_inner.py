@@ -13,6 +13,7 @@ import lostservice.model.location
 import lostservice.exception
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
 
 class FindServiceInnerTest(unittest.TestCase):
 
@@ -665,12 +666,19 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_polygon_multiple_match_policy.return_value = test_data
         target._apply_policies = MagicMock()
         target._apply_policies.return_value = test_data
+        ellipse = Ellipse()
+        ellipse.longitude=0.0
+        ellipse.latitude=1.1
+        ellipse.spatial_ref='something::4326'
+        ellipse.majorAxis=20.0
+        ellipse.minorAxis=10.0
+        ellipse.orientation=90.0
 
-        actual = target.find_service_for_ellipse('urn1', 0.0, 1.1, 'something', 20.0, 10.0, 90.0, False)
+        actual = target.find_service_for_ellipse('urn1',ellipse, False)
 
         self.assertListEqual(actual, test_data)
         mock_config.polygon_multiple_match_policy.assert_not_called()
-        mock_db.get_intersecting_boundary_for_ellipse.assert_called_with(0.0, 1.1, 'something', 20, 10, 90,
+        mock_db.get_intersecting_boundary_for_ellipse.assert_called_with(ellipse,
                                                                           'service1')
         mock_db.get_intersecting_boundary_for_ellipse.assert_called_once()
         target._apply_polygon_multiple_match_policy.assert_called_with(test_data)
@@ -702,7 +710,15 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_policies = MagicMock()
         target._apply_policies.return_value = test_data
 
-        actual = target.find_service_for_ellipse('urn1', 0.0, 1.1, 'something', 20.0, 10.0, 90.0, False)
+        ellipse = Ellipse()
+        ellipse.longitude = 0.0
+        ellipse.latitude = 1.1
+        ellipse.spatial_ref = 'something::4326'
+        ellipse.majorAxis = 20.0
+        ellipse.minorAxis = 10.0
+        ellipse.orientation = 90.0
+
+        actual = target.find_service_for_ellipse('urn1',ellipse, False)
 
         self.assertListEqual(actual, test_data)
         mock_config.polygon_multiple_match_policy.assert_not_called()
@@ -710,8 +726,8 @@ class FindServiceInnerTest(unittest.TestCase):
         mock_config.expanded_search_buffer.assert_called_once()
 
         calls = [
-            call(0.0, 1.1, 'something', 20.0, 10.0, 90.0, 'service1'),
-            call(0.0, 1.1, 'something', 30.0, 20.0, 90.0, 'service1')
+            call(ellipse, 'service1'),
+            call(ellipse, 'service1')
         ]
 
         mock_db.get_intersecting_boundary_for_ellipse.assert_has_calls(calls, any_order=False)
