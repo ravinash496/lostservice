@@ -25,7 +25,7 @@ before_script:
 - chmod +x ./run_newman_tests.sh
 script:
 - pytest --cov=lostservice ./tests/test_*
-- "./lostservice_deploy.sh"
+- ./lostservice_deploy.sh
 install:
 - pip install -r requirements.txt --extra-index-url $GEMFURY_URL
 - pip install coverage
