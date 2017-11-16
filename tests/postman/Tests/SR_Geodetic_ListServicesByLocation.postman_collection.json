@@ -1,10 +1,8 @@
 {
-	"variables": [],
 	"info": {
 		"name": "SR_Geodetic_ListServicesByLocation",
-		"_postman_id": "d4f0a5ab-0e19-c9ce-246c-805e2ef33327",
-		"description": "",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+		"_postman_id": "d4ff420a-a637-a7c2-017f-a5446d9ffa90",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -15,12 +13,12 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[data.Type] = true === true;",
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
 							"var jsonObject = xml2Json(responseBody);",
 							"var ServiceList = jsonObject.listServicesByLocationResponse.serviceList;",
 							"",
-							"tests[\"Service List: \" + ServiceList] = ServiceList === data.Expected_ServiceList;",
+							"tests[\"Service List: \" + ServiceList] = ServiceList == data.Expected_ServiceList;",
 							""
 						]
 					}
@@ -74,18 +72,22 @@
 				}
 			],
 			"request": {
-				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/xml",
-						"description": ""
+						"value": "application/x-www-form-urlencoded"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": "{{Body}}\r\n\r\n"
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
 				},
 				"description": "This is the Root API Request"
 			},
