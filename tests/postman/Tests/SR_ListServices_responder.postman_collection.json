@@ -1,7 +1,7 @@
 {
 	"variables": [],
 	"info": {
-		"name": "SR_ListServices",
+		"name": "SR_ListServices_responder",
 		"_postman_id": "70c15b96-29ef-66d1-63d3-287ec2c1186b",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
