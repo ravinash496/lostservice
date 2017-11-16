@@ -132,9 +132,26 @@ class GisDbInterface(object):
         return spatialdb.get_boundaries_for_previous_id(pid, self._engine, boundary_table)
 
     def get_intersecting_boundary_for_ellipse(self, location: Ellipse, boundary_table):
+        """
+        Executes an intersection query for a ellipse.
+
+        :param location: location object
+        :type location: :py:class:Geodetic2D
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str`
+        :return: A list of dictionaries containing the contents of returned rows.
+        """
         return spatialdb.get_intersecting_boundary_for_ellipse(location, boundary_table, self._engine)
 
     def get_additional_data_for_ellipse(self,location: Ellipse, boundary_table, buffer_distance):
+        """
+        Executes an intersection query for a ellipse.
+        :param location: location object
+        :type location: :py:class:Geodetic2D
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str`
+        :return: A list of dictionaries containing the contents of returned rows.
+        """
         return spatialdb.get_additional_data_for_ellipse(location, buffer_distance, boundary_table, self._engine)
 
     def get_list_services_for_point(self, location: Point, boundary_table):

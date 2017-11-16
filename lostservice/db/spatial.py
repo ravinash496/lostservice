@@ -215,6 +215,17 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
 
 
 def get_additional_data_for_circle(location: geodetic_circle, table_name, buffer_distance, engine):
+    """
+    Executes an intersection query for a circle.
+
+    :param location: location object
+    :type location: :py:class:Geodetic2D
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+        """
     # Pull out just the number from the SRID
     trimmed_srid = int(location.spatial_ref.split('::')[1])
     long, lat = gc_geom.reproject_point(location.longitude, location.latitude, trimmed_srid, 4326)
@@ -892,7 +903,18 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
             boundary_table)
 
 
-def get_list_services_for_ellipse(location, boundary_table, engine):
+def get_list_services_for_ellipse(location: geodetic_ellipse, boundary_table, engine):
+    """
+    Executes a contains query for a polygon.
+
+    :param location: location object
+    :type location: :py:class:Geodetic2D
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
 
     return (_get_list_services_for_ellipse(location, i, engine) for i in boundary_table)
 
