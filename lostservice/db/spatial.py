@@ -27,6 +27,7 @@ from lostservice.exception import InternalErrorException
 from lostservice.configuration import general_logger
 from lostservice.model.geodetic import Point as geodetic_point
 from lostservice.model.geodetic import Circle as geodetic_circle
+from lostservice.model.geodetic import Ellipse as geodetic_ellipse
 logger = general_logger()
 
 
@@ -476,22 +477,12 @@ def get_intersecting_boundaries_for_circle(location: geodetic_circle, boundary_t
             return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
 
 
-def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
+def get_intersecting_boundary_for_ellipse(location: geodetic_ellipse, boundary_table, engine):
     """
     Executes a contains query for a polygon.
 
-    :param long: longitude value .
-    :type long: `float`
-    :param lat: latitude value .
-    :type lat: `float`
-    :param srid: The spatial reference Id of the ellipse.
-    :type srid: `str`
-    :param major: The majorAxis value.
-    :type major: `int`
-    :param minor: The minorAxis value.
-    :type minor: `int`
-    :param orientation: The orientation of ellipse.
-    :type orientation: `float`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -501,14 +492,12 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
 
 
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long,lat,trimmed_srid,4326)
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
-        wkb_ellipse = _transform_ellipse(long ,lat , major, minor, orientation, 4326)
+        wkb_ellipse = location.to_wkbelement(project_to=4326)
 
         s = select(
             [
@@ -529,24 +518,12 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
     return results
 
 
-def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, buffer_distance, boundary_table, engine):
+def get_additional_data_for_ellipse(location: geodetic_ellipse, buffer_distance, boundary_table, engine):
     """
     Executes a contains query for a ellipse.
 
-    :param long: longitude value .
-    :type long: `float`
-    :param lat: latitude value .
-    :type lat: `float`
-    :param srid: The spatial reference Id of the ellipse.
-    :type srid: `str`
-    :param major: The majorAxis value.
-    :type major: `int`
-    :param minor: The minorAxis value.
-    :type minor: `int`
-    :param orientation: The orientation of ellipse.
-    :type orientation: `float`
-    :param buffer_distance: buffer distance
-    :type buffer_distance: `int`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -555,11 +532,11 @@ def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, 
     """
 
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    trimmed_srid = int(location.spatial_ref.split('::')[1])
+    long, lat = gc_geom.reproject_point(location.longitude, location.latitude, trimmed_srid, 4326)
     utmsrid = gc_geom.getutmsrid(long, lat)
 
-    wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
+    wkb_ellipse = location.to_wkbelement(project_to=4326)
     results = _get_additional_data_for_geometry(engine, wkb_ellipse, boundary_table)
     if results is None:
         results = _get_additional_data_for_geometry_with_buffer(engine, wkb_ellipse, boundary_table,
@@ -915,27 +892,17 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
             boundary_table)
 
 
-def get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
+def get_list_services_for_ellipse(location, boundary_table, engine):
 
-    return (_get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, i, engine) for i in boundary_table)
+    return (_get_list_services_for_ellipse(location, i, engine) for i in boundary_table)
 
 
-def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
+def _get_list_services_for_ellipse(location: geodetic_ellipse, boundary_table, engine):
     """
     Executes a contains query for a polygon.
 
-    :param lat: latitude value .
-    :type lat: `float`
-    :param long: longitude value .
-    :type long: `float`
-    :param srid: The spatial reference Id of the ellipse.
-    :type srid: `str`
-    :param major: The majorAxis value.
-    :type major: `int`
-    :param minor: The minorAxis value.
-    :type minor: `int`
-    :param orientation: The orientation of ellipse.
-    :type orientation: `float`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -943,14 +910,12 @@ def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, b
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
-        wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
+        wkb_ellipse = location.to_wkbelement(project_to=4326)
 
         s = select(
             [

@@ -16,6 +16,7 @@ import lostservice.db.spatial as spatialdb
 import lostservice.db.utilities as dbutilities
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
 
 
 class GisDbInterface(object):
@@ -130,11 +131,11 @@ class GisDbInterface(object):
     def get_boundaries_for_previous_id(self, pid, boundary_table):
         return spatialdb.get_boundaries_for_previous_id(pid, self._engine, boundary_table)
 
-    def get_intersecting_boundary_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table):
-        return spatialdb.get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, self._engine)
+    def get_intersecting_boundary_for_ellipse(self, location: Ellipse, boundary_table):
+        return spatialdb.get_intersecting_boundary_for_ellipse(location, boundary_table, self._engine)
 
-    def get_additional_data_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table, buffer_distance):
-        return spatialdb.get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation,buffer_distance, boundary_table, self._engine)
+    def get_additional_data_for_ellipse(self,location: Ellipse, boundary_table, buffer_distance):
+        return spatialdb.get_additional_data_for_ellipse(location, buffer_distance, boundary_table, self._engine)
 
     def get_list_services_for_point(self, location: Point, boundary_table):
         """
@@ -165,19 +166,16 @@ class GisDbInterface(object):
                                                                    self._engine, return_area, return_shape,
                                                                    proximity_search, proximity_buffer)
 
-    def get_list_services_for_ellipse(self, long, lat, srid, major, minor, orientation, boundary_table):
+    def get_list_services_for_ellipse(self, location: Ellipse, boundary_table):
         """
 
-        :param lat: 
-        :param long: 
-        :param srid: 
-        :param major: 
-        :param minor: 
-        :param orientation: 
-        :param boundary_table: 
+        :param location: location object
+        :type location: :py:class:Geodetic2D
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str`
         :return: 
         """
-        return spatialdb.get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table,
+        return spatialdb.get_list_services_for_ellipse(location, boundary_table,
                                                        self._engine, )
 
     def get_intersecting_list_service_for_polygon(self, points, srid, boundary_table, proximity_search=False,

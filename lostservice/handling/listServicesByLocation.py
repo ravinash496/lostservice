@@ -21,6 +21,7 @@ from shapely.geometry import Polygon
 import json
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
 
 
 class ListServiceBYLocationConfigWrapper(object):
@@ -223,37 +224,27 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def list_services_by_location_for_ellipse(self, service, longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation,):
+    def list_services_by_location_for_ellipse(self, service, location):
         """
         List services for the given ellipse.
 
         :param service: The identifier for the service to look up.
         :type service: ``str``
-        :param longitude: Longitude of the center of the ellipse to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the ellipse to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the center of the ellipse to search.
-        :type spatial_ref: ``str``
-        :param semi_major_axis: The length of the semi-major axis.
-        :type semi_major_axis: ``float``
-        :param semi_minor_axis: The length of the semi-minor axis.
-        :type semi_minor_axis: ``float``
-        :param orientation: The orientation of the ellipse.
-        :type orientation: ``float``
-        :param return_shape: Whether or not to return the geometries of found mappings.
-        :type return_shape: ``bool``
+        :param location: location object.
+        :type location: `location object`
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str``
         :return: The service mappings for the given ellipse.
         :rtype: ``list`` of ``dict``
         """
         if service is not None:
             esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
-            result = self._db_wrapper.get_list_services_for_ellipse(longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation, esb_table)
+            result = self._db_wrapper.get_list_services_for_ellipse(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
         elif service is None:
             esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
-            result = self._db_wrapper.get_list_services_for_ellipse(longitude, latitude, spatial_ref, semi_major_axis, semi_minor_axis, orientation, esb_table)
+            result = self._db_wrapper.get_list_services_for_ellipse(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
@@ -387,12 +378,7 @@ class ListServiceBylocationOuter(object):
         self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_ellipse(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.majorAxis),
-            float(request.location.location.minorAxis),
-            float(request.location.location.orientation))
+            request.location.location)
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
     def list_service_by_location_for_arcband(self, request):
