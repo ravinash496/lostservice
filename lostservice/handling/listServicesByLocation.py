@@ -478,7 +478,7 @@ class ListServiceBylocationOuter(object):
         resp_mapping.display_name = mapping['displayname']
         resp_mapping.route_uri = mapping['routeuri']
         resp_mapping.service_number = mapping['servicenum']
-        resp_mapping.source_id = mapping['gcunqid']
+        resp_mapping.source_id = mapping['srcunqid']
         resp_mapping.service_urn = mapping['serviceurn']
         resp_mapping.last_updated = mapping['updatedate']
         return resp_mapping

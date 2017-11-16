@@ -111,7 +111,7 @@ class DefaultRouteHandler(object):
             new_dict = {'serviceurn': request.service,
                         'routeuri': default_route_uri,
                         'displayname': '',
-                        'gcunqid': str(uuid.uuid4()),
+                        'srcunqid': str(uuid.uuid4()),
                         'servicenum': '',
                         'updatedate': str(datetime.datetime.utcnow()),
                         'default_route_used': True

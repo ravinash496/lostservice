@@ -166,8 +166,8 @@ class FindServiceInnerTest(unittest.TestCase):
             """
         parsed_output = etree.tostring(etree.fromstring(output), pretty_print=False).decode("utf-8")
 
-        input = {'gcunqid': '12345', 'wkb_geometry': '' ,'ST_AsGML_1': xml}
-        expected = {'gcunqid': '12345', 'wkb_geometry': '' ,'ST_AsGML_1': parsed_output}
+        input = {'srcunqid': '12345', 'wkb_geometry': '' ,'ST_AsGML_1': xml}
+        expected = {'srcunqid': '12345', 'wkb_geometry': '' ,'ST_AsGML_1': parsed_output}
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
 
@@ -176,15 +176,15 @@ class FindServiceInnerTest(unittest.TestCase):
         self.assertEqual(len(input.keys()), 3)
         self.assertDictEqual(input, expected)
         self.assertEqual(input['ST_AsGML_1'], expected['ST_AsGML_1'])
-        self.assertEqual(input['gcunqid'], expected['gcunqid'])
+        self.assertEqual(input['srcunqid'], expected['srcunqid'])
 
     @patch('lostservice.db.gisdb.GisDbInterface')
     def test_apply_service_boundary_policy_no_value(self, mock_db):
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
-        input = {'gcunqid': '12345'}
-        expected = {'gcunqid': '12345'}
+        input = {'srcunqid': '12345'}
+        expected = {'srcunqid': '12345'}
 
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
 
@@ -192,15 +192,15 @@ class FindServiceInnerTest(unittest.TestCase):
 
         self.assertEqual(len(input.keys()), 1)
         self.assertDictEqual(input, expected)
-        self.assertEqual(input['gcunqid'], expected['gcunqid'])
+        self.assertEqual(input['srcunqid'], expected['srcunqid'])
 
     @patch('lostservice.db.gisdb.GisDbInterface')
     def test_apply_service_boundary_policy_return_shape_false(self, mock_db):
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
-        input = {'gcunqid': '12345', 'ST_AsGML_1': 'something'}
-        expected = {'gcunqid': '12345', 'ST_AsGML_1': 'something'}
+        input = {'srcunqid': '12345', 'ST_AsGML_1': 'something'}
+        expected = {'srcunqid': '12345', 'ST_AsGML_1': 'something'}
 
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
 
@@ -209,7 +209,7 @@ class FindServiceInnerTest(unittest.TestCase):
         self.assertEqual(len(input.keys()), 2)
         self.assertDictEqual(input, expected)
         self.assertEqual(input['ST_AsGML_1'], expected['ST_AsGML_1'])
-        self.assertEqual(input['gcunqid'], expected['gcunqid'])
+        self.assertEqual(input['srcunqid'], expected['srcunqid'])
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -224,8 +224,8 @@ class FindServiceInnerTest(unittest.TestCase):
         mock_db.get_urn_table_mappings = MagicMock()
         mock_db.get_urn_table_mappings.return_value = {'urn1': 'service1', 'urn2': 'service2'}
 
-        input = [{'gcunqid': '12345', 'serviceurn': 'urn1', 'ST_AsGML_1': 'something'}]
-        expected = [{'gcunqid': '12345', 'serviceurn': 'urn1', 'ST_AsGML_1': 'something', 'expiration': 'NO-CACHE'}]
+        input = [{'srcunqid': '12345', 'serviceurn': 'urn1', 'ST_AsGML_1': 'something'}]
+        expected = [{'srcunqid': '12345', 'serviceurn': 'urn1', 'ST_AsGML_1': 'something', 'expiration': 'NO-CACHE'}]
 
         target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
 
@@ -237,7 +237,7 @@ class FindServiceInnerTest(unittest.TestCase):
         self.assertListEqual(actual, expected)
         self.assertDictEqual(actual[0], expected[0])
         self.assertEqual(actual[0]['ST_AsGML_1'], expected[0]['ST_AsGML_1'])
-        self.assertEqual(actual[0]['gcunqid'], expected[0]['gcunqid'])
+        self.assertEqual(actual[0]['srcunqid'], expected[0]['srcunqid'])
         self.assertEqual(actual[0]['expiration'], 'NO-CACHE')
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')

@@ -236,7 +236,7 @@ class FindServiceOuterTest(unittest.TestCase):
             'displayname': 'foo',
             'routeuri': 'bar',
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never'
@@ -252,7 +252,7 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.display_name, mapping['displayname'])
         self.assertEqual(actual.route_uri, mapping['routeuri'])
         self.assertEqual(actual.service_number, mapping['servicenum'])
-        self.assertEqual(actual.source_id, mapping['gcunqid'])
+        self.assertEqual(actual.source_id, mapping['srcunqid'])
         self.assertEqual(actual.service_urn, mapping['serviceurn'])
         self.assertEqual(actual.last_updated, mapping['updatedate'])
         self.assertEqual(actual.expires, mapping['expiration'])
@@ -265,7 +265,7 @@ class FindServiceOuterTest(unittest.TestCase):
             'displayname': 'foo',
             'routeuri': 'bar',
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never',
@@ -282,7 +282,7 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.display_name, mapping['displayname'])
         self.assertEqual(actual.route_uri, mapping['routeuri'])
         self.assertEqual(actual.service_number, mapping['servicenum'])
-        self.assertEqual(actual.source_id, mapping['gcunqid'])
+        self.assertEqual(actual.source_id, mapping['srcunqid'])
         self.assertEqual(actual.service_urn, mapping['serviceurn'])
         self.assertEqual(actual.last_updated, mapping['updatedate'])
         self.assertEqual(actual.expires, mapping['expiration'])
@@ -295,7 +295,7 @@ class FindServiceOuterTest(unittest.TestCase):
             'displayname': 'foo',
             'routeuri': 'bar',
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never',
@@ -312,7 +312,7 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.display_name, mapping['displayname'])
         self.assertEqual(actual.route_uri, mapping['routeuri'])
         self.assertEqual(actual.service_number, mapping['servicenum'])
-        self.assertEqual(actual.source_id, mapping['gcunqid'])
+        self.assertEqual(actual.source_id, mapping['srcunqid'])
         self.assertEqual(actual.service_urn, mapping['serviceurn'])
         self.assertEqual(actual.last_updated, mapping['updatedate'])
         self.assertEqual(actual.expires, mapping['expiration'])
@@ -329,7 +329,7 @@ class FindServiceOuterTest(unittest.TestCase):
             'displayname': 'foo',
             'routeuri': 'bar',
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never',
@@ -344,7 +344,7 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual[0].display_name, mappings[0]['displayname'])
         self.assertEqual(actual[0].route_uri, mappings[0]['routeuri'])
         self.assertEqual(actual[0].service_number, mappings[0]['servicenum'])
-        self.assertEqual(actual[0].source_id, mappings[0]['gcunqid'])
+        self.assertEqual(actual[0].source_id, mappings[0]['srcunqid'])
         self.assertEqual(actual[0].service_urn, mappings[0]['serviceurn'])
         self.assertEqual(actual[0].last_updated, mappings[0]['updatedate'])
         self.assertEqual(actual[0].expires, mappings[0]['expiration'])
@@ -371,7 +371,7 @@ class FindServiceOuterTest(unittest.TestCase):
                 'displayname': 'foo',
                 'routeuri': 'bar',
                 'servicenum': 'baz',
-                'gcunqid': '{12345}',
+                'srcunqid': '{12345}',
                 'serviceurn': 'some.service.urn',
                 'updatedate': 'whenever',
                 'expiration': 'never',
@@ -381,7 +381,7 @@ class FindServiceOuterTest(unittest.TestCase):
                 'displayname': 'a',
                 'routeuri': 'b',
                 'servicenum': 'c',
-                'gcunqid': '{9876}',
+                'srcunqid': '{9876}',
                 'serviceurn': 'some.other.service.urn',
                 'updatedate': 'later',
                 'expiration': 'before'
@@ -396,7 +396,7 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual[0].display_name, mappings[0]['displayname'])
         self.assertEqual(actual[0].route_uri, mappings[0]['routeuri'])
         self.assertEqual(actual[0].service_number, mappings[0]['servicenum'])
-        self.assertEqual(actual[0].source_id, mappings[0]['gcunqid'])
+        self.assertEqual(actual[0].source_id, mappings[0]['srcunqid'])
         self.assertEqual(actual[0].service_urn, mappings[0]['serviceurn'])
         self.assertEqual(actual[0].last_updated, mappings[0]['updatedate'])
         self.assertEqual(actual[0].expires, mappings[0]['expiration'])
@@ -406,7 +406,7 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual[1].display_name, mappings[1]['displayname'])
         self.assertEqual(actual[1].route_uri, mappings[1]['routeuri'])
         self.assertEqual(actual[1].service_number, mappings[1]['servicenum'])
-        self.assertEqual(actual[1].source_id, mappings[1]['gcunqid'])
+        self.assertEqual(actual[1].source_id, mappings[1]['srcunqid'])
         self.assertEqual(actual[1].service_urn, mappings[1]['serviceurn'])
         self.assertEqual(actual[1].last_updated, mappings[1]['updatedate'])
         self.assertEqual(actual[1].expires, mappings[1]['expiration'])
@@ -420,7 +420,7 @@ class FindServiceOuterTest(unittest.TestCase):
             'displayname': 'foo',
             'routeuri': 'bar',
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never',
@@ -439,7 +439,7 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.mappings[0].display_name, mappings[0]['displayname'])
         self.assertEqual(actual.mappings[0].route_uri, mappings[0]['routeuri'])
         self.assertEqual(actual.mappings[0].service_number, mappings[0]['servicenum'])
-        self.assertEqual(actual.mappings[0].source_id, mappings[0]['gcunqid'])
+        self.assertEqual(actual.mappings[0].source_id, mappings[0]['srcunqid'])
         self.assertEqual(actual.mappings[0].service_urn, mappings[0]['serviceurn'])
         self.assertEqual(actual.mappings[0].last_updated, mappings[0]['updatedate'])
         self.assertEqual(actual.mappings[0].expires, mappings[0]['expiration'])
@@ -459,7 +459,7 @@ class FindServiceOuterTest(unittest.TestCase):
             'displayname': 'foo',
             'routeuri': 'bar',
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never',
@@ -488,7 +488,7 @@ class FindServiceOuterTest(unittest.TestCase):
             'displayname': 'foo',
             'routeuri': 'bar',
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never',
@@ -513,7 +513,7 @@ class FindServiceOuterTest(unittest.TestCase):
 
         mappings = [{
             'servicenum': 'baz',
-            'gcunqid': '{12345}',
+            'srcunqid': '{12345}',
             'serviceurn': 'some.service.urn',
             'updatedate': 'whenever',
             'expiration': 'never',

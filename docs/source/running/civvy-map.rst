@@ -18,7 +18,7 @@ Here is our default for civvy_map:
                 },
                 "collection" : "roadcenterline",
                 "geometry" : "wkb_geometry",
-                "ref_id" : "gcunqid",
+                "ref_id" : "srcunqid",
                 "label" : ["countyl", "countyr", "predir", "pretype", "strname", "posttype", "postdir"],
                 "properties" : {
                     "country" : ["countryl", "countryr"],
@@ -56,7 +56,7 @@ Here is our default for civvy_map:
                 },
                 "collection" : "ssap",
                 "geometry" : "wkb_geometry",
-                "ref_id" : "gcunqid",
+                "ref_id" : "srcunqid",
                 "label" : ["county", "addnum", "predir", "pretype", "strname", "posttype", "postdir"],
                 "properties" : {
                     "country" : "country",
