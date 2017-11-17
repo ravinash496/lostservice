@@ -27,6 +27,9 @@ from civvy.db.postgis.query import PgQueryExecutor
 logger = general_logger()
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Ellipse
+from lostservice.model.geodetic import Polygon as geodetic_polygon
+from lostservice.model.geodetic import Arcband
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -565,7 +568,7 @@ class FindServiceInner(object):
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param location: Geoditic location object .
+        :param location: Geodetic location object .
         :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
@@ -628,8 +631,8 @@ class FindServiceInner(object):
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param location: geoditic location.
-        :type longitude: ``geoditic location object fo ellipse``
+        :param location: Geodetic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given ellipse.
@@ -682,33 +685,15 @@ class FindServiceInner(object):
 
     def find_service_for_arcband(self,
                                  service_urn,
-                                 longitude,
-                                 latitude,
-                                 spatial_ref,
-                                 start_angle,
-                                 opening_angle,
-                                 inner_radius,
-                                 outer_radius,
+                                 location,
                                  return_shape=False):
         """
         Find services for the given arcband.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param longitude: Longitude of the center of the arcband to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the arcband to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the arcband to search.
-        :type spatial_ref: ``str``
-        :param start_angle: The angle to the start of the ellipse (from north).
-        :type start_angle: ``float``
-        :param opening_angle: The sweep of the arc.
-        :type opening_angle: ``float``
-        :param inner_radius: The inner radius of the arcband.
-        :type inner_radius: ``float``
-        :param outer_radius: The outer radius of the arcband.
-        :type outer_radius: ``float``
+        :param location: Geodetic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given arcband.
@@ -717,21 +702,27 @@ class FindServiceInner(object):
 
         WGS84SPATIALREFERENCE = 'urn:ogc:def:crs:EPSG::4326'
 
-        arcband = geom.generate_arcband(longitude, latitude,
-                                        spatial_ref, start_angle, opening_angle, inner_radius, outer_radius)
+        arcband = geom.generate_arcband(location.longitude,
+                                        location.latitude,
+                                        location.spatial_ref,
+                                        location.start_angle,
+                                        location.opening_angle,
+                                        location.inner_radius,
+                                        location.outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
-        return self.find_service_for_polygon(service_urn, points, WGS84SPATIALREFERENCE, return_shape)
+        polygon = geodetic_polygon()
+        polygon.spatial_ref=WGS84SPATIALREFERENCE
+        polygon.vertices = points
+        return self.find_service_for_polygon(service_urn, polygon, return_shape)
 
-    def find_service_for_polygon(self, service_urn, points, spatial_ref, return_shape=False):
+    def find_service_for_polygon(self, service_urn, location, return_shape=False):
         """
         Find services for the given polygon.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param points: A list of vertices in (x,y) format.
-        :type points: ``list``
-        :param spatial_ref: Spatial reference of the polygon to search.
-        :type spatial_ref: ``str``
+        :param location: Geodetic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given polygon.
@@ -739,13 +730,18 @@ class FindServiceInner(object):
         """
         if self._find_service_config.polygon_search_mode_policy() is PolygonSearchModePolicyEnum.SearchUsingCentroid:
             # search using a centroid.
-            ref_polygon = Polygon(points)
+            ref_polygon = Polygon(location.vertices)
             pt_array = ref_polygon.centroid
+            point = Point()
+            point.longitude = pt_array.x
+            point.latitude = pt_array.y
+            point.spatial_ref=location.spatial_ref
+
 
             if pt_array is None:
                 return None
 
-            return self.find_service_for_point(service_urn, pt_array.x, pt_array.y, spatial_ref, return_shape)
+            return self.find_service_for_point(service_urn, point, return_shape)
         else:
             ADD_DATA_REQUESTED = False
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
@@ -757,20 +753,19 @@ class FindServiceInner(object):
                 esb_table = self._get_esb_table(service_urn)
 
             if ADD_DATA_REQUESTED:
-                results = self._db_wrapper.get_additionaldata_for_polygon(points, spatial_ref, esb_table, buffer_distance)
+                results = self._db_wrapper.get_additionaldata_for_polygon(location, esb_table, buffer_distance)
                 results = self._apply_addtionaldata_multiple_match_policy(results)
                 if results is None or len(results)==0:
                     results = [{'adddatauri': ''}]
             else:
-                results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
+                results = self._db_wrapper.get_intersecting_boundaries_for_polygon(location, esb_table)
 
                 if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
                     proximity_buffer = self._find_service_config.expanded_search_buffer()
                     # No results and Policy says we should buffer and research
 
                     results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
-                        points,
-                        spatial_ref,
+                        location,
                         esb_table,
                         True,
                         proximity_buffer)
@@ -1101,13 +1096,7 @@ class FindServiceOuter(object):
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_arcband(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.start_angle),
-            float(request.location.location.opening_angle),
-            float(request.location.location.inner_radius),
-            float(request.location.location.outer_radius),
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,
@@ -1129,8 +1118,7 @@ class FindServiceOuter(object):
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_polygon(
             request.service,
-            request.location.location.vertices,
-            request.location.location.spatial_ref,
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,

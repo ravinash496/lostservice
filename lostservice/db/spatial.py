@@ -28,6 +28,8 @@ from lostservice.configuration import general_logger
 from lostservice.model.geodetic import Point as geodetic_point
 from lostservice.model.geodetic import Circle as geodetic_circle
 from lostservice.model.geodetic import Ellipse as geodetic_ellipse
+from lostservice.model.geodetic import Polygon as geodetic_polygon
+from lostservice.model.geodetic import Arcband as geodetic_arcband
 logger = general_logger()
 
 
@@ -682,14 +684,12 @@ def get_containing_boundary_for_polygon(points, srid, boundary_table, engine, pr
         return _get_containing_boundary_for_geom(engine, boundary_table, wkb_ring)
 
 
-def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine, return_intersection_area=False, proximity_search = False, proximity_buffer = 0 ):
+def get_intersecting_boundaries_for_polygon(location: geodetic_polygon, boundary_table, engine, return_intersection_area=False, proximity_search = False, proximity_buffer = 0 ):
     """
     Executes an intersection query for a polygon.
 
-    :param points: A list of vertices in (x,y) format.
-    :type points: `list`
-    :param srid: The spatial reference Id of the vertices.
-    :type srid: `str`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -699,15 +699,16 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
+    trimmed_srid = int(location.spatial_ref.split('::')[1])
 
+    points = location.vertices
     ring = LinearRing(points)
     shapely_polygon = Polygon(ring)
 
     # load up a new Shapely Polygon from the WKT and convert it to a GeoAlchemy2 WKBElement
     # that we can use to query.
     poly = loads(shapely_polygon.wkt)
-    wkb_poly = from_shape(poly, trimmed_srid)
+    wkb_poly = location.to_wkbelement(project_to=trimmed_srid)
 
     if proximity_search == True:
         return get_intersecting_boundaries_with_buffer(points[0][0], points[0][1], engine, boundary_table, wkb_poly,
@@ -716,14 +717,12 @@ def get_intersecting_boundaries_for_polygon(points, srid, boundary_table, engine
         return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_poly, return_intersection_area)
 
 
-def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_distance):
+def get_additionaldata_for_polygon(location: geodetic_polygon, boundary_table, engine, buffer_distance):
     """
 
     Executes an addtional data query for a polygon.
-    :param points: A list of vertices in (x,y) format.
-    :type points: `list`
-    :param srid: The spatial reference Id of the vertices.
-    :type srid: `str`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -733,9 +732,10 @@ def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
+    trimmed_srid = int(location.spatial_ref.split('::')[1])
 
     p= []
+    points = location.vertices
     for point in points:
         long, lat = gc_geom.reproject_point(point[0], point[1], trimmed_srid, 4326)
         p.append([long, lat])
@@ -748,7 +748,7 @@ def get_additionaldata_for_polygon(points, srid, boundary_table, engine, buffer_
     # that we can use to query.
 
     poly = loads(shapely_polygon.wkt)
-    wkb_poly = from_shape(poly, 4326)
+    wkb_poly = location.to_wkbelement(project_to=trimmed_srid)
     results = _get_additional_data_for_geometry(engine, wkb_poly, boundary_table)
     if results is None:
         results = _get_additional_data_for_geometry_with_buffer(engine, wkb_poly, boundary_table,
@@ -873,14 +873,12 @@ def get_intersecting_list_services_for_circle(location: geodetic_circle, boundar
     return (_get_intersecting_list_service_for_geom(engine, i, wkb_circle, return_intersection_area) for i in boundary_table)
 
 
-def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engine, return_intersection_area=False, proximity_search = False, proximity_buffer = 0 ):
+def get_intersecting_list_service_for_polygon(location: geodetic_polygon, boundary_table, engine, return_intersection_area=False, proximity_search = False, proximity_buffer = 0 ):
     """
     Executes an intersection query for a polygon.
 
-    :param points: A list of vertices in (x,y) format.
-    :type points: `list`
-    :param srid: The spatial reference Id of the vertices.
-    :type srid: `str`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -890,14 +888,15 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
+    trimmed_srid = int(location.spatial_ref.split('::')[1])
     p = []
+    points = location.vertices
     for point in points:
         long, lat = gc_geom.reproject_point(point[0], point[1], trimmed_srid, 4326)
         p.append([long, lat])
 
     ring = LinearRing(p)
-    wkb_ring = from_shape(ring, trimmed_srid)
+    wkb_ring = location.to_wkbelement(project_to=trimmed_srid)
 
     return (_get_intersecting_list_service_for_geom(engine, i, wkb_ring, return_intersection_area) for i in
             boundary_table)
