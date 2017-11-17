@@ -26,6 +26,8 @@ import lostservice.geometry as gc_geom
 from lostservice.exception import InternalErrorException
 from lostservice.configuration import general_logger
 from lostservice.model.geodetic import Point as geodetic_point
+from lostservice.model.geodetic import Circle as geodetic_circle
+from lostservice.model.geodetic import Ellipse as geodetic_ellipse
 logger = general_logger()
 
 
@@ -212,13 +214,24 @@ def _get_additional_data_for_geometry_with_buffer(engine, geom, table_name, buff
     return None
 
 
-def get_additional_data_for_circle(long, lat, srid, radius, uom, table_name, buffer_distance, engine):
+def get_additional_data_for_circle(location: geodetic_circle, table_name, buffer_distance, engine):
+    """
+    Executes an intersection query for a circle.
+
+    :param location: location object
+    :type location: :py:class:Geodetic2D
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+        """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    trimmed_srid = int(location.spatial_ref.split('::')[1])
+    long, lat = gc_geom.reproject_point(location.longitude, location.latitude, trimmed_srid, 4326)
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
+    wkb_circle = location.to_wkbelement(project_to=4326)
     utmsrid = gc_geom.getutmsrid(long, lat)
 
     results = _get_additional_data_for_geometry(engine, wkb_circle, table_name)
@@ -433,22 +446,14 @@ def get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_ta
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_circle)
 
 
-def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundary_table, engine,
+def get_intersecting_boundaries_for_circle(location: geodetic_circle, boundary_table, engine,
                                            return_intersection_area=False, return_shape=False,
                                            proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
-    :param long: The long coordinate of the center.
-    :type long: `float`
-    :param lat: The y coordinate of the center.
-    :type lat: `float`
-    :param srid: The spatial reference id of the center point.
-    :type srid: `str`
-    :param radius: The radius of the circle.
-    :type radius: `float`
-    :param uom: The unit of measure of the radius.
-    :type uom: `str`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -460,17 +465,15 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat,
-                                        trimmed_srid, 4326)
+
 
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
+    wkb_circle = location.to_wkbelement(project_to=4326)
 
     # Now execute the query.
     if return_shape == True:
         if proximity_search == True:
-            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
+            return get_intersecting_boundaries_with_buffer(location.longitude, location.latitude, engine, boundary_table, wkb_circle,
                                                            proximity_buffer, return_intersection_area)
         else:
             # Call Overload to return the GML representation of the shape
@@ -479,28 +482,18 @@ def get_intersecting_boundaries_for_circle(long, lat, srid, radius, uom, boundar
                                                                return_intersection_area)
     else:
         if proximity_search == True:
-            return get_intersecting_boundaries_with_buffer(long, lat, engine, boundary_table, wkb_circle,
+            return get_intersecting_boundaries_with_buffer(location.longitude, location.latitude, engine, boundary_table, wkb_circle,
                                                            proximity_buffer, return_intersection_area)
         else:
             return _get_intersecting_boundaries_for_geom(engine, boundary_table, wkb_circle, return_intersection_area)
 
 
-def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
+def get_intersecting_boundary_for_ellipse(location: geodetic_ellipse, boundary_table, engine):
     """
     Executes a contains query for a polygon.
 
-    :param long: longitude value .
-    :type long: `float`
-    :param lat: latitude value .
-    :type lat: `float`
-    :param srid: The spatial reference Id of the ellipse.
-    :type srid: `str`
-    :param major: The majorAxis value.
-    :type major: `int`
-    :param minor: The minorAxis value.
-    :type minor: `int`
-    :param orientation: The orientation of ellipse.
-    :type orientation: `float`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -510,14 +503,12 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
 
 
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long,lat,trimmed_srid,4326)
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
-        wkb_ellipse = _transform_ellipse(long ,lat , major, minor, orientation, 4326)
+        wkb_ellipse = location.to_wkbelement(project_to=4326)
 
         s = select(
             [
@@ -538,24 +529,12 @@ def get_intersecting_boundary_for_ellipse(long, lat, srid, major, minor, orienta
     return results
 
 
-def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, buffer_distance, boundary_table, engine):
+def get_additional_data_for_ellipse(location: geodetic_ellipse, buffer_distance, boundary_table, engine):
     """
     Executes a contains query for a ellipse.
 
-    :param long: longitude value .
-    :type long: `float`
-    :param lat: latitude value .
-    :type lat: `float`
-    :param srid: The spatial reference Id of the ellipse.
-    :type srid: `str`
-    :param major: The majorAxis value.
-    :type major: `int`
-    :param minor: The minorAxis value.
-    :type minor: `int`
-    :param orientation: The orientation of ellipse.
-    :type orientation: `float`
-    :param buffer_distance: buffer distance
-    :type buffer_distance: `int`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -564,11 +543,11 @@ def get_additional_data_for_ellipse(long, lat, srid, major, minor, orientation, 
     """
 
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
+    trimmed_srid = int(location.spatial_ref.split('::')[1])
+    long, lat = gc_geom.reproject_point(location.longitude, location.latitude, trimmed_srid, 4326)
     utmsrid = gc_geom.getutmsrid(long, lat)
 
-    wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
+    wkb_ellipse = location.to_wkbelement(project_to=4326)
     results = _get_additional_data_for_geometry(engine, wkb_ellipse, boundary_table)
     if results is None:
         results = _get_additional_data_for_geometry_with_buffer(engine, wkb_ellipse, boundary_table,
@@ -869,20 +848,12 @@ def get_list_service_for_point(point: geodetic_point, boundary_table, engine):
     return (_get_list_service_for_geom(engine, i, wkb_pt) for i in boundary_table)
 
 
-def get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
+def get_intersecting_list_services_for_circle(location: geodetic_circle, boundary_table, engine, return_intersection_area=False, return_shape=False, proximity_search = False, proximity_buffer = 0):
     """    
     Executes an intersection query for a circle.
 
-    :param long: The long coordinate of the center.
-    :type long: `float`
-    :param lat: The y coordinate of the center.
-    :type lat: `float`
-    :param srid: The spatial reference id of the center point.
-    :type srid: `str`
-    :param radius: The radius of the circle.
-    :type radius: `float`
-    :param uom: The unit of measure of the radius.
-    :type uom: `str`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -894,12 +865,8 @@ def get_intersecting_list_services_for_circle(long, lat, srid, radius, uom, boun
     :return: A list of dictionaries containing the contents of returned rows.
     """
 
-    # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
-
     # Get a version of the circle we can use.
-    wkb_circle = _transform_circle(long, lat, 4326, radius, uom)
+    wkb_circle = location.to_wkbelement(project_to=4326)
 
     # Now execute the query.
 
@@ -936,27 +903,28 @@ def get_intersecting_list_service_for_polygon(points, srid, boundary_table, engi
             boundary_table)
 
 
-def get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
-
-    return (_get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, i, engine) for i in boundary_table)
-
-
-def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, boundary_table, engine):
+def get_list_services_for_ellipse(location: geodetic_ellipse, boundary_table, engine):
     """
     Executes a contains query for a polygon.
 
-    :param lat: latitude value .
-    :type lat: `float`
-    :param long: longitude value .
-    :type long: `float`
-    :param srid: The spatial reference Id of the ellipse.
-    :type srid: `str`
-    :param major: The majorAxis value.
-    :type major: `int`
-    :param minor: The minorAxis value.
-    :type minor: `int`
-    :param orientation: The orientation of ellipse.
-    :type orientation: `float`
+    :param location: location object
+    :type location: :py:class:Geodetic2D
+    :param boundary_table: The name of the service boundary table.
+    :type boundary_table: `str`
+    :param engine: SQLAlchemy database engine.
+    :type engine: :py:class:`sqlalchemy.engine.Engine`
+    :return: A list of dictionaries containing the contents of returned rows.
+    """
+
+    return (_get_list_services_for_ellipse(location, i, engine) for i in boundary_table)
+
+
+def _get_list_services_for_ellipse(location: geodetic_ellipse, boundary_table, engine):
+    """
+    Executes a contains query for a polygon.
+
+    :param location: location object
+    :type location: :py:class:Geodetic2D
     :param boundary_table: The name of the service boundary table.
     :type boundary_table: `str`
     :param engine: SQLAlchemy database engine.
@@ -964,14 +932,12 @@ def _get_list_services_for_ellipse(long, lat, srid, major, minor, orientation, b
     :return: A list of dictionaries containing the contents of returned rows.
     """
     # Pull out just the number from the SRID
-    trimmed_srid = int(srid.split('::')[1])
-    long, lat = gc_geom.reproject_point(long, lat, trimmed_srid, 4326)
 
     try:
         # Get a reference to the table we're going to look in.
         tbl_metadata = MetaData(bind=engine)
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
-        wkb_ellipse = _transform_ellipse(long, lat, major, minor, orientation, 4326)
+        wkb_ellipse = location.to_wkbelement(project_to=4326)
 
         s = select(
             [
