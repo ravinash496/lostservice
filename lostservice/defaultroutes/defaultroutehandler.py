@@ -70,7 +70,6 @@ class ExistingRouteSetting(DefaultSetting):
             return matching_boundary[0]['routeuri']
 
 
-
 class DefaultRouteConfigWrapper(object):
     """
     A wrapper class for DefaultRouteHandler configuration related information.
@@ -127,13 +126,13 @@ class DefaultRouteConfigWrapper(object):
                             raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                         if setting['mode'] == 'OverrideRoute':
                             if 'uri' not in setting:
-                                err_msg = 'You must specify the uri for each item that is in \
-                                          OverrideRoute mode.'
+                                err_msg = 'You must specify the uri for each item that is in ' \
+                                'OverrideRoute mode.'
                                 raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                         elif setting['mode'] == 'ExistingRoute':
                             if 'boundaryid' not in setting:
-                                err_msg = 'You must specify the boundaryid for each item that is in \
-                                          ExistingRoute mode.'
+                                err_msg = 'You must specify the boundaryid for each item that is in ' \
+                                'ExistingRoute mode.'
                                 raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                     else:
                         # the value of each the setting is not a dictionary, that's bad
