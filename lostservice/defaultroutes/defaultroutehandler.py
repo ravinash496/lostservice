@@ -9,11 +9,66 @@ Classes to support Default Routes
 """
 from lostservice.configuration import Configuration
 from injector import inject
-from typing import Dict
 from lostservice.configuration import ConfigurationException
 from lostservice.exception import NotFoundException
 import uuid
 import datetime
+import abc
+from abc import ABC
+from enum import Enum
+from lostservice.db.gisdb import GisDbInterface
+
+
+class DefaultRouteModeEnum(Enum):
+    OverrideRoute = "OverrideRoute"
+    ExistingRoute = "ExistingRoute"
+    CivicMatchingRule = "CivicMatchingRule"
+
+
+class DefaultSetting(ABC):
+    """
+    An abstract class to wrap a default route setting retrieved from the configuration file (lostservice.ini)
+    """
+    def __init__(self, mode: str, urn: str):
+        self.mode: DefaultRouteModeEnum = mode
+        self.urn = urn
+
+    @abc.abstractmethod
+    def get_uri(self) -> str:
+        """Get the uri """
+
+
+class OverrideRouteSetting(DefaultSetting):
+    """
+    A class to wrap an override route default route setting from the config
+    """
+    def __init__(self, mode: str, urn: str, uri: str):
+        super().__init__(mode, urn)
+        self.uri = uri
+
+    def get_uri(self):
+        return self.uri
+
+
+class ExistingRouteSetting(DefaultSetting):
+    """
+    a class to wrap an existing route default setting from the config
+    """
+    def __init__(self, mode: str, urn: str, boundary_id: str, db_wrapper: GisDbInterface):
+        super().__init__(mode, urn)
+        self.boundary_id = boundary_id
+        self._db_wrapper = db_wrapper
+
+    def get_uri(self):
+
+        matching_boundary = self._db_wrapper.get_boundaries_for_previous_id(
+            self.boundary_id,
+            self._db_wrapper.get_urn_table_mappings()[self.urn])
+        if not matching_boundary:
+            return None
+        else:
+            return matching_boundary[0]['routeuri']
+
 
 
 class DefaultRouteConfigWrapper(object):
@@ -22,7 +77,7 @@ class DefaultRouteConfigWrapper(object):
 
     """
     @inject
-    def __init__(self, config: Configuration):
+    def __init__(self, config: Configuration, db_wrapper: GisDbInterface):
         """
         Constructor.
 
@@ -30,8 +85,9 @@ class DefaultRouteConfigWrapper(object):
         :type config: :py:class:`lostservice.configuration.Configuration`
         """
         self._config = config
+        self._db = db_wrapper
 
-    def settings_for_default_route(self) -> Dict or None:
+    def settings_for_default_route(self) -> [DefaultSetting] or None:
         """
         Get the default route settings
         :return:  default route settings
@@ -63,15 +119,22 @@ class DefaultRouteConfigWrapper(object):
                         else:
                             # it has the 'mode'
                             # check it it's set to a valid value
-                            if setting['mode'] != 'OverrideRoute':
+                            if setting['mode'] not in ['OverrideRoute', "ExistingRoute"]:
                                 err_msg = 'Unsupported mode: {0}'.format(setting['mode'])
                                 raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                         if 'urn' not in setting:
                             err_msg = 'You must specify the urn for each item.'
                             raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
-                        if 'uri' not in setting:
-                            err_msg = 'You must specify the uri for each item.'
-                            raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+                        if setting['mode'] == 'OverrideRoute':
+                            if 'uri' not in setting:
+                                err_msg = 'You must specify the uri for each item that is in \
+                                          OverrideRoute mode.'
+                                raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+                        elif setting['mode'] == 'ExistingRoute':
+                            if 'boundaryid' not in setting:
+                                err_msg = 'You must specify the boundaryid for each item that is in \
+                                          ExistingRoute mode.'
+                                raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                     else:
                         # the value of each the setting is not a dictionary, that's bad
                         err_msg = 'Each entry in the default_routes array must be an object.'
@@ -83,7 +146,20 @@ class DefaultRouteConfigWrapper(object):
             err_msg = 'The first object name for the default_routing_civic_policy must be default_routes.'
             raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
 
-        return settings
+        if settings is None:
+            return None
+        else:
+            default_routes = settings['default_routes']
+            default_settings: [DefaultSetting] = []
+            for setting in default_routes:
+                if setting['mode'] == DefaultRouteModeEnum.OverrideRoute.value:
+                    default_settings.append(OverrideRouteSetting(setting['mode'], setting['urn'],setting['uri']))
+                elif setting['mode'] == DefaultRouteModeEnum.ExistingRoute.value:
+                    default_settings.append(ExistingRouteSetting(setting['mode'],
+                                                                 setting['urn'],
+                                                                 setting['boundaryid'],
+                                                                 self._db))
+            return default_settings
 
 
 class DefaultRouteHandler(object):
@@ -127,14 +203,15 @@ class DefaultRouteHandler(object):
         :param service_urn:
         :return: uri or None
         """
-        # get default route policy
-        config_settings = self._default_route_config.settings_for_default_route()
-        if config_settings is None:
+        # get default route policies
+        default_routes: [DefaultSetting] = self._default_route_config.settings_for_default_route()
+        if default_routes is None:
             return None
-        default_routes = config_settings['default_routes']
+
         # get any matching configured urn's in the config, should only be 1 or 0
-        matches = [x for x in default_routes if x['urn'] == service_urn]
+        matches: [DefaultSetting] = \
+            [default_route for default_route in default_routes if default_route.urn == service_urn]
         if not matches:
             return None
         else:
-            return matches[0]['uri']
+            return matches[0].get_uri()
