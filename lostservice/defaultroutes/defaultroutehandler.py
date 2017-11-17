@@ -127,12 +127,12 @@ class DefaultRouteConfigWrapper(object):
                         if setting['mode'] == 'OverrideRoute':
                             if 'uri' not in setting:
                                 err_msg = 'You must specify the uri for each item that is in ' \
-                                'OverrideRoute mode.'
+                                    'OverrideRoute mode.'
                                 raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                         elif setting['mode'] == 'ExistingRoute':
                             if 'boundaryid' not in setting:
                                 err_msg = 'You must specify the boundaryid for each item that is in ' \
-                                'ExistingRoute mode.'
+                                    'ExistingRoute mode.'
                                 raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                     else:
                         # the value of each the setting is not a dictionary, that's bad
