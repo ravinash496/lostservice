@@ -795,7 +795,7 @@ def get_boundaries_for_previous_id(pid, engine, boundary_table):
         the_table = Table(boundary_table, tbl_metadata, autoload=True)
 
         s = select([the_table, func.ST_AsGML(3, the_table.c.wkb_geometry, 15, 16)],
-                   the_table.c.gcunqid.like(pid))
+                   the_table.c.srcunqid.like(pid))
 
         results = _execute_query(engine, s)
     except SQLAlchemyError as ex:

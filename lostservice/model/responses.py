@@ -45,7 +45,7 @@ class ResponseMapping(object):
         """
 
         :param source: the URI of the service that found the mapping (source_uri from config).
-        :param source_id: the unique id of the mapping (gcunqid).
+        :param source_id: the unique id of the mapping (srcunqid).
         :param last_updated: time of last update for the mapping (updatedate).
         :param expires: policy based expiration.
         :param display_name: the human readable name (from displayname).
@@ -201,7 +201,7 @@ class AdditionalDataResponseMapping(object):
         """
 
         :param source: The URI of the service that is found in the mapping.(source_uri from config).
-        :param source_id: The unique ID of the mapping(gcunqid).
+        :param source_id: The unique ID of the mapping(srcunqid).
         :param last_updated: Time of last update for the mapping(updatedate).
         :param expires: Policy based expiration.
         :param service_urn: The Service URN of the request. See section 5.4 of RCC 5222 for special handling.
