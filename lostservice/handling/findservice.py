@@ -26,6 +26,7 @@ from civvy.db.postgis.query import PgQueryExecutor
 
 logger = general_logger()
 from lostservice.model.geodetic import Point
+from lostservice.model.geodetic import Circle
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -557,27 +558,15 @@ class FindServiceInner(object):
 
     def find_service_for_circle(self,
                                 service_urn,
-                                longitude,
-                                latitude,
-                                spatial_ref,
-                                radius,
-                                radius_uom,
+                                location,
                                 return_shape=False):
         """
         Find services for the given circle.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param longitude: Longitude of the center of the circle to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the circle to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the center of the circle to search.
-        :type spatial_ref: ``str``
-        :param radius: The radius of the circle to search.
-        :type radius: ``float``
-        :param radius_uom: Unit of measure for the radius.
-        :type radius_uom: ``str``
+        :param location: Geoditic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given circle.
@@ -586,7 +575,11 @@ class FindServiceInner(object):
 
         if self._find_service_config.polygon_search_mode_policy() is PolygonSearchModePolicyEnum.SearchUsingCentroid:
             # search using a centroid.
-            return self.find_service_for_point(service_urn, longitude, latitude, spatial_ref, return_shape)
+            location_point = Point()
+            location_point.longitude = location.longitude
+            location_point.latitude = location.latitude
+            location_point.spatial_ref = location.spatial_ref
+            return self.find_service_for_point(service_urn, location_point, return_shape)
         else:
             ADD_DATA_REQUESTED = False
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
@@ -603,11 +596,7 @@ class FindServiceInner(object):
             results=[]
             if ADD_DATA_REQUESTED:
                 results = self._db_wrapper.get_additional_data_for_circle(
-                    longitude,
-                    latitude,
-                    spatial_ref,
-                    radius,
-                    radius_uom,
+                    location,
                     esb_table,
                     buffer_distance)
                 results = self._apply_addtionaldata_multiple_match_policy(results)
@@ -615,20 +604,12 @@ class FindServiceInner(object):
                     results = [{'adddatauri':''}]
             else:
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                    longitude,
-                    latitude,
-                    spatial_ref,
-                    radius,
-                    radius_uom, esb_table, return_area, return_shape)
+                    location, esb_table, return_area, return_shape)
 
                 if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
                     proximity_buffer = self._find_service_config.expanded_search_buffer()
                     results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                        longitude,
-                        latitude,
-                        spatial_ref,
-                        radius,
-                        radius_uom,
+                        location,
                         esb_table,
                         return_area,
                         return_shape,
@@ -640,30 +621,15 @@ class FindServiceInner(object):
 
     def find_service_for_ellipse(self,
                                  service_urn,
-                                 longitude,
-                                 latitude,
-                                 spatial_ref,
-                                 semi_major_axis,
-                                 semi_minor_axis,
-                                 orientation,
+                                 location,
                                  return_shape=False):
         """
         Find services for the given ellipse.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param longitude: Longitude of the center of the ellipse to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the ellipse to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the center of the ellipse to search.
-        :type spatial_ref: ``str``
-        :param semi_major_axis: The length of the semi-major axis.
-        :type semi_major_axis: ``float``
-        :param semi_minor_axis: The length of the semi-minor axis.
-        :type semi_minor_axis: ``float``
-        :param orientation: The orientation of the ellipse.
-        :type orientation: ``float``
+        :param location: geoditic location.
+        :type longitude: ``geoditic location object fo ellipse``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given ellipse.
@@ -674,7 +640,11 @@ class FindServiceInner(object):
 
         if self._find_service_config.polygon_search_mode_policy() is PolygonSearchModePolicyEnum.SearchUsingCentroid:
             # search using a centroid.
-            return self.find_service_for_point(service_urn, longitude, latitude, spatial_ref, return_shape)
+            point = Point()
+            point.longitude = location.longitude
+            point.latitude = location.latitude
+            point.spatial_ref = location.spatial_ref
+            return self.find_service_for_point(service_urn, point, return_shape)
         else:
             ADD_DATA_REQUESTED = False
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
@@ -687,12 +657,7 @@ class FindServiceInner(object):
 
             if ADD_DATA_REQUESTED:
                 results = self._db_wrapper.get_additional_data_for_ellipse(
-                    longitude,
-                    latitude,
-                    spatial_ref,
-                    semi_major_axis,
-                    semi_minor_axis,
-                    orientation,
+                    location,
                     esb_table,
                     buffer_distance)
                 results = self._apply_addtionaldata_multiple_match_policy(results)
@@ -700,25 +665,16 @@ class FindServiceInner(object):
                     results = [{'adddatauri': ''}]
             else:
                 results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
-                    longitude,
-                    latitude,
-                    spatial_ref,
-                    semi_major_axis,
-                    semi_minor_axis,
-                    orientation,
+                    location,
                     esb_table)
 
                 if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
                     # No results and Policy says we should buffer and research
                     proximity_buffer = self._find_service_config.expanded_search_buffer()
-
+                    location.majorAxis = location.majorAxis+proximity_buffer
+                    location.minorAxis = location.minorAxis+proximity_buffer
                     results = self._db_wrapper.get_intersecting_boundary_for_ellipse(
-                        longitude,
-                        latitude,
-                        spatial_ref,
-                        semi_major_axis + proximity_buffer,
-                        semi_minor_axis + proximity_buffer,
-                        orientation,
+                        location,
                         esb_table)
 
                 results = self._apply_polygon_multiple_match_policy(results)
@@ -1101,11 +1057,7 @@ class FindServiceOuter(object):
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_circle(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.radius),
-            request.location.location.uom,
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,
@@ -1127,12 +1079,7 @@ class FindServiceOuter(object):
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_ellipse(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.majorAxis),
-            float(request.location.location.minorAxis),
-            float(request.location.location.orientation),
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,
