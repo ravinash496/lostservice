@@ -30,19 +30,33 @@ class DefaultSetting(ABC):
     An abstract class to wrap a default route setting retrieved from the configuration file (lostservice.ini)
     """
     def __init__(self, mode: str, urn: str):
+        """
+
+        :param mode: The mode for the default setting, should be a member of  DefaultRouteModeEnum
+        :param urn: The service urn this policy applies to
+        """
         self.mode: DefaultRouteModeEnum = mode
         self.urn = urn
 
     @abc.abstractmethod
     def get_uri(self) -> str:
-        """Get the uri """
+        """
+        Get the uri
+        :return: the uri
+        """
 
 
 class OverrideRouteSetting(DefaultSetting):
     """
     A class to wrap an override route default route setting from the config
     """
+
     def __init__(self, mode: str, urn: str, uri: str):
+        """
+        :param mode: The mode for the default setting, should be a member of  DefaultRouteModeEnum
+        :param urn: The service urn this policy applies to
+        :param uri: The uri to return for this policy
+        """
         super().__init__(mode, urn)
         self.uri = uri
 
@@ -55,12 +69,22 @@ class ExistingRouteSetting(DefaultSetting):
     a class to wrap an existing route default setting from the config
     """
     def __init__(self, mode: str, urn: str, boundary_id: str, db_wrapper: GisDbInterface):
+        """
+
+        :param mode: The mode for the default setting, should be a member of  DefaultRouteModeEnum
+        :param urn:  The service urn this policy applies to
+        :param boundary_id: The id to find matching row in esb... table matches srcunqid currently
+        :param db_wrapper: the database wrapper to do the queries
+        """
         super().__init__(mode, urn)
         self.boundary_id = boundary_id
         self._db_wrapper = db_wrapper
 
     def get_uri(self):
-
+        """
+        Looks up  the uri in the database table using the boundaryid passed into the constructor
+        :return: Mone or the matching rows in the table
+        """
         matching_boundary = self._db_wrapper.get_boundaries_for_previous_id(
             self.boundary_id,
             self._db_wrapper.get_urn_table_mappings()[self.urn])
@@ -118,7 +142,7 @@ class DefaultRouteConfigWrapper(object):
                         else:
                             # it has the 'mode'
                             # check it it's set to a valid value
-                            if setting['mode'] not in ['OverrideRoute', "ExistingRoute"]:
+                            if setting['mode'] not in DefaultRouteModeEnum.__members__:
                                 err_msg = 'Unsupported mode: {0}'.format(setting['mode'])
                                 raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
                         if 'urn' not in setting:
