@@ -791,7 +791,10 @@ class FindServiceInnerTest(unittest.TestCase):
         self.assertListEqual(actual, expected)
         mock_config.polygon_search_mode_policy.assert_called_once()
         target.find_service_for_point.assert_called_once()
-        target.find_service_for_point.assert_called_with('urn1', polygon, False)
+        # target.find_service_for_point.assert_called_with('urn1', polygon, False)
+        self.assertEqual(target.find_service_for_point.call_args[0][1].latitude, point.latitude)
+        self.assertEqual(target.find_service_for_point.call_args[0][1].longitude, point.longitude)
+        self.assertEqual(target.find_service_for_point.call_args[0][1].spatial_ref, point.spatial_ref)
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
