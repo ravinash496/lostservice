@@ -14,6 +14,8 @@ import lostservice.exception
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
 from lostservice.model.geodetic import Ellipse
+from lostservice.model.geodetic import Arcband
+from lostservice.model.geodetic import Polygon
 
 class FindServiceInnerTest(unittest.TestCase):
 
@@ -747,8 +749,16 @@ class FindServiceInnerTest(unittest.TestCase):
         target = lostservice.handling.findservice.FindServiceInner(None, mock_db)
         target.find_service_for_polygon = MagicMock()
         target.find_service_for_polygon.return_value = expected
+        arcband = Arcband()
+        arcband.longitude = 0.0
+        arcband.latitude = 1.1
+        arcband.spatial_ref = 'urn:ogc:def:crs:EPSG::4326'
+        arcband.start_angle = 20.0
+        arcband.opening_angle = 90.0
+        arcband.inner_radius = 10.0
+        arcband.outer_radius = 20.0
 
-        actual = target.find_service_for_arcband('urn1', 0.0, 1.1, 'urn:ogc:def:crs:EPSG::4326', 20.0, 90.0, 10.0, 20.0, False)
+        actual = target.find_service_for_arcband('urn1', arcband, False)
 
         self.assertListEqual(actual, expected)
         target.find_service_for_polygon.assert_called_once()
@@ -770,13 +780,18 @@ class FindServiceInnerTest(unittest.TestCase):
         target.find_service_for_point.return_value = expected
 
         points = [[0, 0], [2, 0], [2, 2], [0, 2]]
+        polygon = Polygon(spatial_ref="something::4326",vertices=points)
+        point = Point()
+        point.longitude = 1.0
+        point.latitude = 1.0
+        point.spatial_ref = "something::4326"
 
-        actual = target.find_service_for_polygon('urn1', points, 'something', False)
+        actual = target.find_service_for_polygon('urn1', polygon, False)
 
         self.assertListEqual(actual, expected)
         mock_config.polygon_search_mode_policy.assert_called_once()
         target.find_service_for_point.assert_called_once()
-        target.find_service_for_point.assert_called_with('urn1', 1.0, 1.0, 'something', False)
+        target.find_service_for_point.assert_called_with('urn1', polygon, False)
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -800,12 +815,15 @@ class FindServiceInnerTest(unittest.TestCase):
 
         points = [[0, 0], [2, 0], [2, 2], [0, 2]]
 
-        actual = target.find_service_for_polygon('urn1', points, 'something', False)
+        polygon = Polygon()
+        polygon.vertices = points
+        polygon.spatial_ref = "something::4326"
+        actual = target.find_service_for_polygon('urn1', polygon, False)
 
         self.assertListEqual(actual, expected)
         mock_config.polygon_search_mode_policy.assert_called_once()
         mock_db.get_intersecting_boundaries_for_polygon.assert_called_once()
-        mock_db.get_intersecting_boundaries_for_polygon.assert_called_with(points, 'something', 'service1')
+        mock_db.get_intersecting_boundaries_for_polygon.assert_called_with(polygon, 'service1')
         target._apply_polygon_multiple_match_policy.assert_called_once()
         target._apply_polygon_multiple_match_policy.assert_called_with(expected)
         target._apply_policies.assert_called_once()
@@ -837,8 +855,11 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_policies.return_value = expected
 
         points = [[0, 0], [2, 0], [2, 2], [0, 2]]
+        polygon = Polygon()
+        polygon.vertices = points
+        polygon.spatial_ref = "something::4326"
 
-        actual = target.find_service_for_polygon('urn1', points, 'something', False)
+        actual = target.find_service_for_polygon('urn1', polygon, False)
 
         self.assertListEqual(actual, expected)
         mock_config.polygon_search_mode_policy.assert_called_once()
@@ -846,8 +867,8 @@ class FindServiceInnerTest(unittest.TestCase):
         mock_config.expanded_search_buffer.assert_called_once()
 
         calls = [
-            call(points, 'something', 'service1'),
-            call(points, 'something', 'service1', True, 10.0)
+            call(polygon, 'service1'),
+            call(polygon, 'service1', True, 10.0)
         ]
 
         mock_db.get_intersecting_boundaries_for_polygon.assert_has_calls(calls)
