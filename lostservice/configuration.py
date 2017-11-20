@@ -181,7 +181,7 @@ class Configuration(object):
         try:
             opts_union = self.get_options(section)
             found = option in opts_union
-        except ConfigurationException as ex:
+        except ConfigurationException:
             found = False
 
         try:
@@ -199,7 +199,12 @@ class Configuration(object):
         # If the caller has asked to get the value as a Python object, evaluate
         # it now.
         if as_object:
-            return eval(value)
+            try:
+                return eval(value)
+            except SyntaxError as syntax_ex:
+                raise ConfigurationException(
+                    'Error in configuration, section: {0}, option: {1}. {2}'.format(section, option, syntax_ex.msg))
+
         else:
             return value
 
@@ -214,13 +219,13 @@ class Configuration(object):
         """
         try:
             cust_opts = self._custom_config_parser.options(section)
-        except configparser.NoSectionError as noerr:
+        except configparser.NoSectionError:
             # This is okay, we just need to look in the defaults.
             cust_opts = []
 
         try:
             default_opts = self._default_config_parser.options(section)
-        except configparser.NoSectionError as noerr:
+        except configparser.NoSectionError:
             # This could still be okay, depends on above.
             default_opts = []
 
