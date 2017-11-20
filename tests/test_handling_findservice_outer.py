@@ -173,13 +173,7 @@ class FindServiceOuterTest(unittest.TestCase):
             actual = target.find_service_for_arcband(model)
             mock_inner.find_service_for_arcband.assert_called_once()
             mock_inner.find_service_for_arcband.assert_called_with(model.service,
-                                                                   model.location.location.longitude,
-                                                                   model.location.location.latitude,
-                                                                   model.location.location.spatial_ref,
-                                                                   float(model.location.location.start_angle),
-                                                                   float(model.location.location.opening_angle),
-                                                                   float(model.location.location.inner_radius),
-                                                                   float(model.location.location.outer_radius),
+                                                                   model.location.location,
                                                                    False)
 
             self.assertListEqual(actual.path, ['foo'])
@@ -217,8 +211,7 @@ class FindServiceOuterTest(unittest.TestCase):
             actual = target.find_service_for_polygon(model)
             mock_inner.find_service_for_polygon.assert_called_once()
             mock_inner.find_service_for_polygon.assert_called_with(model.service,
-                                                                   model.location.location.vertices,
-                                                                   model.location.location.spatial_ref,
+                                                                   model.location.location,
                                                                    False)
 
             self.assertListEqual(actual.path, ['foo'])
