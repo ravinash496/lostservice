@@ -1,10 +1,8 @@
 {
-	"variables": [],
 	"info": {
 		"name": "SR_AdditionalServices",
-		"_postman_id": "512eda05-8216-c3e2-1849-5b24fc2a6cd6",
-		"description": "",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+		"_postman_id": "2372d637-86b7-94da-7e32-95f869f328dd",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -15,8 +13,8 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"tests[\"Current type under test: \" + data.Type] = true === true;",
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"console.log(\"Current type under test: \" + data.Type);",
 							"var jsonObject = xml2Json(responseBody);",
 							"",
 							"var locationUsedId = jsonObject.findServiceResponse.locationUsed.$.id;",
@@ -33,11 +31,9 @@
 							"    ",
 							"    //Loop through all those messages and validate our URIs are correct.",
 							"    for (var i = 0; i < mappingElements; i++) {",
-							"        console.log(data.Expected_URI[i]);",
 							"        tests[\"Mapping URI Matches: \" + data.Expected_URI[i]] = data.Expected_URI[i] === jsonObject.findServiceResponse.mapping[i].uri;",
 							"    }",
 							"}",
-							"",
 							""
 						]
 					}
@@ -80,20 +76,31 @@
 				}
 			],
 			"request": {
-				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/xml",
-						"description": ""
+						"value": "application/xml"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": "{{Body}}\n"
 				},
-				"description": ""
+				"url": {
+					"raw": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
+					"protocol": "http",
+					"host": [
+						"ec2-52-36-126-217",
+						"us-west-2",
+						"compute",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						""
+					]
+				}
 			},
 			"response": []
 		}
