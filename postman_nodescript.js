@@ -3,6 +3,7 @@ var testBase = './tests/postman/';
 var testFilePath = testBase + 'Tests/';
 var iterationFilePath = testBase + 'PostmanData/';
 var envFilePath = testBase + 'Environments/';
+var code = 0;
 
 
 var fs = require('fs'),             // https://nodejs.org/api/fs.html
@@ -29,26 +30,28 @@ var getFiles = function () {fs.readdir(testFilePath, (err, files) => {
     files.forEach(file => {
         //Run our promise for the iterationData
         checkIterationFile(file)
+        //After our promise, create our newman instance to run the test.
         .then(function (res) {
             newman.run({
               collection: testFilePath + file,
               iterationData: res,
               reporters: 'cli',
-              timeoutRequest: 10000,
               bail: true
-        },  function (err) {
+              //Did we error?
+        }),  function (err) {
                 if (err) { 
                     throw err;
-                    console.log('i hit an error boss');
-                    process.exit
+                    console.log('How did I get here?'); 
+                    code = -1;                   
                 }
-            });
+            };
         })
         .catch(function (error) {
             console.log(error.message);
         });
     });
+    resolve(code);       
  });
 }
 
-getFiles();
+getFiles().then(process.exit(code));
