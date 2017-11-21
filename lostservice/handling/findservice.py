@@ -1193,7 +1193,7 @@ class FindServiceOuter(object):
         if self._check_fuzzy_match_used():
             xml_warning = etree.Element('warnings', attrib={'source': source_uri})
             etree.SubElement(xml_warning, 'approximateLocationUsed',
-                 attrib={'message': 'An exact match could not be found, but a point in near accuracy was used to find'
+                 attrib={'message': 'An exact match could not be found, but a point in near accuracy was used to find '
                          'the service boundary.'})
         # Did we end up with a default route?
         if self._check_using_default_route(mappings):
