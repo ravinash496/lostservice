@@ -1190,7 +1190,7 @@ class FindServiceOuter(object):
                 attr = warnings_element.attrib
                 attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
         # Did we have to use a fuzzy match instead of an exact match?
-        if self._inner.fuzzy_used:
+        if self._check_fuzzy_match_used():
             xml_warning = etree.Element('warnings', attrib={'source': source_uri})
             etree.SubElement(xml_warning, 'approximateLocationUsed',
                  attrib={'message': 'An exact match could not be found, but a point in near accuracy was used to find'
@@ -1251,6 +1251,15 @@ class FindServiceOuter(object):
                 return True
 
         return False
+    def _check_fuzzy_match_used(self) -> bool:
+        """
+        Checks to see if we used a fuzzy match
+        :rtype: ``bool``
+        """
+        if self._inner is not None:
+            return self._inner.fuzzy_used
+        else:
+            return False
 
     def _build_mapping_list(self, mappings, include_boundary_value=False) -> [ResponseMapping]:
         """
