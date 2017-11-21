@@ -1205,7 +1205,7 @@ class FindServiceOuter(object):
             etree.SubElement(xml_warning,'defaultMappingReturned',
                 attrib={'message': "Unable to determine PSAP for the given location: using default PSAP"})
         # Add all this warning stuff to our response.
-        if xml_warning:
+        if xml_warning is not None:
             nonlostdata.append((xml_warning))
 
         return nonlostdata
