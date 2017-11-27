@@ -23,10 +23,13 @@ from shapely.geometry import Polygon
 import json
 from lostservice.configuration import general_logger
 from civvy.db.postgis.query import PgQueryExecutor
+from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
+from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
+from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
 
 logger = general_logger()
 from lostservice.model.geodetic import Point
-from lostservice.model.geodetic import Circle
+from lostservice.model.geodetic import Polygon as geodetic_polygon
 
 
 class ServiceExpiresPolicyEnum(Enum):
@@ -367,6 +370,16 @@ class FindServiceInner(object):
         self._mappings = self._db_wrapper.get_urn_table_mappings()
         self._geomutil = GeometryUtility()
         self._query_executor = query_executor
+        self._fuzzy_used = False
+
+    @property
+    def fuzzy_used(self):
+        """
+        If we used the fuzzy match scoring principle or not when choosing a point for find service.
+
+        :return: ``str``
+        """
+        return self._fuzzy_used
 
     def _get_esb_table(self, service_urn):
         """
@@ -389,8 +402,8 @@ class FindServiceInner(object):
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param location: location object.
-        :type location: `location object`
+        :param geodetic_location: location object.
+        :type geodetic_location: `location object`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given point.
@@ -446,10 +459,6 @@ class FindServiceInner(object):
         :type return_shape: bool
         :return: The service mappings for the given civic address.
         """
-        from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
-        from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
-        from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
-
         # The locator needs some information about the underlying data store.
         jsons = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
 
@@ -472,7 +481,7 @@ class FindServiceInner(object):
         civic_dict = {}
         civic_dict['country'] = civvy_obj.country
         if civvy_obj.a1:
-            civic_dict['a1'] =  civvy_obj.a1
+            civic_dict['a1'] = civvy_obj.a1
         if civvy_obj.a2:
             civic_dict['a2'] = civvy_obj.a2
         if civvy_obj.a3:
@@ -511,12 +520,12 @@ class FindServiceInner(object):
         locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=rcl_offset_distance)
         mappings = None
         if len(locator_results) > 0:
-            use_fuzzy = self._find_service_config.use_fuzzy_match()
+            use_fuzzy = self._find_service_config.use_fuzzy_match()  # Do we use fuzzy matching or not.
+            max_score = self._find_service_config.find_civic_address_maximum_score()
             civic_point = locator_results[0]  # We will always use the first result from civvy for our find service.
             # We want an exact match from our civic address query
             # or if fuzzy matching is on, we are within the score tolerance.
-            if civic_point.score == 0.0 or (civic_point.score <= self._find_service_config.find_civic_address_maximum_score()
-                                          and use_fuzzy):
+            if civic_point.score == 0.0 or (civic_point.score <= max_score and use_fuzzy):
                 civvy_geometry = civic_point.geometry
                 spatial_reference = civvy_geometry.GetSpatialReference()
                 epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
@@ -550,9 +559,11 @@ class FindServiceInner(object):
             else:  # our first result score is too high, send a not found exception.
                 raise NotFoundException('The server could not find an answer to the query.', None)
 
-
         else:
             raise NotFoundException('The server could not find an answer to the query.', None)
+        # If we used a fuzzy match, we want to build a warning for it later.
+        if civic_point.score != 0.0 and (civic_point.score <= max_score and use_fuzzy):
+            self._fuzzy_used = True
 
         return mappings
 
@@ -565,7 +576,7 @@ class FindServiceInner(object):
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param location: Geoditic location object .
+        :param location: Geodetic location object .
         :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
@@ -593,7 +604,6 @@ class FindServiceInner(object):
             multiple_match_policy = self._find_service_config.polygon_multiple_match_policy()
             return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
 
-            results=[]
             if ADD_DATA_REQUESTED:
                 results = self._db_wrapper.get_additional_data_for_circle(
                     location,
@@ -628,8 +638,8 @@ class FindServiceInner(object):
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param location: geoditic location.
-        :type longitude: ``geoditic location object fo ellipse``
+        :param location: Geodetic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given ellipse.
@@ -682,33 +692,15 @@ class FindServiceInner(object):
 
     def find_service_for_arcband(self,
                                  service_urn,
-                                 longitude,
-                                 latitude,
-                                 spatial_ref,
-                                 start_angle,
-                                 opening_angle,
-                                 inner_radius,
-                                 outer_radius,
+                                 location,
                                  return_shape=False):
         """
         Find services for the given arcband.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param longitude: Longitude of the center of the arcband to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the arcband to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the arcband to search.
-        :type spatial_ref: ``str``
-        :param start_angle: The angle to the start of the ellipse (from north).
-        :type start_angle: ``float``
-        :param opening_angle: The sweep of the arc.
-        :type opening_angle: ``float``
-        :param inner_radius: The inner radius of the arcband.
-        :type inner_radius: ``float``
-        :param outer_radius: The outer radius of the arcband.
-        :type outer_radius: ``float``
+        :param location: Geodetic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given arcband.
@@ -717,21 +709,27 @@ class FindServiceInner(object):
 
         WGS84SPATIALREFERENCE = 'urn:ogc:def:crs:EPSG::4326'
 
-        arcband = geom.generate_arcband(longitude, latitude,
-                                        spatial_ref, start_angle, opening_angle, inner_radius, outer_radius)
+        arcband = geom.generate_arcband(location.longitude,
+                                        location.latitude,
+                                        location.spatial_ref,
+                                        location.start_angle,
+                                        location.opening_angle,
+                                        location.inner_radius,
+                                        location.outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
-        return self.find_service_for_polygon(service_urn, points, WGS84SPATIALREFERENCE, return_shape)
+        polygon = geodetic_polygon()
+        polygon.spatial_ref=WGS84SPATIALREFERENCE
+        polygon.vertices = points
+        return self.find_service_for_polygon(service_urn, polygon, return_shape)
 
-    def find_service_for_polygon(self, service_urn, points, spatial_ref, return_shape=False):
+    def find_service_for_polygon(self, service_urn, location, return_shape=False):
         """
         Find services for the given polygon.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param points: A list of vertices in (x,y) format.
-        :type points: ``list``
-        :param spatial_ref: Spatial reference of the polygon to search.
-        :type spatial_ref: ``str``
+        :param location: Geodetic location object .
+        :type location: ``location object``
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given polygon.
@@ -739,13 +737,18 @@ class FindServiceInner(object):
         """
         if self._find_service_config.polygon_search_mode_policy() is PolygonSearchModePolicyEnum.SearchUsingCentroid:
             # search using a centroid.
-            ref_polygon = Polygon(points)
+            ref_polygon = Polygon(location.vertices)
             pt_array = ref_polygon.centroid
+            point = Point()
+            point.longitude = pt_array.x
+            point.latitude = pt_array.y
+            point.spatial_ref=location.spatial_ref
+
 
             if pt_array is None:
                 return None
 
-            return self.find_service_for_point(service_urn, pt_array.x, pt_array.y, spatial_ref, return_shape)
+            return self.find_service_for_point(service_urn, point, return_shape)
         else:
             ADD_DATA_REQUESTED = False
             ADD_DATA_SERVICE = self._find_service_config.additional_data_uri()
@@ -757,20 +760,19 @@ class FindServiceInner(object):
                 esb_table = self._get_esb_table(service_urn)
 
             if ADD_DATA_REQUESTED:
-                results = self._db_wrapper.get_additionaldata_for_polygon(points, spatial_ref, esb_table, buffer_distance)
+                results = self._db_wrapper.get_additionaldata_for_polygon(location, esb_table, buffer_distance)
                 results = self._apply_addtionaldata_multiple_match_policy(results)
                 if results is None or len(results)==0:
                     results = [{'adddatauri': ''}]
             else:
-                results = self._db_wrapper.get_intersecting_boundaries_for_polygon(points, spatial_ref, esb_table)
+                results = self._db_wrapper.get_intersecting_boundaries_for_polygon(location, esb_table)
 
                 if (results is None or len(results) == 0) and self._find_service_config.do_expanded_search():
                     proximity_buffer = self._find_service_config.expanded_search_buffer()
                     # No results and Policy says we should buffer and research
 
                     results = self._db_wrapper.get_intersecting_boundaries_for_polygon(
-                        points,
-                        spatial_ref,
+                        location,
                         esb_table,
                         True,
                         proximity_buffer)
@@ -1101,13 +1103,7 @@ class FindServiceOuter(object):
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_arcband(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.start_angle),
-            float(request.location.location.opening_angle),
-            float(request.location.location.inner_radius),
-            float(request.location.location.outer_radius),
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,
@@ -1129,8 +1125,7 @@ class FindServiceOuter(object):
         include_boundary_value = self._apply_override_policy(request)
         mappings = self._inner.find_service_for_polygon(
             request.service,
-            request.location.location.vertices,
-            request.location.location.spatial_ref,
+            request.location.location,
             include_boundary_value
         )
         return self._build_response(request.path,
@@ -1175,54 +1170,67 @@ class FindServiceOuter(object):
         if mappings is None:
             return nonlostdata
         xml_warning = None
-
+        multiple_match = self._find_service_config.polygon_multiple_match_policy()
+        source_uri = self._find_service_config.source_uri()
+        # Is there additional data in our mappings?
         if self._check_is_addurl_in_mappings(mappings) == True or \
-            (self._find_service_config.polygon_multiple_match_policy() == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning):
+            (multiple_match == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning):
+            # Did we run into too many mappings being returned by the request?
             if self._check_too_many_mappings(mappings) == True:
                 # Setting is ReturnLimitWarning and flag was found so generate a new element for warnings and add
                 # tooManyMappings as sub-element.  Place this in nonlostdata as another element to be added
                 # to the final response.
                 LOST_URN = 'urn:ietf:params:xml:ns:lost1'
-                source_uri = self._find_service_config.source_uri()
                 xml_warning = etree.Element('warnings', nsmap={None: LOST_URN}, attrib={'source': source_uri})
 
                 # add to the warnings element
-                warnings_element = etree.SubElement(xml_warning, 'tooManyMappings', attrib={'message':'Mapping limit exceeded, mappings returned have been truncated.'})
+                warnings_element = etree.SubElement(xml_warning, 'tooManyMappings',
+                    attrib={'message':'Mapping limit exceeded, mappings returned have been truncated.'})
 
                 attr = warnings_element.attrib
                 attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
-
+        # Did we have to use a fuzzy match instead of an exact match?
+        if self._check_fuzzy_match_used():
+            xml_warning = etree.Element('warnings', attrib={'source': source_uri})
+            etree.SubElement(xml_warning, 'approximateLocationUsed',
+                 attrib={'message': 'An exact match could not be found, but a point in near accuracy was used to find '
+                         'the service boundary.'})
+        # Did we end up with a default route?
         if self._check_using_default_route(mappings):
             # check if the warnings tag has already been added
             if len(nonlostdata) > 0:
                 xml_warning = nonlostdata[0].find('warnings')
             if not xml_warning:
-                source_uri = self._find_service_config.source_uri()
                 xml_warning = etree.Element('warnings', attrib={'source': source_uri})
-
-            warnings_element = etree.SubElement(xml_warning,'defaultMappingReturned', attrib={'message': "Unable to determine PSAP for the given location: using default PSAP"})
-
-        if xml_warning:
+            etree.SubElement(xml_warning,'defaultMappingReturned',
+                attrib={'message': "Unable to determine PSAP for the given location: using default PSAP"})
+        # Add all this warning stuff to our response.
+        if xml_warning is not None:
             nonlostdata.append((xml_warning))
 
         return nonlostdata
 
-    def _check_is_addurl_in_mappings(self, mappings):
+    def _check_is_addurl_in_mappings(self, mappings) -> bool:
         """
         Check for addurl in mapping.
-        :param mappings:
+        :param mappings: a list of all the mappings returned by the query
+        :type mappings: ``list`` of ``dict``
         :return:
+        :rtype: ``bool``
         """
         for mapping in mappings:
-            if "adddatauri" in mapping:
+            if 'adddatauri' in mapping:
                 return True
             return False
 
-    def _check_too_many_mappings(self, mappings):
+    def _check_too_many_mappings(self, mappings) -> bool:
         """
         Check for tooManyMappings flag, which triggers building of a warning.
-        :param mappings:
+
+        :param mappings: a list of all the mappings returned by the query
+        :type mappings: ``list`` of ``dict``
         :return:
+        :rtype: ``bool``
         """
         for mapping in mappings:
             if 'tooManyMappings' in mapping:
@@ -1233,16 +1241,27 @@ class FindServiceOuter(object):
     def _check_using_default_route(self, mappings) -> bool:
         """"
         Check for default_route_used  flag , which triggers building a warning
-        :param mappings
+        :param mappings: a list of all the mappings returned by the query
+        :type mappings: ``list`` of ``dict``
         :return:
+        :rtype: ``bool``
         """
         for mapping in mappings:
             if 'default_route_used' in mapping:
                 return True
 
         return False
+    def _check_fuzzy_match_used(self) -> bool:
+        """
+        Checks to see if we used a fuzzy match
+        :rtype: ``bool``
+        """
+        if self._inner is not None:
+            return self._inner.fuzzy_used
+        else:
+            return False
 
-    def _build_mapping_list(self, mappings, include_boundary_value=False):
+    def _build_mapping_list(self, mappings, include_boundary_value=False) -> [ResponseMapping]:
         """
         Build the collection of all response mappings.
 
@@ -1250,7 +1269,8 @@ class FindServiceOuter(object):
         :type mappings: ``list`` of ``dict``
         :param include_boundary_value: Flag to control whether or not to include the mapping boundary by value.
         :type include_boundary_value: ``bool``
-        :return:
+        :return: a list of response mappings.
+        :rtype: :py:class:`[lostservice.model.responses.ResponseMapping]`
         """
         # Resolve source uri once . . .
         source_uri = self._find_service_config.source_uri()
@@ -1264,7 +1284,7 @@ class FindServiceOuter(object):
 
         return resp_mappings
 
-    def _build_one_mapping(self, mapping, include_boundary_value=False):
+    def _build_one_mapping(self, mapping, include_boundary_value=False) -> ResponseMapping:
         """
         Create a single ResponseMapping from a query result.
 
@@ -1304,11 +1324,12 @@ class FindServiceOuter(object):
 
         return resp_mapping
 
-    def _apply_override_policy(self, request):
+    def _apply_override_policy(self, request) -> bool:
         """
         Check Service boundary return override settings 
         :param request: 
-        :return: 
+        :return: to include the boundary or not
+        :rtype: ``bool``
         """
         # use false for ReturnNothing - second check is done in _build_one_mapping()
         include_boundary_value = False

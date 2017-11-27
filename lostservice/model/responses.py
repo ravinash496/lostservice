@@ -24,7 +24,10 @@ class ResponseMapping(object):
     """
     A container for a single response mapping.
     """
-    # <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
+    # <mapping expires="NO-CACHE"
+    #          lastUpdated="2017-05-16 09:00:22+00:00"
+    #          source="authoritative.example"
+    #          sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
     #     <displayName xml:lang="en">Lincoln Ambulance</displayName>
     #     <service>urn:nena:service:sos.EMS</service>
     #     <serviceBoundaryReference source="authoritative.example" key="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}"/>
@@ -187,7 +190,10 @@ class AdditionalDataResponseMapping(object):
     """
     A container for a single Additional Data response mapping.
     """
-    # <mapping expires="NO-CACHE" lastUpdated="2017-05-16 09:00:22+00:00" source="authoritative.example" sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
+    # <mapping expires="NO-CACHE"
+    #          lastUpdated="2017-05-16 09:00:22+00:00"
+    #          source="authoritative.example"
+#              sourceId="{5D9C9865-FE50-4CEB-917D-CBBD56DB462F}">
     #   <service>urn:nena:service:adddatauri</service>
     #   <adddatauri>http://pv-qps-2/testdoc609784.doc</adddatauri>
     # </mapping>
@@ -382,7 +388,7 @@ class ListServicesResponse(Response):
         super(ListServicesResponse, self).__init__()
         self._services = services
         self._path = path
-        self._nonlostdata=nonlostdata
+        self._nonlostdata = nonlostdata
     
     @property
     def services(self):
@@ -409,7 +415,6 @@ class ListServicesResponse(Response):
     @path.setter
     def path(self, value):
         self._path = value
-
 
     @property
     def nonlostdata(self):

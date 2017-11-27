@@ -7,22 +7,20 @@
 Implementation classes for Listservice queries.
 """
 
-import datetime
-import pytz
-from enum import Enum
+
 from injector import inject
 from lostservice.configuration import Configuration
 from lostservice.exception import LoopException
 from lostservice.model.responses import ResponseMapping, ListServicesByLocationResponse
 import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
-from lxml import etree
-from shapely.geometry import Polygon
+
 import json
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
 from lostservice.model.geodetic import Ellipse
-
+from lostservice.model.geodetic import Polygon as geodetic_polygon
+from lostservice.model.geodetic import Arcband
 
 class ListServiceBYLocationConfigWrapper(object):
     """
@@ -248,45 +246,40 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def list_service_by_location_for_arcband(self, service, longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius, return_shape=False):
+    def list_service_by_location_for_arcband(self, service, location, return_shape=False):
         """
         List services for the given arcband.
 
         :param service: The identifier for the service to look up.
         :type service: ``str``
-        :param longitude: Longitude of the center of the arcband to search.
-        :type longitude: ``float``
-        :param latitude: Latitude of the center of the arcband to search.
-        :type latitude: ``float``
-        :param spatial_ref: Spatial reference of the arcband to search.
-        :type spatial_ref: ``str``
-        :param start_angle: The angle to the start of the ellipse (from north).
-        :type start_angle: ``float``
-        :param opening_angle: The sweep of the arc.
-        :type opening_angle: ``float``
-        :param inner_radius: The inner radius of the arcband.
-        :type inner_radius: ``float``
-        :param outer_radius: The outer radius of the arcband.
-        :type outer_radius: ``float``
+        :param location: location object.
+        :type location: `location object`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given arcband.
         :rtype: ``list`` of ``dict``
         """
-        arcband = geom.generate_arcband(longitude, latitude, spatial_ref, start_angle, opening_angle, inner_radius, outer_radius)
+        arcband = geom.generate_arcband(location.longitude,
+                                        location.latitude,
+                                        location.spatial_ref,
+                                        location.start_angle,
+                                        location.opening_angle,
+                                        location.inner_radius,
+                                        location.outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
-        return self.list_services_by_location_for_polygon(service, points, spatial_ref, return_shape)
+        polygon = geodetic_polygon()
+        polygon.vertices = points
+        polygon.spatial_ref = location.spatial_ref
+        return self.list_services_by_location_for_polygon(service, polygon, return_shape)
 
-    def list_services_by_location_for_polygon(self, service, points, spatial_ref, return_shape=False):
+    def list_services_by_location_for_polygon(self, service, location, return_shape=False):
         """
         Listservices for the given polygon.
 
         :param service_urn: The identifier for the service to look up.
         :type service_urn: ``str``
-        :param points: A list of vertices in (x,y) format.
-        :type points: ``list``
-        :param spatial_ref: Spatial reference of the polygon to search.
-        :type spatial_ref: ``str``
+        :param location: location object.
+        :type location: `location object`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: ``bool``
         :return: The service mappings for the given polygon.
@@ -294,12 +287,12 @@ class ListServiceByLocationInner(object):
         """
         if service is not None:
             esb_table = [self._mappings[key] for key in self._mappings if service + '.' in key]
-            result = self._db_wrapper.get_intersecting_list_service_for_polygon(points, spatial_ref, esb_table)
+            result = self._db_wrapper.get_intersecting_list_service_for_polygon(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
         elif service is None:
             esb_table = [self._mappings[key] for key in self._mappings if not '.' in key]
-            result = self._db_wrapper.get_intersecting_list_service_for_polygon(points, spatial_ref, esb_table)
+            result = self._db_wrapper.get_intersecting_list_service_for_polygon(location, esb_table)
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
@@ -393,13 +386,7 @@ class ListServiceBylocationOuter(object):
         self._check_is_loopback(request.path)
         mappings = self._inner.list_service_by_location_for_arcband(
             request.service,
-            request.location.location.longitude,
-            request.location.location.latitude,
-            request.location.location.spatial_ref,
-            float(request.location.location.start_angle),
-            float(request.location.location.opening_angle),
-            float(request.location.location.inner_radius),
-            float(request.location.location.outer_radius))
+            request.location.location)
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
     def list_services_by_location_for_polygon(self, request):
@@ -414,8 +401,7 @@ class ListServiceBylocationOuter(object):
         self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_polygon(
             request.service,
-            request.location.location.vertices,
-            request.location.location.spatial_ref
+            request.location.location
         )
         return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 

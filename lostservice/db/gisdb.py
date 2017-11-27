@@ -17,6 +17,8 @@ import lostservice.db.utilities as dbutilities
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
 from lostservice.model.geodetic import Ellipse
+from lostservice.model.geodetic import Polygon
+from lostservice.model.geodetic import Arcband
 
 
 class GisDbInterface(object):
@@ -99,33 +101,29 @@ class GisDbInterface(object):
         """
         return spatialdb.get_containing_boundary_for_polygon(points, srid, boundary_table, self._engine)
 
-    def get_intersecting_boundaries_for_polygon(self, points, srid, boundary_table, proximity_search = False, proximity_buffer = 0 ):
+    def get_intersecting_boundaries_for_polygon(self, location: Polygon, boundary_table, proximity_search = False, proximity_buffer = 0 ):
         """
         Executes an intersection query for a polygon.
 
-        :param points: A list of vertices in (x,y) format.
-        :type points: `list`
-        :param srid: The spatial reference Id of the vertices.
-        :type srid: `str`
+        :param location: location object
+        :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_boundaries_for_polygon(points, srid, boundary_table, self._engine, True, proximity_search, proximity_buffer)
+        return spatialdb.get_intersecting_boundaries_for_polygon(location, boundary_table, self._engine, True, proximity_search, proximity_buffer)
 
-    def get_additionaldata_for_polygon(self, points, srid, boundary_table, buffer_distance ):
+    def get_additionaldata_for_polygon(self, location: Polygon, boundary_table, buffer_distance ):
         """
         Executes an additonal data query for a polygon.
 
-        :param points: A list of vertices in (x,y) format.
-        :type points: `list`
-        :param srid: The spatial reference Id of the vertices.
-        :type srid: `str`
+        :param location: location object
+        :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_additionaldata_for_polygon(points, srid, boundary_table, self._engine, buffer_distance)
+        return spatialdb.get_additionaldata_for_polygon(location, boundary_table, self._engine, buffer_distance)
 
 
     def get_boundaries_for_previous_id(self, pid, boundary_table):
@@ -195,21 +193,19 @@ class GisDbInterface(object):
         return spatialdb.get_list_services_for_ellipse(location, boundary_table,
                                                        self._engine, )
 
-    def get_intersecting_list_service_for_polygon(self, points, srid, boundary_table, proximity_search=False,
+    def get_intersecting_list_service_for_polygon(self, location: Polygon, boundary_table, proximity_search=False,
                                                   proximity_buffer=0):
         """
         Executes an intersection query for a polygon.
 
-        :param points: A list of vertices in (x,y) format.
-        :type points: `list`
-        :param srid: The spatial reference Id of the vertices.
-        :type srid: `str`
+        :param location: location object
+        :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
 
-        return spatialdb.get_intersecting_list_service_for_polygon(points, srid, boundary_table, self._engine, False,
+        return spatialdb.get_intersecting_list_service_for_polygon(location, boundary_table, self._engine, False,
                                                                    proximity_search, proximity_buffer)
 
     def get_additional_data_for_circle(self, location: Circle, boundary_table, buffer_distance):

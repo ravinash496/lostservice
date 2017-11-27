@@ -1,10 +1,9 @@
 {
-	"variables": [],
 	"info": {
 		"name": "SR_Geodetic_FindService_ByReference",
-		"_postman_id": "19cf1767-b967-fbcc-8183-99885f2bd234",
+		"_postman_id": "1c0cc2e3-d442-2605-d2f4-3f2f218aa50e",
 		"description": "SR_Geodetic_Temp",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -20,11 +19,13 @@
 							"var jsonObject = xml2Json(responseBody);",
 							"var Service = jsonObject.findServiceResponse.mapping.service;",
 							"var URI = jsonObject.findServiceResponse.mapping.uri;",
-							"var ServiceNumber = jsonObject.findServiceResponse.mapping.serviceNumber;",
 							"",
 							"tests[\"Expected Service: \" + Service] = Service == data.Expected_Service;",
 							"tests[\"Expected URI: \" + URI] = URI == data.Expected_URI;",
-							"if (ServiceNumber != \"undefined\") tests[\"Expected Service number: \" + ServiceNumber] = ServiceNumber == data.Expected_Service_Number;",
+							"",
+							"if (jsonObject.findServiceResponse.mapping.serviceNumber != \"undefined\") {",
+							"    tests[\"Expected Service number: \" + jsonObject.findServiceResponse.mapping.serviceNumber] = jsonObject.findServiceResponse.mapping.serviceNumber === data.Expected_Service_Number;",
+							"}",
 							""
 						]
 					}
@@ -93,18 +94,27 @@
 				}
 			],
 			"request": {
-				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com",
 				"method": "POST",
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/xml",
-						"description": ""
+						"value": "application/xml"
 					}
 				],
 				"body": {
 					"mode": "raw",
 					"raw": "{{Body}}"
+				},
+				"url": {
+					"raw": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com",
+					"protocol": "http",
+					"host": [
+						"ec2-52-36-126-217",
+						"us-west-2",
+						"compute",
+						"amazonaws",
+						"com"
+					]
 				},
 				"description": "This is the Root API Request"
 			},
