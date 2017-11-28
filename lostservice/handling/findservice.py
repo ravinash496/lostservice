@@ -440,14 +440,10 @@ class FindServiceInner(object):
 
         return self._apply_policies(results, return_shape)
 
-    def find_service_for_civicaddress(self, civic_request, return_shape=False):
+    def get_civvy_locator(self,civic_request):
         """
-        Function to find the service for the civic address
         :param civic_request: civic address request
         :type civic_request: civicAddress
-        :param return_shape: Whether or not to return the geometries of found mappings.
-        :type return_shape: bool
-        :return: The service mappings for the given civic address.
         """
         from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
         from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
@@ -460,9 +456,6 @@ class FindServiceInner(object):
         source_maps = CivicAddressSourceMapCollection(config=jsons)
 
         civvy_obj = civic_request.location.location
-        validate_location = False
-        if hasattr(civic_request, 'validateLocation'):
-            validate_location = civic_request.validateLocation
 
         rcl_offset_distance = self._find_service_config.offset_distance()
 
@@ -475,7 +468,7 @@ class FindServiceInner(object):
         civic_dict = {}
         civic_dict['country'] = civvy_obj.country
         if civvy_obj.a1:
-            civic_dict['a1'] =  civvy_obj.a1
+            civic_dict['a1'] = civvy_obj.a1
         if civvy_obj.a2:
             civic_dict['a2'] = civvy_obj.a2
         if civvy_obj.a3:
@@ -512,6 +505,23 @@ class FindServiceInner(object):
 
         # Let's get the results for this civic address.
         locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=rcl_offset_distance)
+        return locator_results
+
+    def find_service_for_civicaddress(self, civic_request, return_shape=False):
+        """
+        Function to find the service for the civic address
+        :param civic_request: civic address request
+        :type civic_request: civicAddress
+        :param return_shape: Whether or not to return the geometries of found mappings.
+        :type return_shape: bool
+        :return: The service mappings for the given civic address.
+        """
+        validate_location = False
+        if hasattr(civic_request, 'validateLocation'):
+            validate_location = civic_request.validateLocation
+
+        locator_results = self.get_civvy_locator(civic_request)
+
         mappings = None
         if len(locator_results) > 0:
             use_fuzzy = self._find_service_config.use_fuzzy_match()
@@ -552,8 +562,6 @@ class FindServiceInner(object):
 
             else:  # our first result score is too high, send a not found exception.
                 raise NotFoundException('The server could not find an answer to the query.', None)
-
-
         else:
             raise NotFoundException('The server could not find an answer to the query.', None)
 

@@ -739,6 +739,53 @@ class FindServiceInnerTest(unittest.TestCase):
         target._apply_policies.assert_called_with(test_data, False)
         target._apply_policies.assert_called_once()
 
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.db.gisdb.GisDbInterface')
+    def test_find_service_for_civicaddress(self, mock_config, mock_db):
+
+        target = lostservice.handling.findservice.FindServiceInner(mock_config, mock_db)
+        target.get_civvy_locator = MagicMock()
+        from civvy.db.postgis.locating.basics import PgLocatorResult
+        import ogr
+        from lostservice.model.geodetic import Geodetic2D
+        civic_point=PgLocatorResult("label","geometry_func","source1")
+        civic_point.score=0.0
+        civic_point.GetY = MagicMock()
+        civic_point.GetX = MagicMock()
+        civic_point.GetY.return_value = 0.0
+        civic_point.GetX.return_value = 1.1
+
+        civic_point._geometry_function = MagicMock()
+
+        target.get_civvy_locator.return_value = [civic_point]
+
+
+
+        geodictic_mock = Geodetic2D()
+        geodictic_mock.trim_srid_urn = MagicMock("something::4326")
+        geodictic_mock.trim_srid_urn.return_value = 4326
+
+        model = lostservice.model.requests.FindServiceRequest()
+        model.serviceBoundary = 'reference'
+        model.service = 'some:service:urn'
+        model.path = []
+        model.location = lostservice.model.location.Location()
+        model.location.id = '1234'
+        model.location.location = lostservice.model.civic.CivicAddress()
+        model.location.location.a1 = "a1"
+        model.location.location.spatial_ref = 'bar::1234'
+
+        point_mock = Point()
+        point_mock.spatial_ref = MagicMock()
+        point_mock.spatial_ref.return_value = 'bar::1234'
+
+
+        actual = target.find_service_for_civicaddress(model, False)
+        target.get_civvy_locator.assert_called_once()
+
+        #self.assertListEqual(actual, test_data)
+
+
     @patch('lostservice.db.gisdb.GisDbInterface')
     def test_find_service_for_arcband(self, mock_db):
         mock_db.get_urn_table_mappings = MagicMock()

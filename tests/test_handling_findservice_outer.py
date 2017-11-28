@@ -223,6 +223,36 @@ class FindServiceOuterTest(unittest.TestCase):
             self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @patch('lostservice.handling.findservice.FindServiceInner')
+    def test_civic(self, mock_config, mock_inner):
+
+        mock_config.source_uri = MagicMock()
+        mock_config.source_uri.return_value = 'foo'
+
+        mock_inner.find_service_for_civicaddress = MagicMock()
+        mock_inner.find_service_for_civicaddress.return_value = []
+
+        model = lostservice.model.requests.FindServiceRequest()
+        model.serviceBoundary = 'reference'
+        model.service = 'some:service:urn'
+        model.path = []
+        model.location = lostservice.model.location.Location()
+        model.location.id = '1234'
+        model.location.location = lostservice.model.civic.CivicAddress()
+        model.location.location.a1 = "a1"
+        model.location.location.spatial_ref = 'bar::1234'
+        model.nonlostdata = []
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, mock_inner)
+
+        try:
+            actual = target.find_service_for_civicaddress(model)
+            mock_inner.find_service_for_civicaddress.assert_called_once()
+            mock_inner.find_service_for_civicaddress.assert_called_with(
+                model,False)
+        except:
+            self.fail("handle_request threw an exception.")
+
+    @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     def test_build_one_mapping_no_boundary(self, mock_config):
 
         mapping = {
