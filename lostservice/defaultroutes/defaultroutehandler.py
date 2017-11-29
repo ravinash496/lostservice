@@ -25,12 +25,18 @@ invalid_field_name = "invalid field name"
 
 
 class DefaultRouteModeEnum(Enum):
+    """
+    Enum to determine the mode of a default route
+    """
     OverrideRoute = "OverrideRoute"
     ExistingRoute = "ExistingRoute"
     CivicMatchingRules = "CivicMatchingRules"
 
 
 class CivicMatchingModeEnum(Enum):
+    """
+    Enum used to determine the mode of a civic matching rule
+    """
     OverrideRoute = "OverrideRoute"
     ExistingRoute = "ExistingRoute"
 
@@ -51,7 +57,7 @@ class DefaultSetting(ABC):
     @abc.abstractmethod
     def get_uri(self, request: FindServiceRequest) -> str:
         """
-        Get the uri
+        abstract method that classes must implement to return a uri for the given request
         :return: the uri
         """
 
@@ -71,6 +77,12 @@ class OverrideRouteSetting(DefaultSetting):
         self.uri = uri
 
     def get_uri(self, request: FindServiceRequest):
+        """
+        Returns the default uri for this request
+        :param request: unused for this implementation, but matches base class
+        :type request FindServiceRequest
+        :return: the default uri for this request
+        """
         return self.uri
 
 
@@ -141,10 +153,10 @@ class CivicMatchingSetting(DefaultSetting):
 
     def __init__(self, mode: str, urn: str, rules: List[dict],  db_wrapper: GisDbInterface):
         """
-
+        Constructor
         :param mode: The mode for the default setting, should be a member of  DefaultRouteModeEnum
         :param urn:  The service urn this policy applies to
-        :param rules: The civic matching rules
+        :param rules: A list of civic matching rules
         :param db_wrapper: the database wrapper to do the queries
         """
         super().__init__(mode, urn)
@@ -367,6 +379,13 @@ class DefaultRouteHandler(object):
         self._default_route_config = config
 
     def check_default_route(self, request):
+        """
+        Check if there is a default route for the passed in request
+        :param request: a FindS Service Request
+        :type request FindServiceRequest
+        :return: The mapping if there is a default found
+        """
+
         # Check for default routes
         # if there are none then throw a NotFoundException (return a notFound LoST error)
         default_route_uri = None
