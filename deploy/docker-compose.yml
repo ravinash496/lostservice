@@ -1,20 +1,42 @@
-version: '3'
+version: '3.2'
 services:
+    nginx:
+        image: nginx
+        ports:
+          - 80:80
+        volumes:
+          - type: bind
+            source: ./nginx.conf
+            target: /etc/nginx/nginx.conf
+        deploy:
+          placement:
+            constraints: [node.role == manager]
+        depends_on:
+          - lostservice
     lostservice:
-        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice
+        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
         environment:
             DBNAME: srgis
             DBUSER: postgres
             DBPASSWORD: GeoComm1
             DBHOSTNAME: pgpool
             DBPORT: 5432
-            CONFIGFILE: ./lostservice/lostservice.ini
+            # this will always point to the directory specified as the target in the volume below.
+            CONFIGFILE: /app/config/lostservice.ini
         ports:
             - 8080:8080
+        volumes:
+          - type: bind
+            # change this to point to the directory on the host where lostservice.ini files live
+            source: ./
+            target: /app/config
+        deploy:
+          placement:
+            constraints: [node.role == manager]
         depends_on:
             - pgpool
     pgmaster:
-        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-postgres
+        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-postgres:latest
         environment:
             # Database configurations we want to use for container
             POSTGRES_USER: postgres
@@ -40,7 +62,7 @@ services:
             - 5432:5432
 
     pgslave1:
-        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-postgres
+        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-postgres:latest
         depends_on:
             - pgmaster
         environment:
@@ -63,7 +85,7 @@ services:
             - 5441:5432
 
     pgslave2:
-        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-postgres
+        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-postgres:latest
         depends_on:
             - pgmaster
         environment:
@@ -87,7 +109,7 @@ services:
             - 5442:5432
 
     pgpool:
-        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-pgpool
+        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/geocomm/datadevil-pgpool:latest
         depends_on:
             - pgmaster
         environment:
