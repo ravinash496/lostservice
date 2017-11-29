@@ -287,9 +287,10 @@ class DefaultRouteConfigWrapper(object):
         self._config = config
         self._db = db_wrapper
 
-    def settings_for_default_route(self) -> [DefaultSetting] or None:
+    def settings_for_default_route(self, include_civic_defaults: bool = True) -> [DefaultSetting] or None:
         """
         Get the default route settings
+        :param include_civic_defaults: include default settings targeted for civic requests
         :return:  default route settings
         """
         settings = self._config.get('Policy', 'default_routing_civic_policy', as_object=True, required=False)
@@ -356,7 +357,7 @@ class DefaultRouteConfigWrapper(object):
                                                                  setting['urn'],
                                                                  setting['boundaryid'],
                                                                  self._db))
-                elif setting['mode'] == DefaultRouteModeEnum.CivicMatchingRules.value:
+                elif (setting['mode'] == DefaultRouteModeEnum.CivicMatchingRules.value and include_civic_defaults):
                     default_settings.append(CivicMatchingSetting(setting['mode'],
                                                                  setting['urn'],
                                                                  setting['rules'],
@@ -425,7 +426,12 @@ class DefaultRouteHandler(object):
     def check_default_route(self, request):
         # Check for default routes
         # if there are none then throw a NotFoundException (return a notFound LoST error)
-        default_route_uri = self._get_default_civic_route(request)
+        default_route_uri = None
+        if type(request.location.location) is CivicAddress:
+            default_route_uri = self._get_default_civic_route(request)
+        else:
+            default_route_uri = self._get_default_route(request)
+
         if default_route_uri is None:
             raise NotFoundException('The server could not find an answer to the query.')
         else:
@@ -451,6 +457,26 @@ class DefaultRouteHandler(object):
         """
         # get default route policies
         default_routes: [DefaultSetting] = self._default_route_config.settings_for_default_route()
+        if default_routes is None:
+            return None
+
+        # get any matching configured urn's in the config, should only be 1 or 0
+        matches: [DefaultSetting] = \
+            [default_route for default_route in default_routes if default_route.urn == request.service]
+        if not matches:
+            return None
+        else:
+            return matches[0].get_uri(request)
+
+    def _get_default_route(self, request: FindServiceRequest) -> str or None:
+        """
+        Returns a uri if there is a match in the config file for the passed in urn
+        :param request: The request object
+        :return: uri or None
+        """
+        # get default route policies
+        default_routes: [DefaultSetting] = self._default_route_config.settings_for_default_route(
+            include_civic_defaults=False)
         if default_routes is None:
             return None
 

@@ -145,6 +145,12 @@ class FindServiceHandler(Handler):
                 response = self._outer._build_response(request.path, request.location.id, mapping, request.nonlostdata)
             else:
                 raise
+
+        if response.mappings is None or len(response.mappings) == 0:
+            mapping = self._default_route_handler.check_default_route(request)
+            # build the response with this mapping
+            response = self._outer._build_response(request.path, request.location.id, mapping, request.nonlostdata)
+
         return response
 
 
