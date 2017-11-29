@@ -93,7 +93,8 @@ class ExistingRouteSetting(DefaultSetting):
     def get_uri(self, request: FindServiceRequest):
         """
         Looks up  the uri in the database table using the boundaryid passed into the constructor
-        :return: Mone or the matching rows in the table
+        :param request: not used for this implementation (overrides abstract method in base class)
+        :return: None or the matching rows in the table
         """
         matching_boundary = self._db_wrapper.get_boundaries_for_previous_id(
             self.boundary_id,
@@ -104,40 +105,31 @@ class ExistingRouteSetting(DefaultSetting):
             return matching_boundary[0]['routeuri']
 
 
-class Condition(object):
-    """
-    class to wrap civic mapping rule condition
-    """
-    def __init__(self, cond: dict):
-        self.field = cond['field']
-        self.value = cond['value']
-
-
 class CivicMatchingRule(ABC):
     """
-    some
+    An abstract class to match civic matching rules from the default route configuration settings
     """
-    def __init__(self, name: str, conditions: List[Condition], mode: CivicMatchingModeEnum):
+    def __init__(self, name: str, conditions: List[dict], mode: CivicMatchingModeEnum):
         self.name: str = name
-        self.conditions: [Condition] = conditions
+        self.conditions: dict = conditions
         self.mode: CivicMatchingModeEnum = mode
 
 
 class CivicOverrideMatchingRule(CivicMatchingRule):
     """
-    matching rule that uses OverrideRoute mode
+    Matching rule that uses OverrideRoute mode
     """
-    def __init__(self, name: str, conditions: List[Condition], mode: CivicMatchingModeEnum, uri: str):
+    def __init__(self, name: str, conditions: List[dict], mode: CivicMatchingModeEnum, uri: str):
         super().__init__(name, conditions, mode)
         self.uri = uri
 
 
 class CivicExistingMatchingRule(CivicMatchingRule):
     """
-    matching rule that uses ExistingRoute mode
+    Matching rule that uses ExistingRoute mode
     """
 
-    def __init__(self, name: str, conditions: List[Condition], mode: CivicMatchingModeEnum, boundaryid: str):
+    def __init__(self, name: str, conditions: List[dict], mode: CivicMatchingModeEnum, boundaryid: str):
         super().__init__(name, conditions, mode)
         self.boundaryid = boundaryid
 
@@ -182,67 +174,20 @@ class CivicMatchingSetting(DefaultSetting):
 
         return None
 
-    def civic_location_matches_rule_conditions(self, civic_address: CivicAddress, conditions: List[Condition]) -> bool:
+    def civic_location_matches_rule_conditions(self, civic_address: CivicAddress, conditions: dict) -> bool:
         """
         Return true if civic address matches all the conditions passed in
         :param civic_address:
         :param conditions:
         :return:
         """
-        for condition in conditions:
-            civic_value = self.get_condition_value(civic_address, condition.field)
-            if civic_address != invalid_field_name:
-                if civic_value.lower() != condition.value.lower():
+        for key, value in conditions.items():
+            if '_' + key.lower() in civic_address.keys():
+                if value.lower() != civic_address['_' + key.lower()].lower():
                     return False
             else:
                 return False
         return True
-
-    @staticmethod
-    def get_condition_value(civic_address: CivicAddress, field: str) -> str:
-        """
-        Get the value in the civic address field, or return "invalid string"
-        :param civic_address:
-        :param field:
-        :return:
-        """
-        field = field.lower()
-        switcher = {
-            "country": civic_address.country,
-            "a1": civic_address.a1,
-            "a2": civic_address.a2,
-            "a3": civic_address.a3,
-            "a4": civic_address.a4,
-            "a5": civic_address.a5,
-            "a6": civic_address.a6,
-            "prm": civic_address.prm,
-            "prd": civic_address.prd,
-            "rd": civic_address.rd,
-            "sts": civic_address.sts,
-            "pod": civic_address.pod,
-            "pom": civic_address.pom,
-            "rdsec": civic_address.rdsec,
-            "rdbr": civic_address.rdbr,
-            "rdsubr": civic_address.rdsubr,
-            "hno": civic_address.hno,
-            "hns": civic_address.hns,
-            "lmk": civic_address.lmk,
-            "loc": civic_address.loc,
-            "flr": civic_address.flr,
-            "nam": civic_address.nam,
-            "pc": civic_address.pc,
-            "bld": civic_address.bld,
-            "unit": civic_address.unit,
-            "room": civic_address.room,
-            "seat": civic_address.seat,
-            "plc": civic_address.plc,
-            "pcn": civic_address.pcn,
-            "pobox": civic_address.pobox,
-            "addcode": civic_address.addcode,
-            "stp": civic_address.stp,
-            "stps": civic_address.stps
-        }
-        return switcher.get(field, invalid_field_name)
 
     @staticmethod
     def build_rules(rules: List[dict]) -> List[CivicMatchingRule]:
@@ -254,18 +199,15 @@ class CivicMatchingSetting(DefaultSetting):
         civic_matching_rules: [CivicMatchingRule] = []
 
         for rule in rules:
-            conditions: [Condition] = []
-            for condition in rule['conditions']:
-                conditions.append(Condition(condition))
             if 'uri' in rule:
                 civic_matching_rules.append(CivicOverrideMatchingRule(
                     rule['name'],
-                    conditions,
+                    rule['conditions'],
                     CivicMatchingModeEnum.OverrideRoute,
                     rule['uri']))
             else:
                 civic_matching_rules.append(CivicExistingMatchingRule(rule['name'],
-                                                                      conditions,
+                                                                      rule['conditions'],
                                                                       CivicMatchingModeEnum.OverrideRoute,
                                                                       rule['boundaryid']))
         return civic_matching_rules
@@ -384,7 +326,8 @@ class DefaultRouteConfigWrapper(object):
                         self._error('Each rule must have a mode element.')
                     else:
                         if rule['mode'] not in CivicMatchingModeEnum.__members__:
-                            self._error('Each rule\'s mode must be either OverrideRoute or ExistingRoute')
+                            self._error('Only modes of "OverrideRoute" or "ExistingRoute"' 
+                                        'are supported for civic address rule types.')
                         else:
                             if rule['mode'] == CivicMatchingModeEnum.OverrideRoute.value and 'uri' not in rule:
                                 self._error('Each rule where mode is OverrideRoute must have a uri element.')

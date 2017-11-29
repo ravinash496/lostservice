@@ -536,7 +536,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
             target.settings_for_default_route()
 
         base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
-        err_msg = 'Each rule\'s mode must be either OverrideRoute or ExistingRoute'
+        err_msg = 'Only modes of "OverrideRoute" or "ExistingRoute"' \
+                  'are supported for civic address rule types.'
         self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')

@@ -80,23 +80,13 @@ class DefaultRouteHandlerTest(unittest.TestCase):
         rules = [
             {
                 "name": "some name",
-                "conditions": [
-                    {
-                        "field": "A2",
-                        "value": "Waldo"
-                    }
-                ],
+                "conditions": {"A2": "Waldo"},
                 "mode": "OverrideRoute",
                 "uri": "SIP:+2075555583@strongFD.ngesi.maine.gov"
             },
             {
                 "name": "another rule",
-                "conditions": [
-                    {
-                        "field": "A2",
-                        "value": "Piscataquis"
-                    }
-                ],
+                "conditions": {"A2": "Piscataquis"},
                 "mode": "ExistingRoute",
                 "boundaryid": "{83B81936-29F7-441C-B3F1-5ECE9FA80E50}"
             }
@@ -130,23 +120,13 @@ class DefaultRouteHandlerTest(unittest.TestCase):
         rules = [
             {
                 "name": "some name",
-                "conditions": [
-                    {
-                        "field": "A2",
-                        "value": "Waldo"
-                    }
-                ],
+                "conditions": {"A2": "Waldo"},
                 "mode": "OverrideRoute",
                 "uri": "SIP:+2075555583@strongFD.ngesi.maine.gov"
             },
             {
                 "name": "another rule",
-                "conditions": [
-                    {
-                        "field": "A2",
-                        "value": "Piscataquis"
-                    }
-                ],
+                "conditions": {"A2": "Piscataquis"},
                 "mode": "ExistingRoute",
                 "boundaryid": "{83B81936-29F7-441C-B3F1-5ECE9FA80E50}"
             }
