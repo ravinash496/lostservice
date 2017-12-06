@@ -433,12 +433,13 @@ class FindServiceInner(object):
                 return_area = multiple_match_policy is PolygonMultipleMatchPolicyEnum.ReturnAreaMajority
                 proximity_buffer = self._find_service_config.expanded_search_buffer()
 
+                # TODO, what is our UOM for buffers, assert meters?
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
                     geodetic_location.longitude,
                     geodetic_location.latitude,
                     geodetic_location.spatial_ref,
                     proximity_buffer,
-                    None,  # TODO, what is our UOM for buffers, assert meters?
+                    None,
                     esb_table,
                     return_area,
                     return_shape)
@@ -513,22 +514,17 @@ class FindServiceInner(object):
         locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=rcl_offset_distance)
         return locator_results
 
-    def find_service_for_civicaddress(self, civic_request, return_shape=False):
+    def find_service_for_civicaddress(self, civic_request: CivicAddress, return_shape: bool=False):
         """
         Function to find the service for the civic address
         :param civic_request: civic address request
-        :type civic_request: civicAddress
+        :type civic_request: :py:class:`lostservice.requests.FindServiceRequest`
         :param return_shape: Whether or not to return the geometries of found mappings.
         :type return_shape: bool
         :return: The service mappings for the given civic address.
         """
-        validate_location = False
-        if hasattr(civic_request, 'validateLocation'):
-            validate_location = civic_request.validateLocation
-
         locator_results = self.get_civvy_locator(civic_request)
 
-        mappings = None
         if len(locator_results) > 0:
             use_fuzzy = self._find_service_config.use_fuzzy_match()  # Do we use fuzzy matching or not.
             max_score = self._find_service_config.find_civic_address_maximum_score()
@@ -549,6 +545,10 @@ class FindServiceInner(object):
                                                        point,
                                                        return_shape=return_shape)
                 # Add location validation results to response as needed.
+                validate_location = False
+                if hasattr(civic_request, 'validateLocation'):
+                    validate_location = civic_request.validateLocation
+
                 if validate_location:
                     location_validation = {}
                     # invalid properties
@@ -566,16 +566,19 @@ class FindServiceInner(object):
                         location_validation['unchecked'] = " ".join(unchecked_properties)
                     mappings[0]['locationValidation'] = location_validation
 
-            else:  # our first result score is too high, send a not found exception.
+                # If we used a fuzzy match, we want to build a warning for it later.
+                if civic_point.score != 0.0 and (civic_point.score <= max_score and use_fuzzy):
+                    self._fuzzy_used = True
+
+                return mappings
+            else:
+                # our first result score is too high, send a not found exception.
                 raise NotFoundException('The server could not find an answer to the query.', None)
-
         else:
+            # We couldn't find anything, so return nothing.
             raise NotFoundException('The server could not find an answer to the query.', None)
-        # If we used a fuzzy match, we want to build a warning for it later.
-        if civic_point.score != 0.0 and (civic_point.score <= max_score and use_fuzzy):
-            self._fuzzy_used = True
-
-        return mappings
+        # Nothing good came of this.
+        return None
 
     def find_service_for_circle(self,
                                 service_urn,
@@ -902,8 +905,6 @@ class FindServiceInner(object):
         """
 
         # TODO -
-        # Simplify - On
-        # Simplify -Off
         # ReturnUnedited - Done
         # ReturnAreaMajorityPolygon
         # ReturnAllAsSinglePolygons
