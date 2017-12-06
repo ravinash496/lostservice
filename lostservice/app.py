@@ -32,6 +32,10 @@ import lostservice.queryrunner as queryrunner
 import lostservice.logger.nenalogging as nenalog
 import lostservice.exception as exp
 from lostservice.configuration import general_logger
+import asyncio
+import functools
+from threading import Thread
+
 logger = general_logger()
 
 
@@ -158,11 +162,29 @@ class LostApplication(object):
         self._handler_template = conf.get('ClassLookupTemplates', 'handler_template')
 
         auditor = self._di_container.get(auditlog.AuditLog)
+        self.audit_logging_enabled = conf.get_logging_db_connection_string()
+
         if conf.get_logging_db_connection_string():
             transaction_listener = txnaudit.TransactionAuditListener(conf)
             auditor.register_listener(transaction_listener)
             diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
             auditor.register_listener(diagnostic_listener)
+
+        # setup a loop so logging can happen asynchronously - in order not to interfere with the web.py asyncio loop
+        # start it on another thread - see execute_query (call_soon_threadsafe) to see it in action
+        self.loop = asyncio.new_event_loop()
+        t = Thread(target=self.start_logging_event_loop,args=(self.loop,))
+        t.start()
+
+    def start_logging_event_loop(self,loop):
+        """
+        start up an event loop so that logging can be called asynchronously
+        :param loop:
+        :return:
+        """
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
+
 
     def _get_class(self, classname):
         """
@@ -284,7 +306,14 @@ class LostApplication(object):
         finally:
             if parsed_response is None:
                 parsed_response = etree.fromstring(response.encode())
-            self._audit_transaction(activity_id, parsed_request, starttime, parsed_response, endtime, context)
+            if self.audit_logging_enabled:
+                self.loop.call_soon_threadsafe(functools.partial(self._audit_transaction,
+                                                                 activity_id,
+                                                                 parsed_request,
+                                                                 starttime,
+                                                                 parsed_response,
+                                                                 endtime, context))
+
 
         return response
 
@@ -297,6 +326,8 @@ class LostApplication(object):
         :param end_time:
         :return:
         """
+
+
         nslookup = {'ls':'urn:ietf:params:xml:ns:lost1'}
 
         auditor = self._di_container.get(auditlog.AuditLog)
