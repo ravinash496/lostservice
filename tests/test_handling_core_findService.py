@@ -8,9 +8,8 @@ import lostservice.handling.core
 import lostservice.handling.findservice
 import lostservice.model.requests
 import lostservice.model.responses
-
 import lostservice.model.location
-
+from lostservice.exception import NotFoundException
 
 class FindServiceTest(unittest.TestCase):
 
@@ -28,20 +27,22 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
+        mock_def_route.check_default_route = MagicMock()
+        mock_def_route.check_default_route.side_effect = \
+            NotFoundException('The server could not find an answer to the query.')
+
         target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
         model.location.location = lostservice.model.geodetic.Point()
 
-        try:
+        with self.assertRaises(NotFoundException) as context:
             actual = target.handle_request(model, {})
             mock_outer.find_service_for_point.assert_called_once()
             mock_outer.find_service_for_point.assert_called_with(model)
+            self.assertTrue('The server could not find an answer to the query.' in str(context.exception))
             self.assertTrue(actual is expected, 'Response did not match expected value.')
-
-        except:
-            self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
@@ -56,20 +57,22 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
+        mock_def_route.check_default_route = MagicMock()
+        mock_def_route.check_default_route.side_effect = \
+            NotFoundException('The server could not find an answer to the query.')
+
         target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
         model.location.location = lostservice.model.geodetic.Circle()
 
-        try:
+        with self.assertRaises(NotFoundException) as context:
             actual = target.handle_request(model, {})
             mock_outer.find_service_for_circle.assert_called_once()
             mock_outer.find_service_for_circle.assert_called_with(model)
+            self.assertTrue('The server could not find an answer to the query.' in str(context.exception))
             self.assertTrue(actual is expected, 'Response did not match expected value.')
-
-        except:
-            self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
@@ -84,20 +87,22 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
+        mock_def_route.check_default_route = MagicMock()
+        mock_def_route.check_default_route.side_effect = \
+            NotFoundException('The server could not find an answer to the query.')
+
         target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
         model.location.location = lostservice.model.geodetic.Ellipse()
 
-        try:
+        with self.assertRaises(NotFoundException) as context:
             actual = target.handle_request(model, {})
             mock_outer.find_service_for_ellipse.assert_called_once()
             mock_outer.find_service_for_ellipse.assert_called_with(model)
+            self.assertTrue('The server could not find an answer to the query.' in str(context.exception))
             self.assertTrue(actual is expected, 'Response did not match expected value.')
-
-        except:
-            self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
@@ -112,20 +117,22 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
+        mock_def_route.check_default_route = MagicMock()
+        mock_def_route.check_default_route.side_effect = \
+            NotFoundException('The server could not find an answer to the query.')
+
         target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
         model.location.location = lostservice.model.geodetic.Arcband()
 
-        try:
+        with self.assertRaises(NotFoundException) as context:
             actual = target.handle_request(model, {})
             mock_outer.find_service_for_arcband.assert_called_once()
             mock_outer.find_service_for_arcband.assert_called_with(model)
+            self.assertTrue('The server could not find an answer to the query.' in str(context.exception))
             self.assertTrue(actual is expected, 'Response did not match expected value.')
-
-        except:
-            self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')
@@ -140,20 +147,22 @@ class FindServiceTest(unittest.TestCase):
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
 
+        mock_def_route.check_default_route = MagicMock()
+        mock_def_route.check_default_route.side_effect = \
+            NotFoundException('The server could not find an answer to the query.')
+
         target = lostservice.handling.core.FindServiceHandler(mock_outer, mock_cov, mock_def_route)
 
         model = lostservice.model.requests.FindServiceRequest()
         model.location = lostservice.model.location.Location()
         model.location.location = lostservice.model.geodetic.Polygon()
 
-        try:
+        with self.assertRaises(NotFoundException) as context:
             actual = target.handle_request(model, {})
             mock_outer.find_service_for_polygon.assert_called_once()
             mock_outer.find_service_for_polygon.assert_called_with(model)
+            self.assertTrue('The server could not find an answer to the query.' in str(context.exception))
             self.assertTrue(actual is expected, 'Response did not match expected value.')
-
-        except:
-            self.fail("handle_request threw an exception.")
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
     @patch('lostservice.coverage.resolver.CoverageResolverWrapper')

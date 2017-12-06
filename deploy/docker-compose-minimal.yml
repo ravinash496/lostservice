@@ -1,0 +1,61 @@
+version: '3.2'
+services:
+    portainer:
+        image: portainer/portainer
+        command: -H unix:///var/run/docker.sock
+        ports:
+          - 9000:9000
+        volumes:
+          - type: bind
+            source: //var/run/docker.sock
+            target: /var/run/docker.sock
+        deploy:
+          replicas: 1
+          placement:
+            constraints: [node.role == manager]
+    nginx:
+        image: nginx
+        ports:
+          - 80:80
+        volumes:
+          - type: bind
+            source: ./nginx.conf
+            target: /etc/nginx/nginx.conf
+        deploy:
+          placement:
+            constraints: [node.role == manager]
+        depends_on:
+          - lostservice
+    lostservice:
+        image: 709177336629.dkr.ecr.us-west-2.amazonaws.com/spatialrouter/lostservice:latest
+        environment:
+            DBNAME: srgis
+            DBUSER: postgres
+            DBPASSWORD: GeoComm1
+            DBHOSTNAME: postgis
+            DBPORT: 5432
+            # this will always point to the directory specified as the target in the volume below.
+            CONFIGFILE: /app/config/lostservice.ini
+        ports:
+            - 8080:8080
+        volumes:
+          - type: bind
+            # change this to point to the directory on the host where lostservice.ini files live
+            source: ./
+            target: /app/config
+        deploy:
+          placement:
+            constraints: [node.role == manager]
+        depends_on:
+            - postgis
+    postgis:
+        image: mdillon/postgis
+        ports:
+          - 5432:5432
+        deploy:
+          replicas: 1
+          placement:
+            constraints: [node.role == manager]
+        environment:
+            POSTGRES_PASSWORD: GeoComm1
+

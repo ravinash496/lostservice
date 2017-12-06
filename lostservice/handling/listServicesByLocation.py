@@ -7,22 +7,19 @@
 Implementation classes for Listservice queries.
 """
 
-import datetime
-import pytz
-from enum import Enum
+
 from injector import inject
 from lostservice.configuration import Configuration
 from lostservice.exception import LoopException
 from lostservice.model.responses import ResponseMapping, ListServicesByLocationResponse
 import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
-from lxml import etree
-from shapely.geometry import Polygon
+
 import json
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
 from lostservice.model.geodetic import Ellipse
-from lostservice.model.geodetic import Polygon
+from lostservice.model.geodetic import Polygon as geodetic_polygon
 from lostservice.model.geodetic import Arcband
 
 class ListServiceBYLocationConfigWrapper(object):

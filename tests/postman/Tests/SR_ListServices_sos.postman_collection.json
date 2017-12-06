@@ -1,7 +1,7 @@
 {
 	"variables": [],
 	"info": {
-		"name": "SR_ListServices",
+		"name": "SR_ListServices_sos",
 		"_postman_id": "70c15b96-29ef-66d1-63d3-287ec2c1186b",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
@@ -27,7 +27,7 @@
 				}
 			],
 			"request": {
-				"url": "http://pv-qps-2/SpatialRouter/",
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
 				"method": "POST",
 				"header": [
 					{

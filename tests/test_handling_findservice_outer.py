@@ -22,6 +22,9 @@ class FindServiceOuterTest(unittest.TestCase):
         mock_inner.find_service_for_point = MagicMock()
         mock_inner.find_service_for_point.return_value = []
 
+        mock_inner.fuzzy_used = MagicMock()
+        mock_inner.fuzzy_used = False
+
         model = lostservice.model.requests.FindServiceRequest()
         model.serviceBoundary = 'reference'
         model.service = 'some:service:urn'
@@ -56,12 +59,15 @@ class FindServiceOuterTest(unittest.TestCase):
         mock_config.source_uri = MagicMock()
         mock_config.source_uri.return_value = 'foo'
 
-        mock_inner.find_service_for_circle = MagicMock()
-        mock_inner.find_service_for_circle.return_value = []
-
         mock_config.service_boundary_return_geodetic_override = MagicMock()
         mock_config.service_boundary_return_geodetic_override.return_value = \
             lostservice.handling.findservice.ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest
+
+        mock_inner.find_service_for_circle = MagicMock()
+        mock_inner.find_service_for_circle.return_value = []
+
+        mock_inner.fuzzy_used = MagicMock()
+        mock_inner.fuzzy_used = False
 
         model = lostservice.model.requests.FindServiceRequest()
         model.serviceBoundary = 'value'
@@ -101,12 +107,15 @@ class FindServiceOuterTest(unittest.TestCase):
         mock_config.source_uri = MagicMock()
         mock_config.source_uri.return_value = 'foo'
 
-        mock_inner.find_service_for_ellipse = MagicMock()
-        mock_inner.find_service_for_ellipse.return_value = []
-
         mock_config.service_boundary_return_geodetic_override = MagicMock()
         mock_config.service_boundary_return_geodetic_override.return_value = \
             lostservice.handling.findservice.ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest
+
+        mock_inner.find_service_for_ellipse = MagicMock()
+        mock_inner.find_service_for_ellipse.return_value = []
+
+        mock_inner.fuzzy_used = MagicMock()
+        mock_inner.fuzzy_used = False
 
         model = lostservice.model.requests.FindServiceRequest()
         model.serviceBoundary = 'value'
@@ -151,6 +160,9 @@ class FindServiceOuterTest(unittest.TestCase):
         mock_inner.find_service_for_arcband = MagicMock()
         mock_inner.find_service_for_arcband.return_value = []
 
+        mock_inner.fuzzy_used = MagicMock()
+        mock_inner.fuzzy_used = False
+
         model = lostservice.model.requests.FindServiceRequest()
         model.serviceBoundary = 'reference'
         model.service = 'some:service:urn'
@@ -194,6 +206,9 @@ class FindServiceOuterTest(unittest.TestCase):
 
         mock_inner.find_service_for_polygon = MagicMock()
         mock_inner.find_service_for_polygon.return_value = []
+
+        mock_inner.fuzzy_used = MagicMock()
+        mock_inner.fuzzy_used = False
 
         model = lostservice.model.requests.FindServiceRequest()
         model.serviceBoundary = 'reference'
