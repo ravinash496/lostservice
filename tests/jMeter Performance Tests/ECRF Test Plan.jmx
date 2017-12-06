@@ -1,0 +1,1311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="3.2" jmeter="3.3 r1808647">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="ECRF Performance Run - Non LVF" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Head" enabled="true">
+        <collectionProp name="HeaderManager.headers">
+          <elementProp name="" elementType="Header">
+            <stringProp name="Header.name">Content-Type</stringProp>
+            <stringProp name="Header.value">applicaton/xml</stringProp>
+          </elementProp>
+        </collectionProp>
+      </HeaderManager>
+      <hashTree/>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="Request" enabled="true">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+        <stringProp name="HTTPSampler.domain">ec2-52-36-126-217.us-west-2.compute.amazonaws.com</stringProp>
+        <stringProp name="HTTPSampler.port"></stringProp>
+        <stringProp name="HTTPSampler.protocol"></stringProp>
+        <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+        <stringProp name="HTTPSampler.path"></stringProp>
+        <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+        <stringProp name="HTTPSampler.response_timeout"></stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Let&apos;s Start Threading" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">2</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <longProp name="ThreadGroup.start_time">1511799903000</longProp>
+        <longProp name="ThreadGroup.end_time">1511799903000</longProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <ResultSaver guiclass="ResultSaverGui" testclass="ResultSaver" testname="Log response failures" enabled="true">
+          <stringProp name="FileSaver.filename">response_failed</stringProp>
+          <boolProp name="FileSaver.errorsonly">true</boolProp>
+          <boolProp name="FileSaver.skipautonumber">false</boolProp>
+          <boolProp name="FileSaver.skipsuffix">false</boolProp>
+          <boolProp name="FileSaver.successonly">false</boolProp>
+          <stringProp name="FileSaver.variablename">FILE_NAME</stringProp>
+        </ResultSaver>
+        <hashTree/>
+        <RandomOrderController guiclass="RandomOrderControllerGui" testclass="RandomOrderController" testname="Let&apos;s Us Random All The Things" enabled="true"/>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 1" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;44.129002 -70.580559&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 2" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;44.8000014 -68.777458&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 3" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;44.887195 -68.978106&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 4" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;44.378698 -68.1555232&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 5" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;44.392295 -68.205090&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 6" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;45.163851 -70.355973&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 7" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;46.973329 -68.885370&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 8" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;47.282980 -68.195337&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 9" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;44.615040 -70.884725&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Ref 10" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;&#xd;
+	&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+	&lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+	&lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+	&lt;gml:pos&gt;45.159397 -67.870112&lt;/gml:pos&gt;&#xd;
+	&lt;/gml:Point&gt;&lt;/location&gt;&#xd;
+	&lt;service&gt;urn:nena:service:adddatauri&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Point By Value" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; validateLocation=&quot;false&quot; serviceBoundary=&quot;value&quot;&gt;&#xd;
+   &lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:pos&gt;45.4524048105657 -68.5452615106889&lt;/gml:pos&gt;&#xd;
+      &lt;/gml:Point&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos.EMS&lt;/service&gt;&#xd;
+   &lt;path&gt;&lt;via source=&quot;othervender.example&quot;/&gt;&lt;/path&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService ArcBand By Ref" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; validateLocation=&quot;false&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+   &lt;location id=&quot;24b276e1-7eca-48d5-be24-30e0dd4c1ca0&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:ArcBand xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+       &lt;gml:pos&gt;46.6590717387414 -69.1017379617961&lt;/gml:pos&gt;&#xd;
+       &lt;gs:innerRadius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;0&lt;/gs:innerRadius&gt;&#xd;
+       &lt;gs:outerRadius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;42304.4692422285&lt;/gs:outerRadius&gt;&#xd;
+       &lt;gs:startAngle uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;105.600837806612&lt;/gs:startAngle&gt;&#xd;
+       &lt;gs:openingAngle uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;90.0000000000021&lt;/gs:openingAngle&gt;&#xd;
+      &lt;/gs:ArcBand&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService ArcBand By Value" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; validateLocation=&quot;false&quot; serviceBoundary=&quot;value&quot;&gt;&#xd;
+   &lt;location id=&quot;24b276e1-7eca-48d5-be24-30e0dd4c1ca0&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:ArcBand xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+       &lt;gml:pos&gt;46.6590717387414 -69.1017379617961&lt;/gml:pos&gt;&#xd;
+       &lt;gs:innerRadius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;0&lt;/gs:innerRadius&gt;&#xd;
+       &lt;gs:outerRadius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;42304.4692422285&lt;/gs:outerRadius&gt;&#xd;
+       &lt;gs:startAngle uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;105.600837806612&lt;/gs:startAngle&gt;&#xd;
+       &lt;gs:openingAngle uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;90.0000000000021&lt;/gs:openingAngle&gt;&#xd;
+      &lt;/gs:ArcBand&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Circle By Ref" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; validateLocation=&quot;false&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+   &lt;location id=&quot;24b276e1-7eca-48d5-be24-30e0dd4c1ca0&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:Circle xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:pos&gt;45.4430670070877 -68.4977255651657&lt;/gml:pos&gt;&#xd;
+         &lt;gs:radius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;105.41237061098&lt;/gs:radius&gt;&#xd;
+      &lt;/gs:Circle&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos.police&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="FindService Circle By Value" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; validateLocation=&quot;false&quot; serviceBoundary=&quot;value&quot;&gt;&#xd;
+   &lt;location id=&quot;24b276e1-7eca-48d5-be24-30e0dd4c1ca0&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:Circle xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:pos&gt;45.4430670070877 -68.4977255651657&lt;/gml:pos&gt;&#xd;
+         &lt;gs:radius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;6105.41237061098&lt;/gs:radius&gt;&#xd;
+      &lt;/gs:Circle&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos.EMS&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Find Service Ellipse By Ref" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+   &lt;location id=&quot;ceacd2ce-00a2-499d-85c4-00867b99739d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:Ellipse xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:pos&gt;45.1849969370669 -67.8462093244725&lt;/gml:pos&gt;&#xd;
+         &lt;gs:semiMajorAxis uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;31961.7305901283&lt;/gs:semiMajorAxis&gt;&#xd;
+         &lt;gs:semiMinorAxis uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;6000&lt;/gs:semiMinorAxis&gt;&#xd;
+         &lt;gs:orientation uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;90&lt;/gs:orientation&gt;&#xd;
+      &lt;/gs:Ellipse&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Find Service Polygon By Ref" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;reference&quot;&gt;&#xd;
+   &lt;location id=&quot;9636f44a-f7d1-4b60-a05c-2c8dda628006&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gml:Polygon xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:exterior&gt;&#xd;
+            &lt;gml:LinearRing&gt;&#xd;
+               &lt;gml:pos&gt;46.3222890191904 -67.7983228520407&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3132470673683 -67.8030817740523&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3084881453566 -67.7902326846208&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3218131269892 -67.7869014392126&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3222890191904 -67.7983228520407&lt;/gml:pos&gt;&#xd;
+            &lt;/gml:LinearRing&gt;&#xd;
+         &lt;/gml:exterior&gt;&#xd;
+      &lt;/gml:Polygon&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Find Service Polygon By Value" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;value&quot;&gt;&#xd;
+   &lt;location id=&quot;a01e56af-739f-4c66-9f39-b13abf08e7bf&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gml:Polygon xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:exterior&gt;&#xd;
+            &lt;gml:LinearRing&gt;&#xd;
+               &lt;gml:pos&gt;46.4164024169522 -68.8073848783964&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.1392427989929 -68.8119534435276&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.2580254924042 -68.6276879832361&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.4894994590512 -68.6870793299416&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.4164024169522 -68.8073848783964&lt;/gml:pos&gt;&#xd;
+            &lt;/gml:LinearRing&gt;&#xd;
+         &lt;/gml:exterior&gt;&#xd;
+      &lt;/gml:Polygon&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Find Service Ellipse By Value" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot; serviceBoundary=&quot;value&quot;&gt;&#xd;
+   &lt;location id=&quot;ceacd2ce-00a2-499d-85c4-00867b99739d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:Ellipse xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:pos&gt;45.1849969370669 -67.8462093244725&lt;/gml:pos&gt;&#xd;
+         &lt;gs:semiMajorAxis uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;31961.7305901283&lt;/gs:semiMajorAxis&gt;&#xd;
+         &lt;gs:semiMinorAxis uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;6000&lt;/gs:semiMinorAxis&gt;&#xd;
+         &lt;gs:orientation uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;90&lt;/gs:orientation&gt;&#xd;
+      &lt;/gs:Ellipse&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Find Service Polygon No Service Boundary" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;findService xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot;&gt;&#xd;
+   &lt;location id=&quot;9636f44a-f7d1-4b60-a05c-2c8dda628006&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gml:Polygon xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:exterior&gt;&#xd;
+            &lt;gml:LinearRing&gt;&#xd;
+               &lt;gml:pos&gt;46.3222890191904 -67.7983228520407&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3132470673683 -67.8030817740523&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3084881453566 -67.7902326846208&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3218131269892 -67.7869014392126&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;46.3222890191904 -67.7983228520407&lt;/gml:pos&gt;&#xd;
+            &lt;/gml:LinearRing&gt;&#xd;
+         &lt;/gml:exterior&gt;&#xd;
+      &lt;/gml:Polygon&gt;&#xd;
+   &lt;/location&gt;&#xd;
+   &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+&lt;/findService&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="1364538141">findServiceResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List Service By Point" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;listServicesByLocation&#xd;
+      xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot;&#xd;
+      xmlns:gml=&quot;http://www.opengis.net/gml&quot;&#xd;
+      xmlns:slb=&quot;urn:ietf:params:xml:ns:lost1:slb&quot; recursive=&quot;true&quot;&gt;&#xd;
+      &lt;location id=&quot;a9f93608-1092-42c6-9423-c0167e11398d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+          &lt;gml:Point xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+             &lt;gml:pos&gt;45.4524048105657 -68.5452615106889&lt;/gml:pos&gt;&#xd;
+          &lt;/gml:Point&gt;&#xd;
+      &lt;/location&gt;&#xd;
+      &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+      &lt;slb:serviceListBoundaryRequest type=&quot;value&quot;/&gt;&#xd;
+&lt;/listServicesByLocation&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="-225138231">listServicesByLocationResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List Service By Arcband" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;listServicesByLocation&#xd;
+      xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot;&#xd;
+      xmlns:gml=&quot;http://www.opengis.net/gml&quot;&#xd;
+      xmlns:slb=&quot;urn:ietf:params:xml:ns:lost1:slb&quot; recursive=&quot;true&quot;&gt;&#xd;
+   &lt;location id=&quot;4dbaf2b4-88f2-44db-be7e-5d9955b6bfcc&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:ArcBand xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:pos&gt;43.2779918075767 -68.4348807330539&lt;/gml:pos&gt;&#xd;
+         &lt;gs:innerRadius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;0&lt;/gs:innerRadius&gt;&#xd;
+         &lt;gs:outerRadius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;3.35317014711469&lt;/gs:outerRadius&gt;&#xd;
+         &lt;gs:startAngle uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;136.023030370015&lt;/gs:startAngle&gt;&#xd;
+         &lt;gs:openingAngle uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;269.999999769566&lt;/gs:openingAngle&gt;&#xd;
+      &lt;/gs:ArcBand&gt;&#xd;
+   &lt;/location&gt;&#xd;
+      &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+      &lt;slb:serviceListBoundaryRequest type=&quot;value&quot;/&gt;&#xd;
+&lt;/listServicesByLocation&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="-225138231">listServicesByLocationResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List Service By Circle" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;listServicesByLocation&#xd;
+      xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot;&#xd;
+      xmlns:gml=&quot;http://www.opengis.net/gml&quot;&#xd;
+      xmlns:slb=&quot;urn:ietf:params:xml:ns:lost1:slb&quot; recursive=&quot;true&quot;&gt;&#xd;
+   &lt;location id=&quot;b4d43179-11cf-4b24-aaa6-74af9d296265&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:Circle xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+   &lt;gml:pos&gt;45.3112251370685 -69.9891529973272&lt;/gml:pos&gt;&#xd;
+   &lt;gs:radius uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;7707.99711086547&lt;/gs:radius&gt;&#xd;
+&lt;/gs:Circle&gt;&#xd;
+   &lt;/location&gt;&#xd;
+      &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+      &lt;slb:serviceListBoundaryRequest type=&quot;value&quot;/&gt;&#xd;
+&lt;/listServicesByLocation&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="-225138231">listServicesByLocationResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List Service By Ellipse" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;listServicesByLocation&#xd;
+      xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot;&#xd;
+      xmlns:gml=&quot;http://www.opengis.net/gml&quot;&#xd;
+      xmlns:slb=&quot;urn:ietf:params:xml:ns:lost1:slb&quot; recursive=&quot;true&quot;&gt;&#xd;
+   &lt;location id=&quot;ceacd2ce-00a2-499d-85c4-00867b99739d&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gs:Ellipse xmlns:gs=&quot;http://www.opengis.net/pidflo/1.0&quot; xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:pos&gt;45.1849969370669 -67.8462093244725&lt;/gml:pos&gt;&#xd;
+         &lt;gs:semiMajorAxis uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;31961.7305901283&lt;/gs:semiMajorAxis&gt;&#xd;
+         &lt;gs:semiMinorAxis uom=&quot;urn:ogc:def:uom:EPSG::9001&quot;&gt;6000&lt;/gs:semiMinorAxis&gt;&#xd;
+         &lt;gs:orientation uom=&quot;urn:ogc:def:uom:EPSG::9102&quot;&gt;90&lt;/gs:orientation&gt;&#xd;
+      &lt;/gs:Ellipse&gt;&#xd;
+   &lt;/location&gt;&#xd;
+      &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+      &lt;slb:serviceListBoundaryRequest type=&quot;value&quot;/&gt;&#xd;
+&lt;/listServicesByLocation&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="-225138231">listServicesByLocationResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List Service By Polygon" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;listServicesByLocation&#xd;
+      xmlns=&quot;urn:ietf:params:xml:ns:lost1&quot;&#xd;
+      xmlns:gml=&quot;http://www.opengis.net/gml&quot;&#xd;
+      xmlns:slb=&quot;urn:ietf:params:xml:ns:lost1:slb&quot; recursive=&quot;true&quot;&gt;&#xd;
+   &lt;location id=&quot;170821bd-9c16-46c8-aa3b-774493b1ce01&quot; profile=&quot;geodetic-2d&quot;&gt;&#xd;
+      &lt;gml:Polygon xmlns:gml=&quot;http://www.opengis.net/gml&quot; srsName=&quot;urn:ogc:def:crs:EPSG::4326&quot;&gt;&#xd;
+         &lt;gml:exterior&gt;&#xd;
+            &lt;gml:LinearRing&gt;&#xd;
+               &lt;gml:pos&gt;45.9088621016409 -69.1820616156928&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;45.8676874285048 -69.3430171561342&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;45.8707907255476 -69.3476721016986&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;45.8193943678218 -69.3400578264799&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;45.7927444045565 -69.0526189369756&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;45.9278977896876 -69.1173402763342&lt;/gml:pos&gt;&#xd;
+               &lt;gml:pos&gt;45.9088621016409 -69.1820616156928&lt;/gml:pos&gt;&#xd;
+            &lt;/gml:LinearRing&gt;&#xd;
+         &lt;/gml:exterior&gt;&#xd;
+      &lt;/gml:Polygon&gt;&#xd;
+   &lt;/location&gt;&#xd;
+      &lt;service&gt;urn:nena:service:sos&lt;/service&gt;&#xd;
+      &lt;slb:serviceListBoundaryRequest type=&quot;value&quot;/&gt;&#xd;
+&lt;/listServicesByLocation&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.domain"></stringProp>
+            <stringProp name="HTTPSampler.port"></stringProp>
+            <stringProp name="HTTPSampler.protocol"></stringProp>
+            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.path">/</stringProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Contains correct elements" enabled="true">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="-225138231">listServicesByLocationResponse</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">2</intProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
+          <DurationAssertion guiclass="DurationAssertionGui" testclass="DurationAssertion" testname="Response Time" enabled="true">
+            <stringProp name="DurationAssertion.duration">2000</stringProp>
+            <stringProp name="Assertion.scope">all</stringProp>
+          </DurationAssertion>
+          <hashTree/>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Code" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="49586">200</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">2</intProp>
+            <stringProp name="Assertion.scope">all</stringProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Times" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename">C:\Users\cleppanen\Desktop\AggregateResults.csv</stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="TableVisualizer" testclass="ResultCollector" testname="RESULTS!" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>false</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>true</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>true</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <threadCounts>true</threadCounts>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename">C:\Users\cleppanen\Desktop\ECRF Test Plan.csv</stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+    <WorkBench guiclass="WorkBenchGui" testclass="WorkBench" testname="WorkBench" enabled="true">
+      <boolProp name="WorkBench.save">true</boolProp>
+    </WorkBench>
+    <hashTree/>
+  </hashTree>
+</jmeterTestPlan>
