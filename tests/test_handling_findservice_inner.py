@@ -1,21 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from civvy.db.postgis.locating.basics import PgLocatorResult
 
 from lxml import etree
-import unittest
-from unittest.mock import patch
-from unittest.mock import MagicMock, call
+
 import lostservice.handling.core
 import lostservice.handling.findservice
 import lostservice.model.requests
 import lostservice.model.responses
 import lostservice.model.location
 import lostservice.exception
+from lostservice.model.geodetic import Geodetic2D
 from lostservice.model.geodetic import Point
 from lostservice.model.geodetic import Circle
 from lostservice.model.geodetic import Ellipse
 from lostservice.model.geodetic import Arcband
 from lostservice.model.geodetic import Polygon
+
+import unittest
+from unittest.mock import patch
+from unittest.mock import MagicMock, call
+
+
+
 
 class FindServiceInnerTest(unittest.TestCase):
 
