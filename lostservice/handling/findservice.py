@@ -551,7 +551,9 @@ class FindServiceInner(object):
         # Create the locator we want to use for civic address location searching. (Can be multiple locators)
         locator = self.get_civvy_locator(rcl_offset_distance)
         # Run our civic address location search.
-        locator_results = self.run_civic_location_search(civic_request, rcl_offset_distance, locator)
+        locator_results = self.run_civic_location_search(locator=locator,
+                                                         offset_distance=rcl_offset_distance,
+                                                         civic_request=civic_request)
 
         if len(locator_results) > 0:
             use_fuzzy = self._find_service_config.use_fuzzy_match()  # Do we use fuzzy matching or not.
