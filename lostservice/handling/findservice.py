@@ -555,7 +555,7 @@ class FindServiceInner(object):
                                                          offset_distance=rcl_offset_distance,
                                                          civic_request=civic_request)
 
-        if len(locator_results) > 0:
+        if locator_results is not None and len(locator_results) > 0:
             use_fuzzy = self._find_service_config.use_fuzzy_match()  # Do we use fuzzy matching or not.
             max_score = self._find_service_config.find_civic_address_maximum_score()
             civic_point = locator_results[0]  # We will always use the first result from civvy for our find service.
