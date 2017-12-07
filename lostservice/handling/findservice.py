@@ -451,68 +451,91 @@ class FindServiceInner(object):
 
         return self._apply_policies(results, return_shape)
 
-    def get_civvy_locator(self,civic_request):
+    def get_civvy_locator(self, offset_distance):
         """
-        :param civic_request: civic address request
-        :type civic_request: civicAddress
+        Creates the locator(s) needed for civic address location searching.
+
+        :param offset_distance: distance to offset RCL point matches
+        :type civic_request: int
+        :return: a collection of civic address locator(s)
+        :rtype:
         """
         # The locator needs some information about the underlying data store.
-        jsons = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
+        civvy_json = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
 
         # From the JSON configuration, create the source maps that apply to this database.
-        source_maps = CivicAddressSourceMapCollection(config=jsons)
+        source_maps = CivicAddressSourceMapCollection(config=civvy_json)
 
-        civvy_obj = civic_request.location.location
-
-        rcl_offset_distance = self._find_service_config.offset_distance()
 
         # Now let's create the locator and supply it with the common default strategies.
         locator = Locator(strategies=[
             PgPointsAggregateLocatorStrategy(query_executor=self._query_executor),
             PgStreetsAggregateLocatorStrategy(query_executor=self._query_executor)
-        ], source_maps=source_maps, offset_distance=rcl_offset_distance)
+        ], source_maps=source_maps, offset_distance=offset_distance)
 
-        civic_dict = {}
-        civic_dict['country'] = civvy_obj.country
-        if civvy_obj.a1:
-            civic_dict['a1'] = civvy_obj.a1
-        if civvy_obj.a2:
-            civic_dict['a2'] = civvy_obj.a2
-        if civvy_obj.a3:
-            civic_dict['a3'] = civvy_obj.a3
-        if civvy_obj.a4:
-            civic_dict['a4'] = civvy_obj.a4
-        if civvy_obj.a5:
-            civic_dict['a5'] = civvy_obj.a5
-        if civvy_obj.a6:
-            civic_dict['a6'] = civvy_obj.a6
-        if civvy_obj.rd:
-            civic_dict['rd'] = civvy_obj.rd
-        if civvy_obj.pod:
-            civic_dict['pod'] = civvy_obj.pod
-        if civvy_obj.sts:
-            civic_dict['sts'] = civvy_obj.sts
-        if civvy_obj.hno:
-            civic_dict['hno'] = civvy_obj.hno
-        if civvy_obj.hns:
-            civic_dict['hns'] = civvy_obj.hns
-        if civvy_obj.lmk:
-            civic_dict['lmk'] = civvy_obj.lmk
-        if civvy_obj.loc:
-            civic_dict['loc'] = civvy_obj.loc
-        if civvy_obj.flr:
-            civic_dict['flr'] = civvy_obj.flr
-        if civvy_obj.nam:
-            civic_dict['nam'] = civvy_obj.nam
-        if civvy_obj.pc:
-            civic_dict['pc'] = civvy_obj.pc
+        return locator
 
-        # We can create several civic addresses and pass them to the locator.
-        civic_address = CivicAddress(**civic_dict)
+    def run_civic_location_search(self, locator, offset_distance, civic_request):
+        """
+        Creates a dictionary of values to pass into the civvy library to run civic address match queries.
 
-        # Let's get the results for this civic address.
-        locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=rcl_offset_distance)
-        return locator_results
+        :param locator:
+        :param offset_distance: the distance to offset the resultant point of an RCL match.
+        :param civic_request: int
+        :return: a collection of results from the civic location queries.
+        """
+
+        # Make sure we have a locator to use first.
+        if locator is not None:
+            civvy_obj = civic_request.location.location
+            # Create dictionary of values from request into a civic location dictionary for civvy to use.
+            civic_dict = {}
+            civic_dict['country'] = civvy_obj.country
+            if civvy_obj.a1:
+                civic_dict['a1'] = civvy_obj.a1
+            if civvy_obj.a2:
+                civic_dict['a2'] = civvy_obj.a2
+            if civvy_obj.a3:
+                civic_dict['a3'] = civvy_obj.a3
+            if civvy_obj.a4:
+                civic_dict['a4'] = civvy_obj.a4
+            if civvy_obj.a5:
+                civic_dict['a5'] = civvy_obj.a5
+            if civvy_obj.a6:
+                civic_dict['a6'] = civvy_obj.a6
+            if civvy_obj.rd:
+                civic_dict['rd'] = civvy_obj.rd
+            if civvy_obj.pod:
+                civic_dict['pod'] = civvy_obj.pod
+            if civvy_obj.sts:
+                civic_dict['sts'] = civvy_obj.sts
+            if civvy_obj.hno:
+                civic_dict['hno'] = civvy_obj.hno
+            if civvy_obj.hns:
+                civic_dict['hns'] = civvy_obj.hns
+            if civvy_obj.lmk:
+                civic_dict['lmk'] = civvy_obj.lmk
+            if civvy_obj.loc:
+                civic_dict['loc'] = civvy_obj.loc
+            if civvy_obj.flr:
+                civic_dict['flr'] = civvy_obj.flr
+            if civvy_obj.nam:
+                civic_dict['nam'] = civvy_obj.nam
+            if civvy_obj.pc:
+                civic_dict['pc'] = civvy_obj.pc
+
+            # We can create several civic addresses and pass them to the locator.
+            civic_address = CivicAddress(**civic_dict)
+            logger.info('Executing civic address query')
+            # Let's get the results for this civic address.
+            locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=offset_distance)
+
+            return locator_results
+        else:
+            # Who did this, and why are you doing it?!
+            raise NotFoundException('Locator not defined, cannot complete civic address request.', None)
+            logger.error('Locator object not passed into findService.FindServiceInner.run_civic_location_search')
+            return None
 
     def find_service_for_civicaddress(self, civic_request: CivicAddress, return_shape: bool=False):
         """
@@ -523,7 +546,12 @@ class FindServiceInner(object):
         :type return_shape: bool
         :return: The service mappings for the given civic address.
         """
-        locator_results = self.get_civvy_locator(civic_request)
+        # Get the RCL offset distance from configuration
+        rcl_offset_distance = self._find_service_config.offset_distance()
+        # Create the locator we want to use for civic address location searching. (Can be multiple locators)
+        locator = self.get_civvy_locator(rcl_offset_distance)
+        # Run our civic address location search.
+        locator_results = self.run_civic_location_search(civic_request, rcl_offset_distance, locator)
 
         if len(locator_results) > 0:
             use_fuzzy = self._find_service_config.use_fuzzy_match()  # Do we use fuzzy matching or not.
@@ -532,14 +560,14 @@ class FindServiceInner(object):
             # We want an exact match from our civic address query
             # or if fuzzy matching is on, we are within the score tolerance.
             if civic_point.score == 0.0 or (civic_point.score <= max_score and use_fuzzy):
-                civvy_geometry = civic_point.geometry
-                spatial_reference = civvy_geometry.GetSpatialReference()
+                logger.info('Point found and used for civic address request.')
+                spatial_reference = civic_point.geometry.GetSpatialReference()
                 epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
                 srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
                 spatial_ref = "{0}::{1}".format(epsg, srid)
                 point = Point()
-                point.latitude = civvy_geometry.GetY()
-                point.longitude = civvy_geometry.GetX()
+                point.latitude = civic_point.geometry.GetY()
+                point.longitude = civic_point.geometry.GetX()
                 point.spatial_ref = spatial_ref
                 mappings = self.find_service_for_point(civic_request.service,
                                                        point,
@@ -550,6 +578,7 @@ class FindServiceInner(object):
                     validate_location = civic_request.validateLocation
 
                 if validate_location:
+                    logger.info('Validation used in civic address request.')
                     location_validation = {}
                     # invalid properties
                     invalid_properties = [prop.value for prop in civic_point.invalid_civic_address_properties]
@@ -569,6 +598,7 @@ class FindServiceInner(object):
                 # If we used a fuzzy match, we want to build a warning for it later.
                 if civic_point.score != 0.0 and (civic_point.score <= max_score and use_fuzzy):
                     self._fuzzy_used = True
+                    logger.info('Fuzzy matching used for response.')
 
                 return mappings
             else:
@@ -578,6 +608,7 @@ class FindServiceInner(object):
             # We couldn't find anything, so return nothing.
             raise NotFoundException('The server could not find an answer to the query.', None)
         # Nothing good came of this.
+        logger.info('No valid mappings found.')
         return None
 
     def find_service_for_circle(self,
