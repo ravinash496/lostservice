@@ -11,6 +11,7 @@ import lostservice.model.responses
 import lostservice.model.location
 from lostservice.exception import NotFoundException
 
+
 class FindServiceTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceOuter')
@@ -22,7 +23,7 @@ class FindServiceTest(unittest.TestCase):
         mock_outer.find_service_for_point = MagicMock()
 
         expected = lostservice.model.responses.FindServiceResponse()
-        mock_outer.find_service_for_point.return_value = expected
+        mock_outer.find_service_for_point.return_value = {'response': expected}
 
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
@@ -52,7 +53,7 @@ class FindServiceTest(unittest.TestCase):
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_circle = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
-        mock_outer.find_service_for_circle.return_value = expected
+        mock_outer.find_service_for_circle.return_value = {'response': expected}
 
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
@@ -82,7 +83,7 @@ class FindServiceTest(unittest.TestCase):
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_ellipse = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
-        mock_outer.find_service_for_ellipse.return_value = expected
+        mock_outer.find_service_for_ellipse.return_value = {'response': expected}
 
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
@@ -112,7 +113,7 @@ class FindServiceTest(unittest.TestCase):
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_arcband = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
-        mock_outer.find_service_for_arcband.return_value = expected
+        mock_outer.find_service_for_arcband.return_value = {'response': expected}
 
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'
@@ -142,7 +143,7 @@ class FindServiceTest(unittest.TestCase):
         # Mock for apply_policy_settings.
         mock_outer.find_service_for_polygon = MagicMock()
         expected = lostservice.model.responses.FindServiceResponse()
-        mock_outer.find_service_for_polygon.return_value = expected
+        mock_outer.find_service_for_polygon.return_value = {'response': expected}
 
         mock_cov.check_coverage = MagicMock()
         mock_cov.check_coverage.return_value = 'some.server.name'

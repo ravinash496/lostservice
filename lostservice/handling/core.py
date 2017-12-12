@@ -69,7 +69,7 @@ class ListServicesHandler(Handler):
             service_list = filtered
         else:
             # Filter the response to only the Top Level Services
-            filtered= filter(lambda k: '.' not in k, service_list)
+            filtered = filter(lambda k: '.' not in k, service_list)
             service_list = filtered
 
         # No Recursion available so just add our path
@@ -88,7 +88,8 @@ class FindServiceHandler(Handler):
     """
 
     @inject
-    def __init__(self, outer: FindServiceOuter, cov_resolver: cov.CoverageResolverWrapper, default_route_handler: def_routes.DefaultRouteHandler):
+    def __init__(self, outer: FindServiceOuter, cov_resolver: cov.CoverageResolverWrapper,
+                 default_route_handler: def_routes.DefaultRouteHandler):
         """
         Constructor
 
@@ -145,13 +146,18 @@ class FindServiceHandler(Handler):
                 response = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
             else:
                 raise
-
-        if response.mappings is None or len(response.mappings) == 0:
+        return_value = {}
+        if response['response'].mappings is None or len(response['response'].mappings) == 0:
             mapping = self._default_route_handler.check_default_route(request)
             # build the response with this mapping
-            response = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
+            response['response'] = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
+        else:
+            return_value['latitude'] = response['latitude']
+            return_value['longitude'] = response['longitude']
 
-        return response
+        return_value['response'] = response['response']
+
+        return return_value
 
 
 class GetServiceBoundaryHandler(Handler):

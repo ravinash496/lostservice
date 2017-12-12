@@ -459,6 +459,9 @@ class FindServiceInner(object):
         :type return_shape: bool
         :return: The service mappings for the given civic address.
         """
+
+        # return mapping and location that comes back from civy
+        return_value = {}
         # The locator needs some information about the underlying data store.
         jsons = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
 
@@ -534,6 +537,10 @@ class FindServiceInner(object):
                 point = Point()
                 point.latitude = civvy_geometry.GetY()
                 point.longitude = civvy_geometry.GetX()
+                return_value['latitude'] = point.latitude
+                return_value['longitude'] = point.longitude
+                #try storing point in context
+
                 point.spatial_ref = spatial_ref
                 mappings = self.find_service_for_point(civic_request.service,
                                                        point,
@@ -564,8 +571,8 @@ class FindServiceInner(object):
         # If we used a fuzzy match, we want to build a warning for it later.
         if civic_point.score != 0.0 and (civic_point.score <= max_score and use_fuzzy):
             self._fuzzy_used = True
-
-        return mappings
+        return_value['mappings'] = mappings
+        return return_value
 
     def find_service_for_circle(self,
                                 service_urn,
@@ -718,7 +725,7 @@ class FindServiceInner(object):
                                         location.outer_radius)
         points = geom.get_vertices_for_geom(arcband)[0]
         polygon = geodetic_polygon()
-        polygon.spatial_ref=WGS84SPATIALREFERENCE
+        polygon.spatial_ref = WGS84SPATIALREFERENCE
         polygon.vertices = points
         return self.find_service_for_polygon(service_urn, polygon, return_shape)
 
@@ -742,8 +749,7 @@ class FindServiceInner(object):
             point = Point()
             point.longitude = pt_array.x
             point.latitude = pt_array.y
-            point.spatial_ref=location.spatial_ref
-
+            point.spatial_ref = location.spatial_ref
 
             if pt_array is None:
                 return None
@@ -1018,11 +1024,15 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata,
-                                    include_boundary_value)
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata,
+                                                         include_boundary_value)}
+
+        return return_value
 
     def find_service_for_civicaddress(self, request):
         """
@@ -1035,16 +1045,20 @@ class FindServiceOuter(object):
         self._check_is_loopback(request.path)
         include_boundary_value = self._apply_override_policy(request)
 
-        mappings = self._inner.find_service_for_civicaddress(
+        # returns mappings and lon and lat for logging
+        inner_result = self._inner.find_service_for_civicaddress(
             request,
             include_boundary_value
         )
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         inner_result['mappings'],
+                                                         request.nonlostdata,
+                                                         include_boundary_value)}
 
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata,
-                                    include_boundary_value)
+        return return_value
 
     def find_service_for_circle(self, request):
         """
@@ -1062,11 +1076,14 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata,
-                                    include_boundary_value)
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata,
+                                                         include_boundary_value)}
+        return return_value
 
     def find_service_for_ellipse(self, request):
         """
@@ -1084,11 +1101,15 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata,
-                                    include_boundary_value)
+
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata,
+                                                         include_boundary_value)}
+        return return_value
 
     def find_service_for_arcband(self, request):
         """
@@ -1106,11 +1127,14 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata,
-                                    include_boundary_value)
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata,
+                                                         include_boundary_value)}
+        return return_value
 
     def find_service_for_polygon(self, request):
         """
@@ -1128,11 +1152,14 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return self._build_response(request.path,
-                                    request.location.id,
-                                    mappings,
-                                    request.nonlostdata,
-                                    include_boundary_value)
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata,
+                                                         include_boundary_value)}
+        return return_value
 
     def _build_response(self, path, location_used, mappings, nonlostdata, include_boundary_value=False):
         """

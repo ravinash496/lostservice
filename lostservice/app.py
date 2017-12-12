@@ -147,7 +147,7 @@ class LostApplication(object):
 
         logfile = conf.get('Logging', 'logfile')
         filehandler = RotatingFileHandler(logfile, mode='a', maxBytes=10 * 1024 * 1024,
-                                             backupCount=2, encoding=None, delay=0)
+                                          backupCount=2, encoding=None, delay=0)
         filehandler.setLevel(logging.DEBUG)
         filehandler.setFormatter(formatter)
 
@@ -173,10 +173,10 @@ class LostApplication(object):
         # setup a loop so logging can happen asynchronously - in order not to interfere with the web.py asyncio loop
         # start it on another thread - see execute_query (call_soon_threadsafe) to see it in action
         self.loop = asyncio.new_event_loop()
-        t = Thread(target=self.start_logging_event_loop,args=(self.loop,))
+        t = Thread(target=self.start_logging_event_loop, args=(self.loop,))
         t.start()
 
-    def start_logging_event_loop(self,loop):
+    def start_logging_event_loop(self, loop):
         """
         start up an event loop so that logging can be called asynchronously
         :param loop:
@@ -184,7 +184,6 @@ class LostApplication(object):
         """
         asyncio.set_event_loop(loop)
         loop.run_forever()
-
 
     def _get_class(self, classname):
         """
@@ -280,7 +279,7 @@ class LostApplication(object):
             parsed_response = self._execute_internal(runner, parsed_request, context)
 
             # 4. serialize the xml back out into a string and return it.
-            response = etree.tostring(parsed_response)
+            response = etree.tostring(parsed_response['response'])
 
             # Create End Time (response has been sent)
             endtime = datetime.datetime.now(tz=pytz.utc)
@@ -305,30 +304,34 @@ class LostApplication(object):
                 response = exp.build_error_response(e, source_uri)
         finally:
             if parsed_response is None:
-                parsed_response = etree.fromstring(response.encode())
+                parsed_response['response'] = etree.fromstring(response.encode())
             if self.audit_logging_enabled:
                 self.loop.call_soon_threadsafe(functools.partial(self._audit_transaction,
                                                                  activity_id,
                                                                  parsed_request,
                                                                  starttime,
-                                                                 parsed_response,
-                                                                 endtime, context))
-
+                                                                 parsed_response['response'],
+                                                                 endtime, context,
+                                                                 parsed_response['latitude'],
+                                                                 parsed_response['longitude']))
 
         return response
 
-    def _audit_transaction(self, activity_id, parsed_request, start_time, parsed_response, end_time, context):
+    def _audit_transaction(self, activity_id, parsed_request, start_time, parsed_response, end_time, context,
+                           latitude=0, longitude=0):
         """
         Create and send the request and response to the transactionlogs
-        :param request:
+        :param activity_id:
+        :param parsed_request
         :param start_time:
-        :param response_text:
+        :param parsed_response:
         :param end_time:
+        :param context:
+        :param: latitude
+        :param: longitude
         :return:
         """
-
-
-        nslookup = {'ls':'urn:ietf:params:xml:ns:lost1'}
+        nslookup = {'ls': 'urn:ietf:params:xml:ns:lost1'}
 
         auditor = self._di_container.get(auditlog.AuditLog)
         conf = self._di_container.get(config.Configuration)
@@ -342,6 +345,8 @@ class LostApplication(object):
         trans.serverid = server_id
         trans.machineid = socket.gethostname()
         trans.clientid = context['web_ctx'].client_ip if 'web_ctx' in context else ''
+        trans.requestlocx = latitude
+        trans.requestlocy = longitude
 
         if parsed_request is not None:
             trans.request = etree.tostring(parsed_request, encoding='unicode')
