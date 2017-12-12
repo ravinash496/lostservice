@@ -9,6 +9,7 @@ chardet==3.0.4
 cheroot==5.5.0
 civvy==0.0.18
 colorama==0.3.7
+coverage==4.4.2
 defusedxml==0.5.0
 docutils==0.13.1
 eyeD3==0.8
