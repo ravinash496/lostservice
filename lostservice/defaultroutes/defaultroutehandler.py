@@ -60,6 +60,7 @@ class DefaultSetting(ABC):
         abstract method that classes must implement to return a uri for the given request
         :return: the uri
         """
+        raise NotImplementedError('The get_uri method must be implemented in a subclass.')
 
 
 class OverrideRouteSetting(DefaultSetting):

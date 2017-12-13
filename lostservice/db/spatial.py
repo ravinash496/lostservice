@@ -365,6 +365,7 @@ def get_containing_boundary_for_point(point: geodetic_point, boundary_table, eng
         return _get_nearest_point(point.longitude, point.latitude, engine, boundary_table, wkb_pt,buffer_distance=buffer_distance)
     return _get_containing_boundary_for_geom(engine, boundary_table, wkb_pt)
 
+
 def _transform_circle(long, lat, srid, radius, uom):
     """
     Takes the fundamental bits of a circle and converts it to a descritized circle (polygon)
