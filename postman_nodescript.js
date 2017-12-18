@@ -1,17 +1,17 @@
-//File paths to the various newmane files for testing.
+// File paths to the various newman files for testing.
+var code = 0;
 var testBase = './tests/postman/';
 var testFilePath = testBase + 'Tests/';
 var iterationFilePath = testBase + 'PostmanData/';
-var envFilePath = testBase + 'Environments/';
-var code = 0;
+// var envFilePath = testBase + 'Environments/';
 
 
 var fs = require('fs'),             // https://nodejs.org/api/fs.html
     newman = require('newman'),     // https://
     path = require('path');         // https://www.npmjs.com/package/newman
 
-//This function will check in the PostmanData folder to see if the file for iterating data exists.
-//Returns a file name, or empty string.
+// This function will check in the PostmanData folder to see if the file for iterating data exists.
+// Returns a file name, or empty string.
 function checkIterationFile(file, iterationFile) {
    var fileNameOnly = file.split('.').slice();
     return new Promise((resolve, reject) => {
@@ -26,32 +26,30 @@ function checkIterationFile(file, iterationFile) {
 }
 
 var getFiles = function () {fs.readdir(testFilePath, (err, files) => {
-    //TO MY FUTURE SELF: Assign environment file.
+    // TO MY FUTURE SELF: Assign environment file.
     files.forEach(file => {
-        //Run our promise for the iterationData
+        // Run our promise for the iterationData
         checkIterationFile(file)
-        //After our promise, create our newman instance to run the test.
         .then(function (res) {
             newman.run({
-              collection: testFilePath + file,
-              iterationData: res,
-              reporters: 'cli',
-              bail: true
-              //Did we error?
-        }),  function (err) {
-                if (err) { 
+            collection: testFilePath + file,
+            iterationData: res,
+            reporters: 'cli',
+            timeoutRequest: 10000,
+            bail: true
+        },  function (err) {
+                if (err) {                    
+                    console.log('i hit an error boss');
+                    code = -1;
                     throw err;
-                    console.log('How did I get here?'); 
-                    code = -1;                   
                 }
-            };
+            });
         })
         .catch(function (error) {
             console.log(error.message);
         });
     });
-    resolve(code);       
  });
-}
+};
 
-getFiles().then(process.exit(code));
+getFiles();
