@@ -21,9 +21,6 @@ import unittest
 from unittest.mock import patch
 from unittest.mock import MagicMock, call
 
-
-
-
 class FindServiceInnerTest(unittest.TestCase):
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
