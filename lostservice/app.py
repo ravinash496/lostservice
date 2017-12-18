@@ -341,7 +341,7 @@ class LostApplication(object):
         trans.activityid = activity_id
         trans.starttimeutc = start_time
         trans.endtimeutc = end_time
-        trans.transactionms = int((start_time - end_time).microseconds * .001)
+        trans.transactionms = int((end_time - start_time).microseconds * .001)
         trans.serverid = server_id
         trans.machineid = socket.gethostname()
         trans.clientid = context['web_ctx'].client_ip if 'web_ctx' in context else ''
