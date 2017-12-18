@@ -172,11 +172,11 @@ class FindServiceOuterTest(unittest.TestCase):
         model.location.location = lostservice.model.geodetic.Arcband()
         model.location.location.longitude = 0.0
         model.location.location.latitude = 0.0
-        model.location.location.spatial_ref = 'bar::4321'
-        model.location.location.start_angle = '1.1'
-        model.location.location.opening_angle = '2.2'
-        model.location.location.inner_radius = '3.3'
-        model.location.location.outer_radius = '4.4'
+        model.location.location.spatial_ref = 'urn:ogc:def:crs:EPSG::4326'
+        model.location.location.start_angle = 1.1
+        model.location.location.opening_angle = 2.2
+        model.location.location.inner_radius = 3.3
+        model.location.location.outer_radius = 4.4
         model.location.location.uom = 'baz'
         model.nonlostdata = ['non-lost-data', 'more-non-lost-data', 'still-more-non-lost-data']
         target = lostservice.handling.findservice.FindServiceOuter(mock_config, mock_inner)
@@ -194,8 +194,8 @@ class FindServiceOuterTest(unittest.TestCase):
             self.assertListEqual(actual['response'].mappings, [])
             self.assertEqual(actual['response'].location_used, '1234')
 
-        except:
-            self.fail("handle_request threw an exception.")
+        except Exception as e:
+            self.fail("handle_request threw an exception."+ e.__str__() )
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.handling.findservice.FindServiceInner')
