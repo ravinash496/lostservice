@@ -1166,8 +1166,8 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return_value = {'latitude': request.location.location.latitude,
-                        'longitude': request.location.location.longitude,
+        return_value = {'latitude': request.location.location.build_shapely_geometry().representative_point().y,
+                        'longitude': request.location.location.build_shapely_geometry().representative_point().x,
                         'response': self._build_response(request.path,
                                                          request.location.id,
                                                          mappings,

@@ -345,8 +345,8 @@ class LostApplication(object):
         trans.serverid = server_id
         trans.machineid = socket.gethostname()
         trans.clientid = context['web_ctx'].client_ip if 'web_ctx' in context else ''
-        trans.requestlocx = latitude
-        trans.requestlocy = longitude
+        trans.requestlocx = longitude
+        trans.requestlocy = latitude
 
         if parsed_request is not None:
             trans.request = etree.tostring(parsed_request, encoding='unicode')
