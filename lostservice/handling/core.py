@@ -271,7 +271,7 @@ class ListServicesByLocationHandler(Handler):
             logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
 
-        return_value = {'response': response,
-                        'latitude': 0.0,
-                        'longitude': 0.0}
+        return_value = {'response': response['response'],
+                        'latitude': response['latitude'],
+                        'longitude': response['longitude']}
         return return_value
