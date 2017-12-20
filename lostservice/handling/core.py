@@ -78,8 +78,10 @@ class ListServicesHandler(Handler):
         # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
         request.path.append(our_path)
         response = responses.ListServicesResponse(service_list, request.path, request.nonlostdata)
-
-        return response
+        return_value = {'response': response,
+                        'latitude': 0.0,
+                        'longitude': 0.0}
+        return return_value
 
 
 class FindServiceHandler(Handler):
@@ -209,8 +211,11 @@ class GetServiceBoundaryHandler(Handler):
                 break
         for item in results:
             item =  self._inner.apply_service_boundary_policy(item, True)
+        return_value = {'response': results,
+                        'latitude': 0.0,
+                        'longitude': 0.0}
 
-        return results
+        return return_value
 
 
 class ListServicesByLocationHandler(Handler):
@@ -266,4 +271,7 @@ class ListServicesByLocationHandler(Handler):
             logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
 
-        return response
+        return_value = {'response': response['response'],
+                        'latitude': response['latitude'],
+                        'longitude': response['longitude']}
+        return return_value
