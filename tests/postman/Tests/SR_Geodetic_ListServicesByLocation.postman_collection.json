@@ -1,7 +1,8 @@
 {
 	"info": {
 		"name": "SR_Geodetic_ListServicesByLocation",
-		"_postman_id": "d4ff420a-a637-a7c2-017f-a5446d9ffa90",
+		"_postman_id": "78653d3a-e32f-814d-9e11-fc6c92a9c74d",
+		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,14 +12,18 @@
 				{
 					"listen": "test",
 					"script": {
+						"id": "52d2151c-f83c-4519-8cff-f76d7a51a39c",
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"",
 							"var jsonObject = xml2Json(responseBody);",
-							"var ServiceList = jsonObject.listServicesByLocationResponse.serviceList;",
 							"",
-							"tests[\"Service List: \" + ServiceList] = ServiceList == data.Expected_ServiceList;",
+							"console.log(jsonObject.listServicesByLocationResponse.serviceList !== undefined)",
+							"if (jsonObject.listServicesByLocationResponse.serviceList !== undefined) {",
+							"        var ServiceList = jsonObject.listServicesByLocationResponse.serviceList;",
+							"        tests[\"Service List: \" + ServiceList] = ServiceList == data.Expected_ServiceList;",
+							"}",
+							"",
 							""
 						]
 					}
@@ -26,6 +31,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
+						"id": "ee879e26-c120-447e-a96d-42c088f57e46",
 						"type": "text/javascript",
 						"exec": [
 							"var Type = data.Type;",
@@ -65,8 +71,7 @@
 							"if (Type == \"arcband\")",
 							"{",
 							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"UTF-8\"?><listServicesByLocation xmlns=\"urn:ietf:params:xml:ns:lost1\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:slb=\"urn:ietf:params:xml:ns:lost1:slb\" recursive=\"true\"><location id=\"4dbaf2b4-88f2-44db-be7e-5d9955b6bfcc\" profile=\"geodetic-2d\"><gs:ArcBand xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos1}}</gml:pos><gs:innerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{innerRadius}}</gs:innerRadius><gs:outerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{outerRadius}}</gs:outerRadius><gs:startAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{startAngle}}</gs:startAngle><gs:openingAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{openingAngle}}</gs:openingAngle></gs:ArcBand></location><service>{{Service}}</service><slb:serviceListBoundaryRequest type=\"value\"/></listServicesByLocation>');",
-							"}",
-							""
+							"}"
 						]
 					}
 				}
@@ -76,17 +81,22 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/x-www-form-urlencoded"
+						"value": "application/xml"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{{Body}}\r\n\r\n"
+					"raw": "{{Body}}"
 				},
 				"url": {
-					"raw": "{{url}}",
+					"raw": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com",
+					"protocol": "http",
 					"host": [
-						"{{url}}"
+						"ec2-52-36-126-217",
+						"us-west-2",
+						"compute",
+						"amazonaws",
+						"com"
 					]
 				},
 				"description": "This is the Root API Request"
