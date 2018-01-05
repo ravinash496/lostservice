@@ -145,17 +145,28 @@ class FindServiceHandler(Handler):
                 # check if default route exists, if not raise the same exception
                 mapping = self._default_route_handler.check_default_route(request)
                 # build the response with this mapping
-                response = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
+                response = {'response': self._outer._build_response([],
+                                                                    request.location.id,
+                                                                    mapping,
+                                                                    request.nonlostdata),
+                            'latitude': 0.0,
+                            'longitude': 0.0}
             else:
                 raise
         return_value = {}
-        if response['response'].mappings is None or len(response['response'].mappings) == 0:
+        # if it's not a CivicAddress and the mappings are none (didn't find a resolution) then check for
+        # a default route (unlike FindCivic which throws and exception if it can't find a resolution, geodectic
+        # requests return nothing for the mapping an empty list
+        if type(request.location.location) is not CivicAddress and \
+                (response['response'].mappings is None or len(response['response'].mappings) == 0):
+            # the following function can throw a NotFoundException, In that case since we've exhausted all
+            # tries we let it get caught by execute_query in the app.py (which retunrs a not found message)
             mapping = self._default_route_handler.check_default_route(request)
             # build the response with this mapping
             response['response'] = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
-        else:
-            return_value['latitude'] = response['latitude']
-            return_value['longitude'] = response['longitude']
+
+        return_value['latitude'] = response['latitude']
+        return_value['longitude'] = response['longitude']
 
         return_value['response'] = response['response']
 
