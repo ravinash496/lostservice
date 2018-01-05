@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "SR_Geodetic_FindService_ByReference",
-		"_postman_id": "1c0cc2e3-d442-2605-d2f4-3f2f218aa50e",
+		"_postman_id": "d3559c4f-3679-81b5-ded2-320a92b94e94",
 		"description": "SR_Geodetic_Temp",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -10,35 +10,15 @@
 			"name": "SR_Geodetic_FindService_ByReference",
 			"event": [
 				{
-					"listen": "test",
-					"script": {
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							"",
-							"var jsonObject = xml2Json(responseBody);",
-							"var Service = jsonObject.findServiceResponse.mapping.service;",
-							"var URI = jsonObject.findServiceResponse.mapping.uri;",
-							"",
-							"tests[\"Expected Service: \" + Service] = Service == data.Expected_Service;",
-							"tests[\"Expected URI: \" + URI] = URI == data.Expected_URI;",
-							"",
-							"if (jsonObject.findServiceResponse.mapping.serviceNumber != \"undefined\") {",
-							"    tests[\"Expected Service number: \" + jsonObject.findServiceResponse.mapping.serviceNumber] = jsonObject.findServiceResponse.mapping.serviceNumber === data.Expected_Service_Number;",
-							"}",
-							""
-						]
-					}
-				},
-				{
 					"listen": "prerequest",
 					"script": {
+						"id": "954caf6b-b7d1-4ea7-9218-1b2d686b3d78",
 						"type": "text/javascript",
 						"exec": [
 							"var type = data.Type;",
 							"var Pos = data.Pos;",
 							"var Radius = data.Radius;",
-							"var Service = data.Service.trim();",
+							"var Service = data.Service;",
 							"var Pt1 = data.Pt1;",
 							"var Pt2 = data.Pt2;",
 							"var Pt3 = data.Pt3;",
@@ -89,6 +69,29 @@
 							"//});",
 							"",
 							"pm.environment.get(\"variable_key\");"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "51012600-d2b7-4590-991b-409d1f6f8f0a",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"var jsonObject = xml2Json(responseBody);",
+							"var Service = jsonObject.findServiceResponse.mapping.service;",
+							"var URI = jsonObject.findServiceResponse.mapping.uri;",
+							"",
+							"tests[\"Expected Service: \" + Service] = Service == data.Expected_Service;",
+							"tests[\"Expected URI: \" + URI] = URI == data.Expected_URI;",
+							"",
+							"if ((jsonObject.hasOwnProperty('serviceNumber')) === 0) {",
+							"    var ServiceNumber = jsonObject.findServiceResponse.mapping.serviceNumber;",
+							"    tests[\"Expected Service number: \" + ServiceNumber] = ServiceNumber == data.Expected_Service_Number;",
+							"}",
+							""
 						]
 					}
 				}
