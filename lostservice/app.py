@@ -304,7 +304,10 @@ class LostApplication(object):
                 response = exp.build_error_response(e, source_uri)
         finally:
             if parsed_response is None:
-                parsed_response['response'] = etree.fromstring(response.encode())
+                parsed_response = {'response': etree.fromstring(response.encode()),
+                                   'latitude': 0.0,
+                                   'longitude': 0.0
+                }
             if self.audit_logging_enabled:
                 self.loop.call_soon_threadsafe(functools.partial(self._audit_transaction,
                                                                  activity_id,
