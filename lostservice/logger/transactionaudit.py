@@ -13,7 +13,9 @@ from sqlalchemy.sql import func
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
-
+from geoalchemy2 import Geometry
+from geoalchemy2 import shape
+from shapely.geometry import Point
 
 class TransactionEvent(AuditableEvent):
     """
@@ -52,6 +54,7 @@ class TransactionEvent(AuditableEvent):
         self.responselvftype = ""
         self.responsecivgissrctype = ""
         self.notes = ""
+        self.wkb_geometry = None
 
 
 Base = declarative_base()
@@ -90,6 +93,7 @@ class Transaction(Base):
     responselvftype = Column(String(48))
     responsecivgissrctype = Column(String(48))
     notes = Column(Text)
+    wkb_geometry = Column(Geometry(geometry_type='Point', srid=4326))
 
 
 class TransactionAuditListener(AuditListener):
@@ -149,6 +153,9 @@ class TransactionAuditListener(AuditListener):
             trans.responselvftype = event.responselvftype
             trans.responsecivgissrctype = event.responsecivgissrctype
             trans.notes = event.notes
+
+            location_point = Point(event.requestlocx, event.requestlocy)
+            trans.wkb_geometry = shape.from_shape(location_point, srid=4326)
 
             s = session()
             s.add(trans)
