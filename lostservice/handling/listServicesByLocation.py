@@ -176,6 +176,7 @@ class ListServiceByLocationInner(object):
         # Let's get the results for this civic address.
         locator_results = locator.locate_civic_address(civic_address=civic_address)
         mappings = None
+        point = Point()
         if len(locator_results) > 0:
             first_civic_point = None
             for locater_result in locator_results:
@@ -188,15 +189,15 @@ class ListServiceByLocationInner(object):
                 epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
                 srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
                 spatial_ref = "{0}::{1}".format(epsg, srid)
-                point = Point()
                 point.latitude = civvy_geometry.GetY()
                 point.longitude = civvy_geometry.GetX()
                 point.spatial_ref = spatial_ref
                 mappings = self.list_services_by_location_for_point(
                     civic_request.service,
                     point)
-
-        return mappings
+        return {'mappings': mappings,
+                'latitude': point.latitude,
+                'longitude': point.longitude}
 
     def list_services_by_location_for_circle(self, service, location):
         """
@@ -332,7 +333,13 @@ class ListServiceBylocationOuter(object):
             request.service,
             request.location.location
         )
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata)}
+        return return_value
 
     def list_services_by_location_for_civicaddress(self, request):
         """
@@ -341,8 +348,15 @@ class ListServiceBylocationOuter(object):
         :return:
         """
         self._check_is_loopback(request.path)
-        mappings = self._inner.list_services_by_location_for_civicaddress(request)
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+        inner_result = self._inner.list_services_by_location_for_civicaddress(request)
+        return_value = {'latitude': inner_result['latitude'],
+                        'longitude': inner_result['longitude'],
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         inner_result['mappings'],
+                                                         request.nonlostdata)}
+
+        return return_value
 
     def list_services_by_location_for_circle(self, request):
         """
@@ -357,7 +371,14 @@ class ListServiceBylocationOuter(object):
         mappings = self._inner.list_services_by_location_for_circle(
             request.service,
             request.location.location)
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata)}
+        return return_value
 
     def list_services_by_location_for_ellipse(self, request):
         """
@@ -372,7 +393,13 @@ class ListServiceBylocationOuter(object):
         mappings = self._inner.list_services_by_location_for_ellipse(
             request.service,
             request.location.location)
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+        return_value = {'latitude': request.location.location.latitude,
+                        'longitude': request.location.location.longitude,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata)}
+        return return_value
 
     def list_service_by_location_for_arcband(self, request):
         """
@@ -387,7 +414,13 @@ class ListServiceBylocationOuter(object):
         mappings = self._inner.list_service_by_location_for_arcband(
             request.service,
             request.location.location)
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+        return_value = {'latitude': request.location.location.build_shapely_geometry().representative_point().y,
+                        'longitude': request.location.location.build_shapely_geometry().representative_point().x,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata)}
+        return return_value
 
     def list_services_by_location_for_polygon(self, request):
         """
@@ -403,7 +436,13 @@ class ListServiceBylocationOuter(object):
             request.service,
             request.location.location
         )
-        return self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+        return_value = {'latitude': request.location.location.build_shapely_geometry().representative_point().y,
+                        'longitude': request.location.location.build_shapely_geometry().representative_point().x,
+                        'response': self._build_response(request.path,
+                                                         request.location.id,
+                                                         mappings,
+                                                         request.nonlostdata)}
+        return return_value
 
     def _build_response(self, path, location_id, mapping,  nonlostdata):
         """

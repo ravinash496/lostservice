@@ -41,7 +41,9 @@ class QueryRunner(object):
         """
         request = self._converter.parse(data)
         response = self._handler.handle_request(request, context)
-        output = self._converter.format(response)
+        output = self._converter.format(response['response'])
+        return_value = {'latitude': response['latitude'],
+                        'longitude': response['longitude'],
+                        'response': output}
 
-        return output
-
+        return return_value

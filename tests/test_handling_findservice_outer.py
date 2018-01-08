@@ -44,10 +44,10 @@ class FindServiceOuterTest(unittest.TestCase):
             mock_inner.find_service_for_point.assert_called_with(model.service,
                                                                  model.location.location,
                                                                  False)
-            self.assertListEqual(actual.path, ['path.one', 'path.two', 'foo'])
-            self.assertListEqual(actual.nonlostdata, [])
-            self.assertListEqual(actual.mappings, [])
-            self.assertEqual(actual.location_used, '1234')
+            self.assertListEqual(actual['response'].path, ['path.one', 'path.two', 'foo'])
+            self.assertListEqual(actual['response'].nonlostdata, [])
+            self.assertListEqual(actual['response'].mappings, [])
+            self.assertEqual(actual['response'].location_used, '1234')
 
         except:
             self.fail("handle_request threw an exception.")
@@ -92,10 +92,10 @@ class FindServiceOuterTest(unittest.TestCase):
                                                                   model.location.location,
                                                                   True)
 
-            self.assertListEqual(actual.path, ['path.one', 'foo'])
-            self.assertListEqual(actual.nonlostdata, ['non-lost-data'])
-            self.assertListEqual(actual.mappings, [])
-            self.assertEqual(actual.location_used, '1234')
+            self.assertListEqual(actual['response'].path, ['path.one', 'foo'])
+            self.assertListEqual(actual['response'].nonlostdata, ['non-lost-data'])
+            self.assertListEqual(actual['response'].mappings, [])
+            self.assertEqual(actual['response'].location_used, '1234')
 
         except:
             self.fail("handle_request threw an exception.")
@@ -142,10 +142,10 @@ class FindServiceOuterTest(unittest.TestCase):
                                                                    model.location.location,
                                                                    True)
 
-            self.assertListEqual(actual.path, ['foo'])
-            self.assertListEqual(actual.nonlostdata, ['non-lost-data', 'more-non-lost-data'])
-            self.assertListEqual(actual.mappings, [])
-            self.assertEqual(actual.location_used, '1234')
+            self.assertListEqual(actual['response'].path, ['foo'])
+            self.assertListEqual(actual['response'].nonlostdata, ['non-lost-data', 'more-non-lost-data'])
+            self.assertListEqual(actual['response'].mappings, [])
+            self.assertEqual(actual['response'].location_used, '1234')
 
         except:
             self.fail("handle_request threw an exception.")
@@ -172,11 +172,11 @@ class FindServiceOuterTest(unittest.TestCase):
         model.location.location = lostservice.model.geodetic.Arcband()
         model.location.location.longitude = 0.0
         model.location.location.latitude = 0.0
-        model.location.location.spatial_ref = 'bar::4321'
-        model.location.location.start_angle = '1.1'
-        model.location.location.opening_angle = '2.2'
-        model.location.location.inner_radius = '3.3'
-        model.location.location.outer_radius = '4.4'
+        model.location.location.spatial_ref = 'urn:ogc:def:crs:EPSG::4326'
+        model.location.location.start_angle = 1.1
+        model.location.location.opening_angle = 2.2
+        model.location.location.inner_radius = 3.3
+        model.location.location.outer_radius = 4.4
         model.location.location.uom = 'baz'
         model.nonlostdata = ['non-lost-data', 'more-non-lost-data', 'still-more-non-lost-data']
         target = lostservice.handling.findservice.FindServiceOuter(mock_config, mock_inner)
@@ -188,14 +188,14 @@ class FindServiceOuterTest(unittest.TestCase):
                                                                    model.location.location,
                                                                    False)
 
-            self.assertListEqual(actual.path, ['foo'])
-            self.assertListEqual(actual.nonlostdata,
+            self.assertListEqual(actual['response'].path, ['foo'])
+            self.assertListEqual(actual['response'].nonlostdata,
                                  ['non-lost-data', 'more-non-lost-data', 'still-more-non-lost-data'])
-            self.assertListEqual(actual.mappings, [])
-            self.assertEqual(actual.location_used, '1234')
+            self.assertListEqual(actual['response'].mappings, [])
+            self.assertEqual(actual['response'].location_used, '1234')
 
-        except:
-            self.fail("handle_request threw an exception.")
+        except Exception as e:
+            self.fail("handle_request threw an exception."+ e.__str__() )
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     @patch('lostservice.handling.findservice.FindServiceInner')
@@ -217,8 +217,8 @@ class FindServiceOuterTest(unittest.TestCase):
         model.location = lostservice.model.location.Location()
         model.location.id = '1234'
         model.location.location = lostservice.model.geodetic.Polygon()
-        model.location.location.vertices = [[1, 1], [2, 2], [3, 3]]
-        model.location.location.spatial_ref = 'bar::1234'
+        model.location.location.vertices = [(0, 0), (1, 1), (1, 0)]
+        model.location.location.spatial_ref = 'urn:ogc:def:crs:EPSG::4326'
         model.nonlostdata = []
         target = lostservice.handling.findservice.FindServiceOuter(mock_config, mock_inner)
 
@@ -229,11 +229,42 @@ class FindServiceOuterTest(unittest.TestCase):
                                                                    model.location.location,
                                                                    False)
 
-            self.assertListEqual(actual.path, ['foo'])
-            self.assertListEqual(actual.nonlostdata, [])
-            self.assertListEqual(actual.mappings, [])
-            self.assertEqual(actual.location_used, '1234')
+            self.assertListEqual(actual['response'].path, ['foo'])
+            self.assertListEqual(actual['response'].nonlostdata, [])
+            self.assertListEqual(actual['response'].mappings, [])
+            self.assertEqual(actual['response'].location_used, '1234')
 
+        except:
+            self.fail("handle_request threw an exception.")
+
+    @ patch('lostservice.handling.findservice.FindServiceConfigWrapper')
+    @ patch('lostservice.handling.findservice.FindServiceInner')
+    def test_civic(self, mock_config, mock_inner):
+
+        mock_config.source_uri = MagicMock()
+        mock_config.source_uri.return_value = 'foo'
+
+        mock_inner.find_service_for_civicaddress = MagicMock()
+        mock_inner.find_service_for_civicaddress.return_value = {'mappings': [],
+                                                                 'latitude': 0.0,
+                                                                 'longitude': 0.0}
+
+        model = lostservice.model.requests.FindServiceRequest()
+        model.serviceBoundary = 'reference'
+        model.service = 'some:service:urn'
+        model.path = []
+        model.location = lostservice.model.location.Location()
+        model.location.id = '1234'
+        model.location.location = lostservice.model.civic.CivicAddress()
+        model.location.location.a1 = "a1"
+        model.location.location.spatial_ref = 'bar::1234'
+        model.nonlostdata = []
+        target = lostservice.handling.findservice.FindServiceOuter(mock_config, mock_inner)
+
+        try:
+            actual = target.find_service_for_civicaddress(model)
+            mock_inner.find_service_for_civicaddress.assert_called_once()
+            mock_inner.find_service_for_civicaddress.assert_called_with(model, False)
         except:
             self.fail("handle_request threw an exception.")
 
@@ -325,7 +356,6 @@ class FindServiceOuterTest(unittest.TestCase):
         self.assertEqual(actual.last_updated, mapping['updatedate'])
         self.assertEqual(actual.expires, mapping['expiration'])
         self.assertIsNone(actual.boundary_value)
-
 
     @patch('lostservice.handling.findservice.FindServiceConfigWrapper')
     def test_build_mapping_list(self, mock_config):
@@ -547,7 +577,8 @@ class FindServiceOuterTest(unittest.TestCase):
             path = ['authoritative.example']
             target._check_is_loopback(path)
         except Exception as e:
-            self.assertEqual(str(e),'<loop message="LoopError" xml:lang="en"/>')
+            self.assertEqual(str(e), '<loop message="LoopError" xml:lang="en"/>')
+
 
 if __name__ == '__main__':
     unittest.main()

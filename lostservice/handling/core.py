@@ -69,7 +69,7 @@ class ListServicesHandler(Handler):
             service_list = filtered
         else:
             # Filter the response to only the Top Level Services
-            filtered= filter(lambda k: '.' not in k, service_list)
+            filtered = filter(lambda k: '.' not in k, service_list)
             service_list = filtered
 
         # No Recursion available so just add our path
@@ -78,8 +78,10 @@ class ListServicesHandler(Handler):
         # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
         request.path.append(our_path)
         response = responses.ListServicesResponse(service_list, request.path, request.nonlostdata)
-
-        return response
+        return_value = {'response': response,
+                        'latitude': 0.0,
+                        'longitude': 0.0}
+        return return_value
 
 
 class FindServiceHandler(Handler):
@@ -88,7 +90,8 @@ class FindServiceHandler(Handler):
     """
 
     @inject
-    def __init__(self, outer: FindServiceOuter, cov_resolver: cov.CoverageResolverWrapper, default_route_handler: def_routes.DefaultRouteHandler):
+    def __init__(self, outer: FindServiceOuter, cov_resolver: cov.CoverageResolverWrapper,
+                 default_route_handler: def_routes.DefaultRouteHandler):
         """
         Constructor
 
@@ -142,16 +145,32 @@ class FindServiceHandler(Handler):
                 # check if default route exists, if not raise the same exception
                 mapping = self._default_route_handler.check_default_route(request)
                 # build the response with this mapping
-                response = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
+                response = {'response': self._outer._build_response([],
+                                                                    request.location.id,
+                                                                    mapping,
+                                                                    request.nonlostdata),
+                            'latitude': 0.0,
+                            'longitude': 0.0}
             else:
                 raise
-
-        if response.mappings is None or len(response.mappings) == 0:
+        return_value = {}
+        # if it's not a CivicAddress and the mappings are none (didn't find a resolution) then check for
+        # a default route (unlike FindCivic which throws and exception if it can't find a resolution, geodectic
+        # requests return nothing for the mapping an empty list
+        if type(request.location.location) is not CivicAddress and \
+                (response['response'].mappings is None or len(response['response'].mappings) == 0):
+            # the following function can throw a NotFoundException, In that case since we've exhausted all
+            # tries we let it get caught by execute_query in the app.py (which retunrs a not found message)
             mapping = self._default_route_handler.check_default_route(request)
             # build the response with this mapping
-            response = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
+            response['response'] = self._outer._build_response([], request.location.id, mapping, request.nonlostdata)
 
-        return response
+        return_value['latitude'] = response['latitude']
+        return_value['longitude'] = response['longitude']
+
+        return_value['response'] = response['response']
+
+        return return_value
 
 
 class GetServiceBoundaryHandler(Handler):
@@ -203,8 +222,11 @@ class GetServiceBoundaryHandler(Handler):
                 break
         for item in results:
             item =  self._inner.apply_service_boundary_policy(item, True)
+        return_value = {'response': results,
+                        'latitude': 0.0,
+                        'longitude': 0.0}
 
-        return results
+        return return_value
 
 
 class ListServicesByLocationHandler(Handler):
@@ -260,4 +282,7 @@ class ListServicesByLocationHandler(Handler):
             logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
 
-        return response
+        return_value = {'response': response['response'],
+                        'latitude': response['latitude'],
+                        'longitude': response['longitude']}
+        return return_value
