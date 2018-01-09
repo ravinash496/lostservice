@@ -41,12 +41,14 @@ ARG C_INCLUDE_PATH=/usr/include/gdal
 
 COPY requirements.txt /app/requirements.txt
 COPY server.py /app/server.py
+COPY build.sh /app/build.sh
 COPY /lostservice /app/lostservice
 COPY /deploy/lostservice.ini /app/lostservice/lostservice.ini
 COPY /deploy/lostservice.default.ini /app/lostservice/lostservice.default.ini
 
 WORKDIR /app
-RUN virtualenv --python python3.6 venv && /bin/bash -c "source ./venv/bin/activate" && ./venv/bin/pip install -r requirements.txt --extra-index-url $GEMFURY_URL
+RUN chmod +x ./build.sh
+RUN ./build.sh
 
 # Expose ports
 EXPOSE 8080

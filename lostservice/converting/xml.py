@@ -681,8 +681,7 @@ class FindServiceXmlConverter(XmlConverter):
                         # TODO - fix the profile.
                         services_element = lxml.etree.SubElement(mapping, 'serviceBoundary', profile='geodetic-2d')
 
-                        final_gml_as_xml = io.StringIO(
-                            '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item.boundary_value))
+                        final_gml_as_xml = io.StringIO('''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item.boundary_value))
                         final_gml = etree.parse(final_gml_as_xml).getroot()
                         services_element.extend(final_gml)
 
@@ -922,8 +921,7 @@ class GetServiceBoundaryXmlConverter(XmlConverter):
 
         for item in data:
             services_element = lxml.etree.SubElement(xml_response, 'serviceBoundary', profile=item.get('profile',GEO_PROFILE))
-            final_gml_as_xml = io.StringIO(
-                '''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['ST_AsGML_1']))
+            final_gml_as_xml = io.StringIO('''<root xmlns:gml="{0}">{1}</root>'''.format(GML_URN, item['ST_AsGML_1']))
             final_gml = etree.parse(final_gml_as_xml).getroot()
             services_element.extend(final_gml)
 
