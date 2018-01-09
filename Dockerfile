@@ -43,12 +43,15 @@ COPY requirements.txt /app/requirements.txt
 COPY server.py /app/server.py
 COPY build.sh /app/build.sh
 COPY /lostservice /app/lostservice
-COPY /deploy/lostservice.ini /app/lostservice/lostservice.ini
-COPY /deploy/lostservice.default.ini /app/lostservice/lostservice.default.ini
 
+#Run python build requirements.
 WORKDIR /app
 RUN chmod +x ./build.sh
 RUN ./build.sh
+
+#Copy fongis after python build is complete.
+COPY /deploy/lostservice.ini /app/lostservice/lostservice.ini
+COPY /deploy/lostservice.default.ini /app/lostservice/lostservice.default.ini
 
 # Expose ports
 EXPOSE 8080
