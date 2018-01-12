@@ -555,9 +555,12 @@ class FindServiceInnerTest(unittest.TestCase):
 
 
 
-        mock_db.get_intersecting_boundaries_for_circle.assert_called_with(1.1,0.0,
-                                                                          'something::1234',
-                                                                          10, None, 'service1', True, False)
+        mock_db.get_intersecting_boundaries_for_circle.assert_called_with(location=location,
+                                                                          proximity_buffer=10,
+                                                                          boundary_table='service1',
+                                                                          proximity_search=True,
+                                                                          return_area=True,
+                                                                          return_shape=False)
         mock_db.get_intersecting_boundaries_for_circle.assert_called_once()
 
         target._apply_point_multiple_match_policy.assert_not_called()

@@ -10,7 +10,7 @@ Implementation classes for Listservice queries.
 
 from injector import inject
 from lostservice.configuration import Configuration
-from lostservice.exception import LoopException
+from lostservice.exception import LoopException, NotFoundException
 from lostservice.model.responses import ResponseMapping, ListServicesByLocationResponse
 import lostservice.geometry as geom
 from lostservice.db.gisdb import GisDbInterface
@@ -21,6 +21,14 @@ from lostservice.model.geodetic import Circle
 from lostservice.model.geodetic import Ellipse
 from lostservice.model.geodetic import Polygon as geodetic_polygon
 from lostservice.model.geodetic import Arcband
+from lostservice.configuration import general_logger
+from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
+from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
+from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
+from civvy.db.postgis.query import PgQueryExecutor
+
+logger = general_logger()
+
 
 class ListServiceBYLocationConfigWrapper(object):
     """
@@ -71,7 +79,8 @@ class ListServiceByLocationInner(object):
 
     """
     @inject
-    def __init__(self, config: ListServiceBYLocationConfigWrapper, db_wrapper: GisDbInterface):
+    def __init__(self, config: ListServiceBYLocationConfigWrapper, db_wrapper: GisDbInterface,
+                 query_executor: PgQueryExecutor = None):
         """
         Constructor
 
@@ -83,6 +92,7 @@ class ListServiceByLocationInner(object):
         self._list_service_config = config
         self._db_wrapper = db_wrapper
         self._mappings = self._db_wrapper.get_urn_table_mappings()
+        self._query_executor = query_executor
 
     def list_services_by_location_for_point(self, service, location):
         """
@@ -108,80 +118,115 @@ class ListServiceByLocationInner(object):
             results = [i[0].get('serviceurn') for i in result if i and i[0].get('serviceurn')]
             return results
 
-    def list_services_by_location_for_civicaddress(self, civic_request):
-        from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
-        from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
-        from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
-        from civvy.db.postgis.query import PgQueryExecutor
-
+    def get_civvy_locator(self, offset_distance):
+        """
+        Creates the locator(s) needed for civic address location searching.
+        :param offset_distance: distance to offset RCL point matches
+        :type civic_request: int
+        :return: a collection of civic address locator(s)
+        :rtype:
+        """
         # The locator needs some information about the underlying data store.
-        jsons = json.dumps(self._list_service_config.settings_for_service("civvy_map"))
+        civvy_json = json.dumps(self._find_service_config.settings_for_service("civvy_map"))
 
         # From the JSON configuration, create the source maps that apply to this database.
-        source_maps = CivicAddressSourceMapCollection(config=jsons)
+        source_maps = CivicAddressSourceMapCollection(config=civvy_json)
 
-        civvy_obj = civic_request.location.location
-
-        # Create the query executor for the PostgreSQL database.
-        host = self._list_service_config._config.get('Database', 'host', as_object=False, required=True)
-        db_name = self._list_service_config._config.get('Database', 'dbname', as_object=False, required=True)
-        username = self._list_service_config._config.get('Database', 'username', as_object=False, required=True)
-        password = self._list_service_config._config.get('Database', 'password', as_object=False, required=True)
-        query_executor = PgQueryExecutor(database=db_name, host=host, user=username, password=password)
 
         # Now let's create the locator and supply it with the common default strategies.
         locator = Locator(strategies=[
-            PgPointsAggregateLocatorStrategy(query_executor=query_executor),
-            PgStreetsAggregateLocatorStrategy(query_executor=query_executor)
-        ], source_maps=source_maps)
+            PgPointsAggregateLocatorStrategy(query_executor=self._query_executor),
+            PgStreetsAggregateLocatorStrategy(query_executor=self._query_executor)
+        ], source_maps=source_maps, offset_distance=offset_distance)
 
-        civic_dict = {}
-        civic_dict['country'] = civvy_obj.country
-        if civvy_obj.a1:
-            civic_dict['a1'] = civvy_obj.a1
-        if civvy_obj.a2:
-            civic_dict['a2'] = civvy_obj.a2
-        if civvy_obj.a3:
-            civic_dict['a3'] = civvy_obj.a3
-        if civvy_obj.a4:
-            civic_dict['a4'] = civvy_obj.a4
-        if civvy_obj.a5:
-            civic_dict['a5'] = civvy_obj.a5
-        if civvy_obj.a6:
-            civic_dict['a6'] = civvy_obj.a6
-        if civvy_obj.rd:
-            civic_dict['a6'] = civvy_obj.rd
-        if civvy_obj.pod:
-            civic_dict['pod'] = civvy_obj.pod
-        if civvy_obj.sts:
-            civic_dict['sts'] = civvy_obj.sts
-        if civvy_obj.hno:
-            civic_dict['hno'] = civvy_obj.hno
-        if civvy_obj.hns:
-            civic_dict['hns'] = civvy_obj.hns
-        if civvy_obj.lmk:
-            civic_dict['lmk'] = civvy_obj.lmk
-        if civvy_obj.loc:
-            civic_dict['loc'] = civvy_obj.loc
-        if civvy_obj.flr:
-            civic_dict['flr'] = civvy_obj.flr
-        if civvy_obj.nam:
-            civic_dict['nam'] = civvy_obj.nam
-        if civvy_obj.pc:
-            civic_dict['pc'] = civvy_obj.pc
+        return locator
 
-        # We can create several civic addresses and pass them to the locator.
-        civic_address = CivicAddress(**civic_dict)
+    def run_civic_location_search(self, locator, offset_distance, civic_request):
+        """
+        Creates a dictionary of values to pass into the civvy library to run civic address match queries.
+        :param locator:
+        :param offset_distance: the distance to offset the resultant point of an RCL match.
+        :param civic_request: int
+        :return: a collection of results from the civic location queries.
+        """
 
+        # Make sure we have a locator to use first.
+        if locator is not None:
+            civvy_obj = civic_request.location.location
+            # Create dictionary of values from request into a civic location dictionary for civvy to use.
+            civic_dict = {}
+            civic_dict['country'] = civvy_obj.country
+            if civvy_obj.a1:
+                civic_dict['a1'] = civvy_obj.a1
+            if civvy_obj.a2:
+                civic_dict['a2'] = civvy_obj.a2
+            if civvy_obj.a3:
+                civic_dict['a3'] = civvy_obj.a3
+            if civvy_obj.a4:
+                civic_dict['a4'] = civvy_obj.a4
+            if civvy_obj.a5:
+                civic_dict['a5'] = civvy_obj.a5
+            if civvy_obj.a6:
+                civic_dict['a6'] = civvy_obj.a6
+            if civvy_obj.rd:
+                civic_dict['rd'] = civvy_obj.rd
+            if civvy_obj.pod:
+                civic_dict['pod'] = civvy_obj.pod
+            if civvy_obj.sts:
+                civic_dict['sts'] = civvy_obj.sts
+            if civvy_obj.hno:
+                civic_dict['hno'] = civvy_obj.hno
+            if civvy_obj.hns:
+                civic_dict['hns'] = civvy_obj.hns
+            if civvy_obj.lmk:
+                civic_dict['lmk'] = civvy_obj.lmk
+            if civvy_obj.loc:
+                civic_dict['loc'] = civvy_obj.loc
+            if civvy_obj.flr:
+                civic_dict['flr'] = civvy_obj.flr
+            if civvy_obj.nam:
+                civic_dict['nam'] = civvy_obj.nam
+            if civvy_obj.pc:
+                civic_dict['pc'] = civvy_obj.pc
+
+            # We can create several civic addresses and pass them to the locator.
+            civic_address = CivicAddress(**civic_dict)
+            logger.info('Executing civic address query')
+            # Let's get the results for this civic address.
+            logger.debug('Running civic address query for list services through civvy.')
+            locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=offset_distance)
+
+            return locator_results
+        else:
+            # Who did this, and why are you doing it?!
+            logger.error('Locator object not passed.')
+            raise NotFoundException('Locator not defined, cannot complete civic address request.', None)
+            return None
+
+    def list_services_by_location_for_civicaddress(self, civic_request):
+        """
+        Function to find the service for the civic address
+
+         :param civic_request: civic address request
+         :type civic_request: :py:class:`lostservice.model.requests.ListServicesRequest`
+         :return: The service mappings for the given civic address.
+        """
+        rcl_offset_distance = self._list_service_config.get('Policy', 'offset_distance_from_centerline',
+                                                            as_object=False,
+                                                            required=False)
+        # Now let's create the locator and supply it with the common default strategies.
+        locator = self.get_civvy_locator(rcl_offset_distance)
         # Let's get the results for this civic address.
-        locator_results = locator.locate_civic_address(civic_address=civic_address)
+        locator_results = self.run_civic_location_search(locator=locator,
+                                                         offset_distance=rcl_offset_distance,
+                                                         civic_request=civic_request)
         mappings = None
         point = Point()
         if len(locator_results) > 0:
             first_civic_point = None
-            for locater_result in locator_results:
-                if locater_result.score==0:
-                    first_civic_point = locater_result
+            for locator_result in locator_results:
+                if locator_result.score == 0:
+                    first_civic_point = locator_result
                     break
             if first_civic_point:
                 civvy_geometry = first_civic_point.geometry
@@ -207,8 +252,6 @@ class ListServiceByLocationInner(object):
         :type service: ``str``
         :param location: location object.
         :type location: `location object`
-        :param return_shape: Whether or not to return the geometries of found mappings.
-        :type return_shape: ``bool``
         :return: The service mappings for the given circle.
         :rtype: ``list`` of ``dict``
         """
@@ -231,8 +274,6 @@ class ListServiceByLocationInner(object):
         :type service: ``str``
         :param location: location object.
         :type location: `location object`
-        :param boundary_table: The name of the service boundary table.
-        :type boundary_table: `str``
         :return: The service mappings for the given ellipse.
         :rtype: ``list`` of ``dict``
         """
@@ -315,6 +356,7 @@ class ListServiceBylocationOuter(object):
         """
         self._inner = inner
         self._list_service_config = config
+
     def _check_is_loopback(self, path):
         if self._list_service_config.source_uri() in path:
             raise LoopException("LoopError")
@@ -444,17 +486,17 @@ class ListServiceBylocationOuter(object):
                                                          request.nonlostdata)}
         return return_value
 
-    def _build_response(self, path, location_id, mapping,  nonlostdata):
+    def _build_response(self, path, location_id, mapping, nonlostdata):
         """
         Builds a List service response.
 
         :param path: The list of path elements that came in with the request.
         :type path: ``list`` of ``str``
-        :param location_used: The location id that came in with the request.
-        :type location_used: ``str``
-        :param mappings: A list of all mappings returned by the query.
-        :type mappings: ``list`` of ``dict``
-        :param nonlostdata: Passthrough elements from the request.
+        :param location_id: The location id that came in with the request.
+        :type location_id: ``str``
+        :param mapping: A list of all mappings returned by the query.
+        :type mapping: ``list`` of ``dict``
+        :param nonlostdata: Pass through elements from the request.
         :type nonlostdata: ``list``
         :return:  A ListServiceResponse
         :rtype: :py:class:`lostservice.model.responses.ListServiceResponse`
@@ -473,8 +515,6 @@ class ListServiceBylocationOuter(object):
 
         :param mappings: A list of all mappings returned by the query.
         :type mappings: ``list`` of ``dict``
-        :param include_boundary_value: Flag to control whether or not to include the mapping boundary by value.
-        :type include_boundary_value: ``bool``
         :return:
         """
         # Resolve source uri once . . .
@@ -492,10 +532,8 @@ class ListServiceBylocationOuter(object):
         """
         Create a single ResponseMapping from a query result.
 
-        :param mapping: A dictonary of the query result attrubtes for a mapping.
+        :param mapping: A dictionary of the query result attributes for a mapping.
         :type mapping: ``dict``
-        :param include_boundary_value: Flag to control whether or not to include the mapping boundary by value.
-        :type include_boundary_value: ``bool``
         :return: A ResponseMapping instance.
         :rtype: :py:class:`lostservice.model.responses.ResponseMapping`
         """

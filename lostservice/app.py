@@ -253,8 +253,6 @@ class LostApplication(object):
         :return: The LoST query response XML.
         :rtype: ``str``
         """
-        logger.info('Starting LoST query execution . . .')
-        logger.debug(data)
 
         conf = self._di_container.get(config.Configuration)
         parsed_request = None
@@ -266,9 +264,11 @@ class LostApplication(object):
         starttime = datetime.datetime.now(tz=pytz.utc)
 
         try:
+            logger.info('Starting LoST query execution. . .')
             # Here's what's gonna happen . . .
             # 1. Parse the request and pull out the root element.
             parsed_request = etree.fromstring(data)
+            logger.debug(parsed_request)
             qname = etree.QName(parsed_request)
             query_name = qname.localname
 
@@ -289,7 +289,7 @@ class LostApplication(object):
             nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
             logger.debug(response)
-            logger.info('Finished LoST query execution . . .')
+            logger.info('Finished LoST query execution. . .')
 
         except Exception as e:
             endtime = datetime.datetime.now(tz=pytz.utc)
@@ -297,18 +297,22 @@ class LostApplication(object):
             logger.error(e)
             source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
             if isinstance(e, exp.RedirectException):
+                logger.error(f'Redirect Exception: {e}')
                 response = exp.build_redirect_response(e, source_uri)
             elif isinstance(e, etree.LxmlError):
+                logger.error(f'Malformed XML request: {e} Source URI: {source_uri}')
                 response = exp.build_error_response(exp.BadRequestException('Malformed request xml.', None), source_uri)
             else:
                 response = exp.build_error_response(e, source_uri)
         finally:
             if parsed_response is None:
+                logger.debug('There was no found parsed response. Adding a blank one into record.')
                 parsed_response = {'response': etree.fromstring(response.encode()),
                                    'latitude': 0.0,
                                    'longitude': 0.0
                 }
             if self.audit_logging_enabled:
+                logger.debug('Audit Logging: Begin')
                 self.loop.call_soon_threadsafe(functools.partial(self._audit_transaction,
                                                                  activity_id,
                                                                  parsed_request,
@@ -317,7 +321,7 @@ class LostApplication(object):
                                                                  endtime, context,
                                                                  parsed_response['latitude'],
                                                                  parsed_response['longitude']))
-
+                logger.debug('Audit Logging: Complete')
         return response
 
     def _audit_transaction(self, activity_id, parsed_request, start_time, parsed_response, end_time, context,
@@ -334,54 +338,55 @@ class LostApplication(object):
         :param: longitude
         :return:
         """
+        logger.debug('Audit Transaction: Begin')
         nslookup = {'ls': 'urn:ietf:params:xml:ns:lost1'}
 
         auditor = self._di_container.get(auditlog.AuditLog)
         conf = self._di_container.get(config.Configuration)
         server_id = conf.get('Service', 'source_uri', as_object=False, required=False)
-
+        logger.debug('Creating transaction event. . .')
         trans = txnaudit.TransactionEvent()
-        trans.activityid = activity_id
-        trans.starttimeutc = start_time
-        trans.endtimeutc = end_time
-        trans.transactionms = int((end_time - start_time).microseconds * .001)
-        trans.serverid = server_id
-        trans.machineid = socket.gethostname()
-        trans.clientid = context['web_ctx'].client_ip if 'web_ctx' in context else ''
-        trans.requestlocx = longitude
-        trans.requestlocy = latitude
+        trans.activity_id = activity_id
+        trans.start_time_utc = start_time
+        trans.end_time_utc = end_time
+        trans.transaction_ms = int((end_time - start_time).microseconds * .001)
+        trans.server_id = server_id
+        trans.machine_id = socket.gethostname()
+        trans.client_id = context['web_ctx'].client_ip if 'web_ctx' in context else ''
+        trans.request_loc_x = longitude
+        trans.request_loc_y = latitude
 
         if parsed_request is not None:
             trans.request = etree.tostring(parsed_request, encoding='unicode')
             req_service_urn = parsed_request.xpath('//ls:service/text()', namespaces=nslookup)
             if req_service_urn is not None and len(req_service_urn) > 0:
-                trans.requestsvcurn = req_service_urn[0]
+                trans.request_svc_urn = req_service_urn[0]
 
             qname = etree.QName(parsed_request)
             request_type = "LoST" + str(qname.localname)
-            trans.requesttype = request_type
+            trans.request_type = request_type
 
             loc_type = parsed_request.xpath('//ls:location/@profile', namespaces=nslookup)
-            trans.requestloctype = loc_type[0] if loc_type else ''
+            trans.request_loc_type = loc_type[0] if loc_type else ''
 
-            requestloc = parsed_request.xpath('//ls:location', namespaces=nslookup)
-            trans.requestloc = etree.tostring(requestloc[0][0], encoding='unicode') \
-                if len(requestloc) > 0 and len(requestloc[0]) > 0 else ''
+            request_loc = parsed_request.xpath('//ls:location', namespaces=nslookup)
+            trans.request_loc = etree.tostring(request_loc[0][0], encoding='unicode') \
+                if len(request_loc) > 0 and len(request_loc[0]) > 0 else ''
 
         if parsed_response is not None:
             trans.response = etree.tostring(parsed_response, encoding='unicode')
             qname = etree.QName(parsed_response)
-            trans.responsetype = "LoST" + str(qname)
+            trans.response_type = "LoST" + str(qname)
 
             error_type = parsed_response.xpath('//ls:errors', namespaces=nslookup)
-            trans.responseerrortype = etree.QName(error_type[0][0]).localname \
+            trans.response_error_type = etree.QName(error_type[0][0]).localname \
                 if len(error_type) > 0 and len(error_type[0]) > 0 else ''
 
         # TODO: need to update this when we get to recursion.
-        trans.responsesrctype = 'Local'
+        trans.response_src_type = 'Local'
 
         auditor.record_event(trans)
-
+        logger.debug('Audit Transaction: Complete')
     def _audit_diagnostics(self, activity_id, error):
         """
         Create and send the request and response to the transactionlogs
@@ -395,24 +400,24 @@ class LostApplication(object):
 
         conf = self._di_container.get(config.Configuration)
         server_id = conf.get('Service', 'source_uri', as_object=False, required=False)
-
+        logger.debug('Audit Diagnostics: Begin')
         diag = diagaudit.DiagnosticEvent()
-        diag.qpslogid = -1
-        diag.eventid = 1
+        diag.qps_log_id = -1
+        diag.event_id = 1
         diag.priority = 5
         diag.severity = 2
-        diag.activityid = activity_id
-        diag.categoryname = "Diagnostic"
+        diag.activity_id = activity_id
+        diag.category_name = "Diagnostic"
         diag.title = "Error"
-        diag.timestamputc = datetime.datetime.now(tz=pytz.utc).strftime('%m/%d/%Y %H:%M:%S %Z%z')
-        diag.machinename = socket.gethostname()
-        diag.serverid = server_id
-        diag.machineid = diag.machinename
+        diag.timestamp_utc = datetime.datetime.now(tz=pytz.utc).strftime('%m/%d/%Y %H:%M:%S %Z%z')
+        diag.machine_name = socket.gethostname()
+        diag.server_id = server_id
+        diag.machine_id = diag.machine_name
         diag.message = str(error)
-        diag.formattedmessage = 'Timestamp: {0} Message: {1}'.format(diag.timestamputc, error)
+        diag.formatted_message = 'Timestamp: {0} Message: {1}'.format(diag.timestamp_utc, error)
 
         auditor.record_event(diag)
-
+        logger.debug('Audit Diagnostics: Complete')
 
 if __name__ == "__main__":
 
