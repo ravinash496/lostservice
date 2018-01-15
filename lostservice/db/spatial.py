@@ -1069,9 +1069,11 @@ def _get_list_service_for_geom(engine, table_name, geom):
         s = select([the_table.c.serviceurn], the_table.c.wkb_geometry.ST_Contains(geom))
         retval = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct contains query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as sqe:
+        logger.error(sqe)
         raise
     return retval
 
