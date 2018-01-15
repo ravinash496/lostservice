@@ -49,7 +49,7 @@ WORKDIR /app
 RUN chmod +x ./build.sh
 RUN ./build.sh
 
-#Copy fongis after python build is complete.
+#Copy configs after python build is complete.
 COPY /deploy/lostservice.ini /app/lostservice/lostservice.ini
 COPY /deploy/lostservice.default.ini /app/lostservice/lostservice.default.ini
 

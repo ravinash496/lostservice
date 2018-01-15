@@ -13,6 +13,7 @@ from typing import List
 
 class DefaultRouteConfigWrapperTest(unittest.TestCase):
 
+    base_msg = 'Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured.'
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
     def test_settings_for_default_route_mis_configured_1(self, mock_configuration, mock_db):
@@ -23,9 +24,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = 'Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured'
         err_msg = 'The first object name for the default_routing_civic_policy must be default_routes.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -36,9 +36,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = 'Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured'
         err_msg = 'The first object name for the default_routing_civic_policy must be default_routes.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -49,9 +48,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = 'Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured'
         err_msg = 'The first value must be an array of default route objects.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -62,9 +60,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Each entry in the default_routes array must be an object.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -89,9 +86,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'You must specify the mode for each item.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -116,9 +112,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Unsupported mode: invalid_mode'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -143,9 +138,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'You must specify the urn for each item.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -170,9 +164,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'You must specify the uri for each item that is in OverrideRoute mode.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -197,9 +190,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'You must specify the boundaryid for each item that is in ExistingRoute mode.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -219,9 +211,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'You must specify the rules for each item that is in CivicMatchingRules mode.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -241,9 +232,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'The rules element value must be an array of rules.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -265,9 +255,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Each rule in rules must be a dictionary of key value pairs.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -310,9 +299,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Each rule must have a name element.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -355,9 +343,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Each rule must have a conditions element.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -400,9 +387,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Each rule must have a mode element.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -445,9 +431,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Each rule where mode is OverrideRoute must have a uri element.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -490,9 +475,8 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Each rule where mode is ExistingRoute must have a boundaryid element.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')
@@ -535,10 +519,9 @@ class DefaultRouteConfigWrapperTest(unittest.TestCase):
         with self.assertRaises(ConfigurationException) as context:
             target.settings_for_default_route()
 
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
         err_msg = 'Only modes of "OverrideRoute" or "ExistingRoute"' \
                   'are supported for civic address rule types.'
-        self.assertTrue('{0} : {1}'.format(base_msg, err_msg) in str(context.exception))
+        self.assertTrue('{0} : {1}'.format(self.base_msg, err_msg) in str(context.exception))
 
     @patch('lostservice.configuration.Configuration')
     @patch('lostservice.db.gisdb.GisDbInterface')

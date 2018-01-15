@@ -1069,21 +1069,10 @@ def _get_list_service_for_geom(engine, table_name, geom):
         s = select([the_table.c.serviceurn], the_table.c.wkb_geometry.ST_Contains(geom))
         retval = _execute_query(engine, s)
     except SQLAlchemyError as ex:
+        logger.error(ex)
         raise SpatialQueryException(
             'Unable to construct contains query.', ex)
-    except SpatialQueryException:
+    except SpatialQueryException as sqe:
+        logger.error(sqe)
         raise
     return retval
-
-
-def simplify_service_boundary_geometry(engine, table_name, geom):
-    """
-
-    Takes a resulting polygon and "simplifies" it.
-    We do this to help aide in the size of the response sent
-    When doing a service boundary request.
-    :param engine:
-    :param table_name:
-    :param geom:
-    :return:
-    """

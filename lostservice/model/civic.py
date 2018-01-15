@@ -8,6 +8,11 @@
 Model(s) for civic location.
 """
 
+from civvy.db.postgis.locating.streets import PgStreetsAggregateLocatorStrategy
+from civvy.db.postgis.locating.points import PgPointsAggregateLocatorStrategy
+from civvy.locating import CivicAddress, CivicAddressSourceMapCollection, Locator
+from civvy.db.postgis.query import PgQueryExecutor
+
 
 class CivicAddress(object):
     """

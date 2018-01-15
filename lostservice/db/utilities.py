@@ -60,7 +60,8 @@ def _get_serviceurn(tablename, engine):
     except SQLAlchemyError as ex:
         logger.error('Failed to extract mapping for table {0}'.format(tablename), ex)
         raise MappingDiscoveryException('Failed to extract mapping for table {0}'.format(tablename), ex)
-    except MappingDiscoveryException:
+    except MappingDiscoveryException as mpe:
+        logger.error(mpe)
         raise
 
     return urn

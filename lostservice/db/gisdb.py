@@ -73,7 +73,12 @@ class GisDbInterface(object):
         """
         return spatialdb.get_containing_boundary_for_circle(long, lat, srid, radius, uom, boundary_table, self._engine)
 
-    def get_intersecting_boundaries_for_circle(self, location: Circle, boundary_table, return_area = False, return_shape = False, proximity_search = False, proximity_buffer = 0):
+    def get_intersecting_boundaries_for_circle(self, location: Circle,
+                                               boundary_table: str,
+                                               return_area: bool=False,
+                                               return_shape: bool=False,
+                                               proximity_search: bool=False,
+                                               proximity_buffer = 0):
         """
         Executes an intersection query for a circle.
 
@@ -85,7 +90,13 @@ class GisDbInterface(object):
         :type boundary_table: `bool`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_boundaries_for_circle(location, boundary_table, self._engine, return_area, return_shape, proximity_search, proximity_buffer)
+        return spatialdb.get_intersecting_boundaries_for_circle(location,
+                                                                boundary_table,
+                                                                self._engine,
+                                                                return_area,
+                                                                return_shape,
+                                                                proximity_search,
+                                                                proximity_buffer)
 
     def get_containing_boundary_for_polygon(self, points, srid, boundary_table):
         """
@@ -101,7 +112,10 @@ class GisDbInterface(object):
         """
         return spatialdb.get_containing_boundary_for_polygon(points, srid, boundary_table, self._engine)
 
-    def get_intersecting_boundaries_for_polygon(self, location: Polygon, boundary_table, proximity_search = False, proximity_buffer = 0 ):
+    def get_intersecting_boundaries_for_polygon(self, location: Polygon,
+                                                boundary_table,
+                                                proximity_search = False,
+                                                proximity_buffer = 0 ):
         """
         Executes an intersection query for a polygon.
 
@@ -111,11 +125,16 @@ class GisDbInterface(object):
         :type boundary_table: `str`
         :return: A list of dictionaries containing the contents of returned rows.
         """
-        return spatialdb.get_intersecting_boundaries_for_polygon(location, boundary_table, self._engine, True, proximity_search, proximity_buffer)
+        return spatialdb.get_intersecting_boundaries_for_polygon(location,
+                                                                 boundary_table,
+                                                                 self._engine,
+                                                                 True,
+                                                                 proximity_search,
+                                                                 proximity_buffer)
 
     def get_additionaldata_for_polygon(self, location: Polygon, boundary_table, buffer_distance ):
         """
-        Executes an additonal data query for a polygon.
+        Executes an additional data query for a polygon.
 
         :param location: location object
         :type location: :py:class:Geodetic2D
@@ -127,6 +146,13 @@ class GisDbInterface(object):
 
 
     def get_boundaries_for_previous_id(self, pid, boundary_table):
+        """
+        Executes a query to get boundaries from the previous ID.
+
+        :param pid: `str`
+        :param boundary_table: `str`
+        :return: A list of dictionaries containing the contents of returned rows.
+        """
         return spatialdb.get_boundaries_for_previous_id(pid, self._engine, boundary_table)
 
     def get_intersecting_boundary_for_ellipse(self, location: Ellipse, boundary_table):
@@ -144,6 +170,7 @@ class GisDbInterface(object):
     def get_additional_data_for_ellipse(self,location: Ellipse, boundary_table, buffer_distance):
         """
         Executes an intersection query for a ellipse.
+
         :param location: location object
         :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
@@ -174,7 +201,7 @@ class GisDbInterface(object):
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
         :param return_area: Flag which triggers an area calculation on the Intersecting polygons
-        :type boundary_table: `bool`
+        :type return_area: `bool`
         :return: A list of dictionaries containing the contents of returned rows.
         """
         return spatialdb.get_intersecting_list_services_for_circle(location, boundary_table,
@@ -193,7 +220,9 @@ class GisDbInterface(object):
         return spatialdb.get_list_services_for_ellipse(location, boundary_table,
                                                        self._engine, )
 
-    def get_intersecting_list_service_for_polygon(self, location: Polygon, boundary_table, proximity_search=False,
+    def get_intersecting_list_service_for_polygon(self, location: Polygon,
+                                                  boundary_table,
+                                                  proximity_search=False,
                                                   proximity_buffer=0):
         """
         Executes an intersection query for a polygon.
@@ -202,6 +231,10 @@ class GisDbInterface(object):
         :type location: :py:class:Geodetic2D
         :param boundary_table: The name of the service boundary table.
         :type boundary_table: `str`
+        :param proximity_search: Whether or not to allow the proximity buffer to be included in the search.
+        :type proximity_search: `bool`
+        :param proximity_buffer: A buffer around the polygon to search for extra results around the area.
+        :type proximity_buffer: `float`
         :return: A list of dictionaries containing the contents of returned rows.
         """
 
@@ -209,5 +242,13 @@ class GisDbInterface(object):
                                                                    proximity_search, proximity_buffer)
 
     def get_additional_data_for_circle(self, location: Circle, boundary_table, buffer_distance):
-        return spatialdb.get_additional_data_for_circle(location, boundary_table, buffer_distance, self._engine)
+        """
 
+        :param location:
+        :param boundary_table: The name of the service boundary table.
+        :type boundary_table: `str`
+        :param buffer_distance: The distance buffered around the circle to get extra results.
+        :type buffer_distance: `float`
+        :return: A list of dictionaries containing the contents of returned rows.
+        """
+        return spatialdb.get_additional_data_for_circle(location, boundary_table, buffer_distance, self._engine)
