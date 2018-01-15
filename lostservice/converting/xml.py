@@ -332,7 +332,7 @@ class PolygonXmlConverter(XmlConverter):
             raise BadRequestException('Invalid polygon input.')
 
         if not model.vertices:
-            logger.warning('Invalid polygon input.')
+            logger.error('Invalid polygon input.')
             raise BadRequestException('Invalid polygon input.')
 
         return model
@@ -895,6 +895,7 @@ class GetServiceBoundaryXmlConverter(XmlConverter):
         try:
             request.key = root.get("key")
         except:
+            logger.error('Request key not found!')
             request.key = None
 
         for element in root.iter():
