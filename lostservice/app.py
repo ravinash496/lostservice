@@ -170,6 +170,8 @@ class LostApplication(object):
             diagnostic_listener = diagaudit.DiagnosticAuditListener(conf)
             auditor.register_listener(diagnostic_listener)
 
+        self.nena_logging_enabled = conf.get('Logging', 'logging_services')
+
         # setup a loop so logging can happen asynchronously - in order not to interfere with the web.py asyncio loop
         # start it on another thread - see execute_query (call_soon_threadsafe) to see it in action
         self.loop = asyncio.new_event_loop()
@@ -286,7 +288,6 @@ class LostApplication(object):
 
             # TODO Identify Malformed Query Types
             # Send Logs to configured NENA Logging Services
-            nenalog.create_NENA_log_events(data, query_name, starttime, response, endtime, conf)
 
             logger.debug(response)
             logger.info('Finished LoST query execution. . .')
@@ -321,6 +322,11 @@ class LostApplication(object):
                                                                  endtime, context,
                                                                  parsed_response['latitude'],
                                                                  parsed_response['longitude']))
+            if self.nena_logging_enabled:
+                self.loop.call_soon_threadsafe(
+                    functools.partial(nenalog.create_NENA_log_events, data, query_name, starttime, response, endtime,
+                                      conf))
+
                 logger.debug('Audit Logging: Complete')
         return response
 
