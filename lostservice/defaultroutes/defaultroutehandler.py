@@ -196,7 +196,7 @@ class CivicMatchingSetting(DefaultSetting):
         Return true if civic address matches all the conditions passed in
         :param civic_address:
         :param conditions:
-        :rtype: ```bool
+        :rtype: `bool`
         """
         for key, value in conditions.items():
             if '_' + key.lower() in civic_address.keys():
