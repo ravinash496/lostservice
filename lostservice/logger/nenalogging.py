@@ -48,12 +48,12 @@ wrapper_nsmap = {
 def create_NENA_log_events(request_text, query_type, start_time, response_text, end_time, conf):
     """
     Create and Send Request and Resposne to the list of configured logging service urls.
-    :param request_text: 
-    :param query_type: 
-    :param start_time: UTC
-    :param response_text: 
+    :param request_text:  reqest 
+    :param query_type: Type of Query
+    :param start_time: UTC 
+    :param response_text: response
     :param end_time:  UTC
-    :param conf: 
+    :param conf: configuration file
     :return: 
     """
 
@@ -106,13 +106,13 @@ def create_NENA_log_events(request_text, query_type, start_time, response_text, 
 def _send_nenalog_request(nena_log_id, request_text, start_time, server_id, query_ip_port, is_valid_query, logging_service_urls):
     """
     Send the Request
-    :param nena_log_id: 
-    :param request_text: 
-    :param start_time: 
-    :param server_id: 
+    :param nena_log_id: Log_Id
+    :param request_text: request
+    :param start_time: UTC
+    :param server_id: Host Id
     :param query_ip_port: 
     :param is_valid_query: 
-    :param logging_service_urls: 
+    :param logging_service_urls: nena log service Url
     :return: 
     """
 
@@ -182,12 +182,12 @@ def _send_nenalog_request(nena_log_id, request_text, start_time, server_id, quer
 def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, response_ip_port, logging_service_urls):
     """
     Send the Response
-    :param nena_log_id: 
-    :param response_text: 
-    :param end_time: 
-    :param server_id: 
-    :param response_ip_port: 
-    :param logging_service_urls: 
+    :param nena_log_id: Log_Id
+    :param response_text: response
+    :param end_time:  end time UTC
+    :param server_id: host Id
+    :param response_ip_port:  
+    :param logging_service_urls: nena log service Url
     :return: 
     """
 
@@ -245,16 +245,15 @@ def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, resp
 def _post_nena_logging(soap_env, raw_text, url):
     """
 
-    :param soap_env:
-    :param raw_text:
-    :param url:
+    :param soap_env: data to be logged includes request/response 
+    :param raw_text: request/response
+    :param url: url for nena logging
     :return:
     """
 
     try:
         requests.post(url, data=etree.tostring(soap_env))
+        logger.debug('posting to Nena log')
     except Exception as e:
-        logger.debug('%s :Raw Event: %s' % (str(e), raw_text))
-        #TODO Log Error(s)
-
-# End of _post_async_nena_logging
+        logger.warning('%s :Raw Event: %s' % (str(e), raw_text))
+# End of _post_nena_logging
