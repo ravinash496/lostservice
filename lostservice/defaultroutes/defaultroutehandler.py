@@ -194,8 +194,11 @@ class CivicMatchingSetting(DefaultSetting):
     def civic_location_matches_rule_conditions(self, civic_address: CivicAddress, conditions: dict) -> bool:
         """
         Return true if civic address matches all the conditions passed in
-        :param civic_address:
-        :param conditions:
+        :param civic_address: civic address properties and values to be used for evaluation
+        :type civic_address: :py:class:`CivicAddress`
+        :param conditions: dictionary of conditions that must be matched for the default route to be used.
+        :type conditions: `dict`
+        :return: If we have a match from requested data to provide a default route.
         :rtype: `bool`
         """
         for key, value in conditions.items():
@@ -211,7 +214,9 @@ class CivicMatchingSetting(DefaultSetting):
         """
         given some json build a list of rules
         :param rules: the json that represents the list of rules
-        :return:
+        :type rules: List of `dict`
+        :return: List of matching rules.
+        :rtype: List of :py:lostservice:defaultroutehandler:class:`CivicMatchinRule`
         """
         civic_matching_rules: [CivicMatchingRule] = []
 
