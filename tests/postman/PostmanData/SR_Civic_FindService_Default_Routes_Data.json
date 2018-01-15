@@ -1,0 +1,54 @@
+[
+{
+    "Country": "US",
+    "A1": "ME",
+    "A2": "Waldo",
+    "A3": "Strong Township",
+    "RD": "Gero",
+	"STS": "Duck",
+	"HNO": "951",
+	"PC": "66135",
+	"Service": "urn:nena:service:sos.fire",
+	"Expected_URI": "SIP:+2075555583@strongFD.ngesi.maine.gov",
+	"Expected_warningMessageText": "Unable to determine PSAP for the given location: using default PSAP"
+},
+{
+    "Country": "US",
+    "A1": "MN",
+    "A2": "Waldo",
+    "A3": "Strong Township",
+    "RD": "Gero",
+	"STS": "Duck",
+	"HNO": "951",
+	"PC": "66135",
+	"Service": "urn:nena:service:sos.fire",
+	"Expected_URI": "SIP:+2075555583@strongFD.ngesi.maine.gov",
+	"Expected_warningMessageText": "Unable to determine PSAP for the given location: using default PSAP"
+},
+{
+    "Country": "US",
+    "A1": "ME",
+    "A2": "Waldo",
+    "A3": "LincolnTest",
+    "RD": "Aligator",
+	"STS": "Rd",
+	"HNO": "18",
+	"PC": "04849",
+	"Service": "urn:nena:service:sos.fire",
+	"Expected_URI": "SIP:+2075555583@strongFD.ngesi.maine.gov",
+	"Expected_warningMessageText": "Unable to determine PSAP for the given location: using default PSAP"
+},
+{
+    "Country": "US",
+    "A1": "MN",
+    "A2": "Piscataquis",
+    "A3": "Strong Township",
+    "RD": "Gero",
+	"STS": "Duck",
+	"HNO": "951",
+	"PC": "66135",
+	"Service": "urn:nena:service:sos.fire",
+	"Expected_URI": "SIP:+2075555583@strongFD.ngesi.maine.gov",
+	"Expected_warningMessageText": "Unable to determine PSAP for the given location: using default PSAP"
+}
+]

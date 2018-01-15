@@ -1,0 +1,94 @@
+{
+	"info": {
+		"name": "SR_Geodetic_ErrorWarningTest",
+		"_postman_id": "ed933aaf-42f0-cd79-9b66-35ee9103235b",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_Geodetic_ErrorWarningTest",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c60368f2-c851-4074-b53e-561d592b1477",
+						"type": "text/javascript",
+						"exec": [
+							"var type = data.Type;",
+							"var Pos = data.Pos;",
+							"var Radius = data.Radius;",
+							"var Service = data.Service;",
+							"var Pt1 = data.Pt1;",
+							"var Pt2 = data.Pt2;",
+							"var Pt3 = data.Pt3;",
+							"var Pt4 = data.Pt4;",
+							"var Pt5 = data.Pt5;",
+							"var Pt6 = data.Pt6;",
+							"var Pt7 = data.Pt7;",
+							"var SemiMajorAxis = data.SemiMajorAxis;",
+							"var SemiMinorAxis = data.SemiMinorAxis;",
+							"var Orientation = data.Orientation;",
+							"var innerRadius = data.innerRadius;",
+							"var outerRadius = data.outerRadius;",
+							"var startAngle = data.startAngle;",
+							"var openingAngle = data.openingAngle;",
+							"",
+							"",
+							"if (type == \"point\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"1a046d9d-2a97-43c7-b986-e11f660c0a7a\" profile=\"geodetic-2d\"><gml:Point xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos></gml:Point></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"circle\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"reference\"><location id=\"24b276e1-7eca-48d5-be24-30e0dd4c1ca0\" profile=\"geodetic-2d\"><gs:Circle xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos><gs:radius uom=\"urn:ogc:def:uom:EPSG::9001\">{{Radius}}</gs:radius></gs:Circle></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"poly6pt\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"reference\"><location id=\"1a046d9d-2a97-43c7-b986-e11f660c0a7a\" profile=\"geodetic-2d\"><gml:Polygon xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:exterior><gml:LinearRing><gml:pos>{{Pt1}}</gml:pos><gml:pos>{{Pt2}}</gml:pos><gml:pos>{{Pt3}}</gml:pos><gml:pos>{{Pt4}}</gml:pos><gml:pos>{{Pt5}}</gml:pos><gml:pos>{{Pt6}}</gml:pos></gml:LinearRing></gml:exterior></gml:Polygon></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"ellipse\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"value\"><location id=\"1a046d9d-2a97-43c7-b986-e11f660c0a7a\" profile=\"geodetic-2d\"><gs:Ellipse xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos><gs:semiMajorAxis uom=\"urn:ogc:def:uom:EPSG::9001\">{{SemiMajorAxis}}</gs:semiMajorAxis><gs:semiMinorAxis uom=\"urn:ogc:def:uom:EPSG::9001\">{{SemiMinorAxis}}</gs:semiMinorAxis><gs:orientation uom=\"urn:ogc:def:uom:EPSG::9102\">{{Orientation}}</gs:orientation></gs:Ellipse></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else if (type == \"arcband\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"utf-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" serviceBoundary=\"reference\"><location id=\"4dbaf2b4-88f2-44db-be7e-5d9955b6bfcc\" profile=\"geodetic-2d\"><gs:ArcBand xmlns:gs=\"http://www.opengis.net/pidflo/1.0\" xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\"><gml:pos>{{Pos}}</gml:pos><gs:innerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{innerRadius}}</gs:innerRadius><gs:outerRadius uom=\"urn:ogc:def:uom:EPSG::9001\">{{outerRadius}}</gs:outerRadius><gs:startAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{startAngle}}</gs:startAngle><gs:openingAngle uom=\"urn:ogc:def:uom:EPSG::9102\">{{openingAngle}}</gs:openingAngle></gs:ArcBand></location><service>{{Service}}</service></findService>');",
+							"}",
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "13347f9c-899f-4b91-a6f4-375cd3cac961",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"var jsonObject = xml2Json(responseBody);",
+							"",
+							"if (jsonObject.errors !== undefined && jsonObject.errors !== null) {",
+							"    var Warnings = jsonObject.errors.notFound.$.message;",
+							"    tests[\"Not found warning displayed: \"] = Warnings === \"The server could not find an answer to the query.\";",
+							"}",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{{Body}}\n"
+				},
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com",
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
