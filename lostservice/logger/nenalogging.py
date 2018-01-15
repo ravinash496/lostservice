@@ -11,9 +11,9 @@ Class to handle sending Logs to Logging Service(s)
 from lxml import etree
 import requests
 import uuid
+from lostservice.configuration import general_logger
+logger = general_logger()
 
-import asyncio
-import aiohttp
 
 class NENALoggingException(Exception):
     """
@@ -63,7 +63,7 @@ def create_NENA_log_events(request_text, query_type, start_time, response_text, 
 
     # Check to see if Nena Loggging Service has been configured (optional)
     if len(logging_service_urls) < 1:
-        print('NENA Logging: No Service configured')
+        logger.info('NENA Logging: No Service configured')
         return
 
     # add query_ip_port, response_ip_port  TODO get IP and Port
@@ -97,11 +97,11 @@ def create_NENA_log_events(request_text, query_type, start_time, response_text, 
      #Body
     #Envelope
 
-
     _send_nenalog_request(nena_log_id, request_text, start_time, server_id, query_ip_port, is_valid_query, logging_service_urls)
     _send_nenalog_response(nena_log_id, response_text, end_time, server_id, response_ip_port, logging_service_urls)
 
 # End of create_NENA_log_events
+
 
 def _send_nenalog_request(nena_log_id, request_text, start_time, server_id, query_ip_port, is_valid_query, logging_service_urls):
     """
@@ -171,13 +171,13 @@ def _send_nenalog_request(nena_log_id, request_text, start_time, server_id, quer
     lost_query_id = etree.SubElement(log_event_body, '{%s}LoSTQueryId' % DATA_TYPES_NS)
     lost_query_id.text = nena_log_id
 
-    print(etree.tostring(soap_env, pretty_print=True))
+    logger.info(etree.tostring(soap_env, pretty_print=True))
 
-    futures = [_post_async_nena_logging(soap_env, request_text, url) for key, url in logging_service_urls.items()]
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.wait(futures))
+    for key, url in logging_service_urls.items():
+        _post_nena_logging(soap_env, request_text, url)
 
 # End of _send_nenalog_request
+
 
 def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, response_ip_port, logging_service_urls):
     """
@@ -234,31 +234,27 @@ def _send_nenalog_response(nena_log_id, response_text, end_time, server_id, resp
     xml_response = etree.fromstring(response_text)
     lost_query_adapter.append(xml_response)
 
-    print(etree.tostring(soap_env, pretty_print=True))
+    logger.info(etree.tostring(soap_env, pretty_print=True))
 
-    futures = [_post_async_nena_logging(soap_env, response_text, url) for key, url in logging_service_urls.items()]
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.wait(futures))
+    for key, url in logging_service_urls.items():
+        _post_nena_logging(soap_env, response_text, url)
 
 # End of _send_nenalog_response
 
-async def _post_async_nena_logging(soap_env, raw_text, url):
-    """
-    Async Post to the logging service
-    :param soap_env: 
-    :param raw_text: 
-    :param url: 
-    :return: 
+
+def _post_nena_logging(soap_env, raw_text, url):
     """
 
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(url, data=etree.tostring(soap_env)) as response:
-                if response.status != 200:
-                    print('NENA Logging Failure: %s :Raw Event: %s' % (response.text, raw_text))
+    :param soap_env:
+    :param raw_text:
+    :param url:
+    :return:
+    """
 
-        except Exception as e:
-            print('%s :Raw Event: %s' % (str(e), raw_text))
+    try:
+        requests.post(url, data=etree.tostring(soap_env))
+    except Exception as e:
+        logger.debug('%s :Raw Event: %s' % (str(e), raw_text))
         #TODO Log Error(s)
 
 # End of _post_async_nena_logging
