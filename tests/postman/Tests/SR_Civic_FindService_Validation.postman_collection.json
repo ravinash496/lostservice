@@ -1,0 +1,86 @@
+{
+	"info": {
+		"name": "SR_Civic_FindService_Validation",
+		"_postman_id": "c3168075-9135-06e9-3aad-2a8bb5120272",
+		"description": "FindService for Civic validation is on\nPossible: <valid>, <invalid>, <unchecked>\n",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_Civic_FindService_Validation",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "7942c2f1-7c54-44ea-95cc-c9e65098d5bf",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"var jsonObject = xml2Json(responseBody);",
+							"",
+							"// Fields do not always appear in the response",
+							"if (jsonObject.findServiceResponse.locationValidation.valid !== undefined) {",
+							"    var ValidResponseElements = jsonObject.findServiceResponse.locationValidation.valid;",
+							"    var ValidDataElements = data.Expected_Valid_Fields;",
+							"        ",
+							"    tests[\"Expected Valid elements: \" + ValidResponseElements] = ValidResponseElements== ValidDataElements;",
+							"}",
+							"     ",
+							"if (jsonObject.findServiceResponse.locationValidation.invalid !== undefined) {",
+							"    var InvalidResponseElements = jsonObject.findServiceResponse.locationValidation.invalid;",
+							"    var InvalidDataElements = data.Expected_Invalid_Fields;",
+							"        ",
+							"    tests[\"Response Body contains invalid elements: \" + InvalidResponseElements] = InvalidResponseElements == InvalidDataElements;",
+							"}",
+							"",
+							"if (jsonObject.findServiceResponse.locationValidation.unchecked !== undefined) {",
+							"    var UncheckedResponseElements = jsonObject.findServiceResponse.locationValidation.unchecked;",
+							"    var UncheckedDataElements = data.Expected_Unchecked_Fields;",
+							"    ",
+							"    tests[\"Response Body contains unchecked elements: \" + UncheckedResponseElements] = UncheckedResponseElements == UncheckedDataElements;",
+							"}",
+							""
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "33df44ab-ef0a-487f-abc0-c9e701268569",
+						"type": "text/javascript",
+						"exec": [
+							"// We can either use A6 or RD for the street. A6 will be the if it exists in the data",
+							"",
+							"if (data.A6 !== \"\")",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"UTF-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" validateLocation=\"true\"><location id=\"a8bc0513-7cd9-47fe-af02-de65299e2ad6\" profile=\"civic\"><civ:civicAddress xmlns:civ=\"urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr\"><civ:country>{{Country}}</civ:country><civ:A1>{{A1}}</civ:A1><civ:A2>{{A2}}</civ:A2><civ:A3>{{A3}}</civ:A3><civ:A6>{{A6}}</civ:A6><civ:STS>{{STS}}</civ:STS><civ:HNO>{{HNO}}</civ:HNO><civ:PC>{{PC}}</civ:PC></civ:civicAddress></location><service>{{Service}}</service></findService>');",
+							"}",
+							"else",
+							"{",
+							"    postman.setEnvironmentVariable(\"Body\", '<?xml version=\"1.0\" encoding=\"UTF-8\"?><findService xmlns=\"urn:ietf:params:xml:ns:lost1\" validateLocation=\"true\"><location id=\"a8bc0513-7cd9-47fe-af02-de65299e2ad6\" profile=\"civic\"><civ:civicAddress xmlns:civ=\"urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr\"><civ:country>{{Country}}</civ:country><civ:A1>{{A1}}</civ:A1><civ:A2>{{A2}}</civ:A2><civ:A3>{{A3}}</civ:A3><civ:RD>{{RD}}</civ:RD><civ:STS>{{STS}}</civ:STS><civ:HNO>{{HNO}}</civ:HNO><civ:PC>{{PC}}</civ:PC></civ:civicAddress></location><service>{{Service}}</service></findService>');",
+							"}",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/xml"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{Body}}\n"
+				},
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com",
+				"description": "This is the Root API Request"
+			},
+			"response": []
+		}
+	]
+}

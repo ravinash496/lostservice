@@ -1,0 +1,49 @@
+{
+	"info": {
+		"name": "SR_Civic_FindService_Default_Routes",
+		"_postman_id": "6be0f806-1896-f615-3160-c511dd948e90",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_Civic_FindService_Default_Routes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "df264c36-73d2-45bb-a6dd-975f92288379",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"var jsonObject = xml2Json(responseBody);",
+							"var URI = jsonObject.findServiceResponse.mapping.uri;",
+							"",
+							"tests[\"URI: \"+ URI] = URI == data.Expected_URI;",
+							"if (jsonObject.findServiceResponse.warnings !== undefined && jsonObject.findServiceResponse.warning !== null) {",
+							"        var Warnings = jsonObject.findServiceResponse.warnings.defaultMappingReturned.$.message;",
+							"        tests[\"Default warning displayed: \"] = Warnings == data.Expected_warningMessageText;",
+							"}",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/xml"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<findService xmlns=\"urn:ietf:params:xml:ns:lost1\">\r\n   <location id=\"ce152f4b-2ade-4e37-9741-b6649e2d87a6\" profile=\"civic\">\r\n      <civ:civicAddress xmlns:civ=\"urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr\">\r\n         <civ:country>{{Country}}</civ:country>\r\n         <civ:A1>{{A1}}</civ:A1>\r\n         <civ:A2>{{A2}}</civ:A2>\r\n         <civ:A3>{{A3}}</civ:A3>\r\n         <civ:RD>{{RD}}</civ:RD>\r\n         <civ:STS>{{STS}}</civ:STS>\r\n         <civ:HNO>{{HNO}}</civ:HNO>\r\n         <civ:PC>{{PC}}</civ:PC>\r\n      </civ:civicAddress>\r\n   </location>\r\n   <service>{{Service}}</service>\r\n</findService>"
+				},
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com"
+			},
+			"response": []
+		}
+	]
+}

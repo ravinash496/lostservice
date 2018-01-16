@@ -1,0 +1,29 @@
+{
+	"info": {
+		"name": "SR_GetServiceBoundary",
+		"_postman_id": "f7ef95ac-63bc-dca3-4937-3db308601ee4",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_GetServiceBoundary",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/xml"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n      <getServiceBoundary xmlns=\"urn:ietf:params:xml:ns:lost1\"\n          key=\"{{srcunqid}}\"/>\n"
+				},
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

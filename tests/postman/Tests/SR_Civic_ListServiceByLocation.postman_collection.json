@@ -1,0 +1,71 @@
+{
+	"info": {
+		"name": "SR_Civic_ListServiceByLocation",
+		"_postman_id": "1ab70692-34e5-0eae-35d4-8b9f0c4061eb",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SR_Civic_ListServiceByLocation",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "02ea11f2-7c90-4fa1-a322-57e5287a38c2",
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"var jsonObject = xml2Json(responseBody);",
+							"var Services = jsonObject.listServicesByLocationResponse.serviceList;",
+							"var Expected_ListServices_Data = data.Expected_ListServicesFields;",
+							"",
+							"tests[\"Services matches string: \"+Expected_ListServices_Data] = Services.has(Expected_ListServices_Data);",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/xml"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<listServicesByLocation\r\n      xmlns=\"urn:ietf:params:xml:ns:lost1\"\r\n      xmlns:gml=\"http://www.opengis.net/gml\"\r\n      xmlns:slb=\"urn:ietf:params:xml:ns:lost1:slb\" recursive=\"false\">\r\n   <location id=\"48022b27-a2a5-4b1e-aee0-013fc19ae131\" profile=\"civic\">\r\n      <civ:civicAddress xmlns:civ=\"urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr\">\r\n         <civ:country>{{Country}}</civ:country>\r\n         <civ:A1>{{A1}}</civ:A1>\r\n         <civ:A2>{{A2}}</civ:A2>\r\n         <civ:A3>{{A3}}</civ:A3>\r\n         <civ:RD>{{RD}}</civ:RD>\r\n         <civ:STS>{{STS}}</civ:STS>\r\n         <civ:HNO>{{HNO}}</civ:HNO>\r\n         <civ:PC>{{PC}}</civ:PC>\r\n      </civ:civicAddress>\r\n   </location>\r\n   <service>{{Service}}</service>\r\n   <slb:serviceListBoundaryRequest type=\"value\"/>\r\n</listServicesByLocation>"
+				},
+				"url": "http://ec2-52-36-126-217.us-west-2.compute.amazonaws.com/",
+				"description": "This is the Root API Request"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "2536af9c-575b-43d1-86a8-d7441f7a09f7",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "1b5fa8b8-8d7f-44ce-b632-a7e6aa0df3b7",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
