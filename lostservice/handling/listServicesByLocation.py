@@ -478,13 +478,21 @@ class ListServiceBylocationOuter(object):
             request.service,
             request.location.location
         )
-        return_value = {'latitude': request.location.location.build_shapely_geometry().representative_point().y,
-                        'longitude': request.location.location.build_shapely_geometry().representative_point().x,
-                        'response': self._build_response(request.path,
-                                                         request.location.id,
-                                                         mappings,
-                                                         request.nonlostdata)}
-        return return_value
+        return_value = {}
+        try:
+            return_value = {'latitude': request.location.location.build_shapely_geometry().centroid.y,
+                            'longitude': request.location.location.build_shapely_geometry().centroid.x,
+                            'response': self._build_response(request.path,
+                                                             request.location.id,
+                                                             mappings,
+                                                             request.nonlostdata)}
+
+        except Exception as e:
+            logger.error(e)
+            raise NotFoundException('Could not generate a return value from request data provided.')
+        finally:
+            return return_value
+
 
     def _build_response(self, path, location_id, mapping, nonlostdata):
         """
