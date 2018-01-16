@@ -9,6 +9,7 @@ Implementation classes for findservice queries.
 """
 from enum import Enum
 
+from lostservice.configuration import general_logger
 from geoalchemy2.shape import to_shape
 from measurement.measures import Distance
 from osgeo import ogr
@@ -20,7 +21,7 @@ from typing import Dict
 import re
 import shapely.wkb
 
-
+logger = general_logger()
 
 class Sides(Enum):
     """
@@ -107,7 +108,7 @@ class GeometryUtility(object):
         # Let's try to match the format so we can separate the SRID from the rest of the WKT.
         ewkt_match = self._ewkt_re.search(ewkt)
         if not ewkt_match:
-            raise GeometryException('The EWK is not propertly formatted.')  # TODO: Add more information?
+            raise GeometryException('The EWK is not properly formatted.')  # TODO: Add more information?
         # Great!  The format matched!!  Let's get the pieces.
         srid = int(ewkt_match.group('srid'))  # Grab the SRID.
         wkt = ewkt_match.group('wkt')  # Get the WKT.
@@ -287,8 +288,9 @@ class GeometryUtility(object):
         # It's very silly, but it's the only way.. for now.
 
         if mapping_object['wkb_geometry'] is None:
+            logger.error('There is no geometry in the mapping object, so we cannot simplify.')
             return mapping_object
-
+        logger.debug('Beginning Simplification.')
         shapely_geometry = to_shape(mapping_object['wkb_geometry'])
 
         # Also, we add a definitive WKID to the geometry
@@ -304,9 +306,10 @@ class GeometryUtility(object):
         # now that we've simplified, we will want to project back to WKID: 4326
         ogr_wgs_84 = self.project(ogr_simplified, 4326)
         # Geesh, we're not done yet! Let's take this pretty geometry and export it to GML.
+        logger.debug('Formatting simplified polygon to GML3 spec.')
         ogr_as_gml = ogr_wgs_84.ExportToGML(options=['FORMAT=GML3'])
 
         #Wait, all of this actually worked? Well I suppose we should put it into the return object then.
         mapping_object['ST_AsGML_1'] = ogr_as_gml
-        # WE OUTTA HERE!
+        logger.debug('Simplification Complete. . .')
         return mapping_object

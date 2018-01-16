@@ -25,19 +25,19 @@ class DiagnosticEvent(AuditableEvent):
 
         """
         super().__init__()
-        self.qpslogid = ""
-        self.eventid = ""
+        self.qps_log_id = ""
+        self.event_id = ""
         self.priority = ""
         self.severity = ""
-        self.activityid = ""
-        self.categoryname = ""
+        self.activity_id = ""
+        self.category_name = ""
         self.title = ""
-        self.timestamputc = ""
-        self.machinename = ""
-        self.serverid = ""
-        self.machineid = ""
+        self.timestamp_utc = ""
+        self.machine_name = ""
+        self.server_id = ""
+        self.machine_id = ""
         self.message = ""
-        self.formattedmessage = ""
+        self.formatted_message = ""
 
 
 Base = declarative_base()

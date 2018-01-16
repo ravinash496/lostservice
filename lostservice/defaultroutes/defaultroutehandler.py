@@ -9,6 +9,7 @@ Classes to support Default Routes
 """
 from lostservice.configuration import Configuration
 from injector import inject
+from lostservice.configuration import general_logger
 from lostservice.configuration import ConfigurationException
 from lostservice.exception import NotFoundException
 import uuid
@@ -22,7 +23,7 @@ from typing import List
 from lostservice.model.civic import CivicAddress
 
 invalid_field_name = "invalid field name"
-
+logger = general_logger()
 
 class DefaultRouteModeEnum(Enum):
     """
@@ -175,14 +176,17 @@ class CivicMatchingSetting(DefaultSetting):
                     civic_address = request.location.location
                     if self.civic_location_matches_rule_conditions(civic_address, rule.conditions):
                         if isinstance(rule, CivicOverrideMatchingRule):
+                            logger.debug(f'Default route URI: {rule.uri}')
                             return rule.uri
                         elif isinstance(rule, CivicExistingMatchingRule):
                             matching_boundary = self._db_wrapper.get_boundaries_for_previous_id(
                                 rule.boundaryid,
                                 self._db_wrapper.get_urn_table_mappings()[self.urn])
                             if not matching_boundary:
+                                logger.debug(f'No matching boundary found for rule: {rule}')
                                 return None
                             else:
+                                logger.debug(f'boundary matched. URI: {matching_boundary[0]["routeuri"]}')
                                 return matching_boundary[0]['routeuri']
 
         return None
@@ -190,9 +194,12 @@ class CivicMatchingSetting(DefaultSetting):
     def civic_location_matches_rule_conditions(self, civic_address: CivicAddress, conditions: dict) -> bool:
         """
         Return true if civic address matches all the conditions passed in
-        :param civic_address:
-        :param conditions:
-        :return:
+        :param civic_address: civic address properties and values to be used for evaluation
+        :type civic_address: :py:class:`CivicAddress`
+        :param conditions: dictionary of conditions that must be matched for the default route to be used.
+        :type conditions: `dict`
+        :return: If we have a match from requested data to provide a default route.
+        :rtype: `bool`
         """
         for key, value in conditions.items():
             if '_' + key.lower() in civic_address.keys():
@@ -207,7 +214,9 @@ class CivicMatchingSetting(DefaultSetting):
         """
         given some json build a list of rules
         :param rules: the json that represents the list of rules
-        :return:
+        :type rules: List of `dict`
+        :return: List of matching rules.
+        :rtype: List of :py:lostservice:defaultroutehandler:class:`CivicMatchinRule`
         """
         civic_matching_rules: [CivicMatchingRule] = []
 
@@ -361,8 +370,9 @@ class DefaultRouteConfigWrapper(object):
         :param err_msg: the rest of the error message
         :return: None
         """
-        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured"
-        raise ConfigurationException('{0} : {1}'.format(base_msg, err_msg))
+        base_msg = "Error in lostservice.ini file. The default_routing_civic_policy setting is mis-configured."
+        logger.error(f'Error in default route configuration. {err_msg}')
+        raise ConfigurationException(f'{base_msg} : {err_msg}')
 
 
 class DefaultRouteHandler(object):
@@ -382,7 +392,7 @@ class DefaultRouteHandler(object):
     def check_default_route(self, request):
         """
         Check if there is a default route for the passed in request
-        :param request: a FindS Service Request
+        :param request: a Find Service Request
         :type request FindServiceRequest
         :return: The mapping if there is a default found
         """
@@ -396,8 +406,10 @@ class DefaultRouteHandler(object):
             default_route_uri = self._get_default_route(request)
 
         if default_route_uri is None:
+            logger.warning(f'No default route URI found for URN: {request.service}')
             raise NotFoundException('The server could not find an answer to the query.')
         else:
+            logger.debug(f'Using default route URI: {default_route_uri}')
             # Create a default mapping given just a uri
             new_dict = {'serviceurn': request.service,
                         'routeuri': default_route_uri,
@@ -421,15 +433,19 @@ class DefaultRouteHandler(object):
         # get default route policies
         default_routes: [DefaultSetting] = self._default_route_config.settings_for_default_route()
         if default_routes is None:
+            logger.debug('No civic address default route found.')
             return None
 
         # get any matching configured urn's in the config, should only be 1 or 0
         matches: [DefaultSetting] = \
             [default_route for default_route in default_routes if default_route.urn == request.service]
         if not matches:
+            logger.debug('No civic address default route found.')
             return None
         else:
-            return matches[0].get_uri(request)
+            matched_uri = matches[0].get_uri(request)
+            logger.debug(f'Civic address default route found. URN: {request.service} URI: {matched_uri}')
+            return matched_uri
 
     def _get_default_route(self, request: FindServiceRequest) -> str or None:
         """
@@ -441,12 +457,16 @@ class DefaultRouteHandler(object):
         default_routes: [DefaultSetting] = self._default_route_config.settings_for_default_route(
             include_civic_defaults=False)
         if default_routes is None:
+            logger.debug('No civic address default route found.')
             return None
 
         # get any matching configured urn's in the config, should only be 1 or 0
         matches: [DefaultSetting] = \
             [default_route for default_route in default_routes if default_route.urn == request.service]
         if not matches:
+            logger.debug('No civic address default route found.')
             return None
         else:
-            return matches[0].get_uri(request)
+            matched_uri = matches[0].get_uri(request)
+            logger.debug(f'Default route found. URN: {request.service} URI: {matched_uri}')
+            return matched_uri

@@ -435,14 +435,12 @@ class FindServiceInner(object):
 
                 # TODO, what is our UOM for buffers, assert meters?
                 results = self._db_wrapper.get_intersecting_boundaries_for_circle(
-                    geodetic_location.longitude,
-                    geodetic_location.latitude,
-                    geodetic_location.spatial_ref,
-                    proximity_buffer,
-                    None,
-                    esb_table,
-                    return_area,
-                    return_shape)
+                    location=geodetic_location,
+                    boundary_table=esb_table,
+                    return_area=return_area,
+                    return_shape=return_shape,
+                    proximity_search=True,
+                    proximity_buffer=proximity_buffer)
 
                 results = self._apply_polygon_multiple_match_policy(results)
         else:
@@ -526,20 +524,21 @@ class FindServiceInner(object):
             civic_address = CivicAddress(**civic_dict)
             logger.info('Executing civic address query')
             # Let's get the results for this civic address.
+            logger.debug('Running civic address query for find service through civvy.')
             locator_results = locator.locate_civic_address(civic_address=civic_address, offset_distance=offset_distance)
 
             return locator_results
         else:
             # Who did this, and why are you doing it?!
+            logger.error('Locator object not passed.')
             raise NotFoundException('Locator not defined, cannot complete civic address request.', None)
-            logger.error('Locator object not passed into findService.FindServiceInner.run_civic_location_search')
             return None
 
     def find_service_for_civicaddress(self, civic_request: CivicAddress, return_shape: bool=False):
         """
          Function to find the service for the civic address
          :param civic_request: civic address request
-         :type civic_request: :py:class:`lostservice.requests.FindServiceRequest`
+         :type civic_request: :py:class:`lostservice.model.requests.FindServiceRequest`
          :param return_shape: Whether or not to return the geometries of found mappings.
          :type return_shape: bool
          :return: The service mappings for the given civic address.
@@ -560,7 +559,7 @@ class FindServiceInner(object):
             # We want an exact match from our civic address query
             # or if fuzzy matching is on, we are within the score tolerance.
             if civic_point.score == 0.0 or (civic_point.score <= max_score and use_fuzzy):
-                logger.info('Point found and used for civic address request.')
+                logger.info(f'Point found and used for civic address request. Score: {civic_point.score}')
                 spatial_reference = civic_point.geometry.GetSpatialReference()
                 epsg = spatial_reference.GetAttrValue("AUTHORITY", 0)
                 srid = spatial_reference.GetAttrValue("AUTHORITY", 1)
@@ -578,17 +577,16 @@ class FindServiceInner(object):
                     validate_location = civic_request.validateLocation
 
                 if validate_location:
-                    logger.info('Validation used in civic address request.')
+                    logger.info('Validating Location. . .')
                     location_validation = {}
-                    # invalid properties
-                    invalid_properties = [prop.value for prop in civic_point.invalid_civic_address_properties]
-                    if len(invalid_properties) > 0:
-                        location_validation['invalid'] = " ".join(invalid_properties)
                     # valid properties
                     valid_properties = [prop.value for prop in civic_point.valid_civic_address_properties]
                     if len(valid_properties) > 0:
                         location_validation['valid'] = " ".join(valid_properties)
-                    mappings[0]['locationValidation'] = location_validation
+                    # invalid properties
+                    invalid_properties = [prop.value for prop in civic_point.invalid_civic_address_properties]
+                    if len(invalid_properties) > 0:
+                        location_validation['invalid'] = " ".join(invalid_properties)
                     # unchecked properties
                     unchecked_properties = [prop.value for prop in civic_point.unchecked_civic_address_properties]
                     if len(unchecked_properties) > 0:
@@ -598,7 +596,7 @@ class FindServiceInner(object):
                 # If we used a fuzzy match, we want to build a warning for it later.
                 if civic_point.score != 0.0 and (civic_point.score <= max_score and use_fuzzy):
                     self._fuzzy_used = True
-                    logger.info('Fuzzy matching used for response.')
+                    logger.info(f'Fuzzy matching used for response. Score: {civic_point.score}')
 
                 return {'mappings': mappings,
                         'latitude': point.latitude,
@@ -1239,10 +1237,10 @@ class FindServiceOuter(object):
         multiple_match = self._find_service_config.polygon_multiple_match_policy()
         source_uri = self._find_service_config.source_uri()
         # Is there additional data in our mappings?
-        if self._check_is_addurl_in_mappings(mappings) == True or \
-            (multiple_match == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning):
+        if self._check_is_addurl_in_mappings(mappings)or \
+        (multiple_match == PolygonMultipleMatchPolicyEnum.ReturnLimitWarning):
             # Did we run into too many mappings being returned by the request?
-            if self._check_too_many_mappings(mappings) == True:
+            if self._check_too_many_mappings(mappings):
                 # Setting is ReturnLimitWarning and flag was found so generate a new element for warnings and add
                 # tooManyMappings as sub-element.  Place this in nonlostdata as another element to be added
                 # to the final response.
@@ -1251,7 +1249,7 @@ class FindServiceOuter(object):
 
                 # add to the warnings element
                 warnings_element = etree.SubElement(xml_warning, 'tooManyMappings',
-                    attrib={'message':'Mapping limit exceeded, mappings returned have been truncated.'})
+                    attrib={'message': 'Mapping limit exceeded, mappings returned have been truncated.'})
 
                 attr = warnings_element.attrib
                 attr['{http://www.w3.org/XML/1998/namespace}lang'] = 'en'
@@ -1317,6 +1315,7 @@ class FindServiceOuter(object):
                 return True
 
         return False
+
     def _check_fuzzy_match_used(self) -> bool:
         """
         Checks to see if we used a fuzzy match
@@ -1384,9 +1383,9 @@ class FindServiceOuter(object):
         if "locationValidation" in mapping:
             resp_mapping.locationValidation = mapping.get("locationValidation")
 
-        resp_mapping.last_updated = mapping.get('updatedate','')
+        resp_mapping.last_updated = mapping.get('updatedate', '')
         resp_mapping.expires = mapping.get('expiration', "NO-CACHE")
-        resp_mapping.source_id = mapping.get('srcunqid',"")
+        resp_mapping.source_id = mapping.get('srcunqid', "")
 
         return resp_mapping
 
@@ -1400,14 +1399,14 @@ class FindServiceOuter(object):
         # use false for ReturnNothing - second check is done in _build_one_mapping()
         include_boundary_value = False
         geodetic_override = self._find_service_config.service_boundary_return_geodetic_override()
-        if  geodetic_override == ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest:
+        if geodetic_override == ServiceBoundaryGeodeticOverridePolicyEnum.MatchRequest:
             # Respect the value in the request
             include_boundary_value = request.serviceBoundary == 'value'
-        elif geodetic_override== ServiceBoundaryGeodeticOverridePolicyEnum.ReturnReference:
+        elif geodetic_override == ServiceBoundaryGeodeticOverridePolicyEnum.ReturnReference:
             # override the value in the request and never return the GML representing the shape
             include_boundary_value = False
-        elif geodetic_override== ServiceBoundaryGeodeticOverridePolicyEnum.ReturnValue:
-            # override the value in the request and alwasy return the GML representing the shape
+        elif geodetic_override == ServiceBoundaryGeodeticOverridePolicyEnum.ReturnValue:
+            # override the value in the request and always return the GML representing the shape
             include_boundary_value = True
 
         return include_boundary_value
