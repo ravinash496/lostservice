@@ -456,12 +456,17 @@ class ListServiceBylocationOuter(object):
         mappings = self._inner.list_service_by_location_for_arcband(
             request.service,
             request.location.location)
-        return_value = {'latitude': request.location.location.build_shapely_geometry().representative_point().y,
-                        'longitude': request.location.location.build_shapely_geometry().representative_point().x,
-                        'response': self._build_response(request.path,
-                                                         request.location.id,
-                                                         mappings,
-                                                         request.nonlostdata)}
+        return_value = {}
+        try:
+            lat = request.location.location.build_shapely_geometry().representative_point().y
+            long = request.location.location.build_shapely_geometry().representative_point().x
+            resp = self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
+            return_value = {'latitude': lat,
+                            'longitude': long,
+                            'response': resp}
+        except Exception as e:
+            logger.error(e)
+
         return return_value
 
     def list_services_by_location_for_polygon(self, request):
@@ -476,23 +481,20 @@ class ListServiceBylocationOuter(object):
         self._check_is_loopback(request.path)
         mappings = self._inner.list_services_by_location_for_polygon(
             request.service,
-            request.location.location
-        )
+            request.location.location)
         return_value = {}
         try:
-            return_value = {'latitude': request.location.location.build_shapely_geometry().centroid.y,
-                            'longitude': request.location.location.build_shapely_geometry().centroid.x,
-                            'response': self._build_response(request.path,
-                                                             request.location.id,
-                                                             mappings,
-                                                             request.nonlostdata)}
+            lat = request.location.location.build_shapely_geometry().centroid.y
+            long = request.location.location.build_shapely_geometry().centroid.x
+            resp = self._build_response(request.path, request.location.id, mappings, request.nonlostdata)
 
+            return_value = {'latitude': lat,
+                            'longitude': long,
+                            'response': resp}
         except Exception as e:
             logger.error(e)
-            raise NotFoundException('Could not generate a return value from request data provided.')
-        finally:
-            return return_value
 
+        return return_value
 
     def _build_response(self, path, location_id, mapping, nonlostdata):
         """
