@@ -293,9 +293,9 @@ class LostApplication(object):
             logger.info('Finished LoST query execution. . .')
 
         except Exception as e:
+            logger.error(e)
             endtime = datetime.datetime.now(tz=pytz.utc)
             self._audit_diagnostics(activity_id, e)
-            logger.error(e)
             source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
             if isinstance(e, exp.RedirectException):
                 logger.error(f'Redirect Exception: {e}')
