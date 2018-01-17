@@ -150,7 +150,7 @@ class FindServiceHandler(Handler):
                             'latitude': 0.0,
                             'longitude': 0.0}
             else:
-                raise
+                raise NotFoundException('The server could not find an answer to the query.')
         return_value = {}
         # If it's not a CivicAddress and there are no mappings, then check for a default route.
         # Unlike FindCivic which throws an exception if it can't find a resolution, geodetic
@@ -211,7 +211,7 @@ class GetServiceBoundaryHandler(Handler):
             if results:
                 # No Recursion available so just add our path
                 our_path = self._config.get('Service', 'source_uri', as_object=False, required=False)
-                # Add our LVF/ECRF path to any other paths aready in the original request (recursive)
+                # Add our LVF/ECRF path to any other paths already in the original request (recursive)
                 results[0]['path'] = our_path
 
                 # Add NonLoSTdata items
@@ -279,8 +279,12 @@ class ListServicesByLocationHandler(Handler):
         else:
             logger.error('Invalid location type.')
             raise BadRequestException('Invalid location type.')
-
-        return_value = {'response': response['response'],
-                        'latitude': response['latitude'],
-                        'longitude': response['longitude']}
-        return return_value
+        if response is not None:
+            logger.debug('Response found!')
+            return_value = {'response': response['response'],
+                            'latitude': response['latitude'],
+                            'longitude': response['longitude']}
+            return return_value
+        else:
+            logger.error(f'Unable to find an answer to the query for {request.location.location}.')
+            raise NotFoundException('The server could not find an answer to the query.')

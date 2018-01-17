@@ -307,11 +307,12 @@ class LostApplication(object):
                 response = exp.build_error_response(e, source_uri)
         finally:
             if parsed_response is None:
-                logger.debug('There was no found parsed response. Adding a blank one into record.')
-                parsed_response = {'response': etree.fromstring(response.encode()),
-                                   'latitude': 0.0,
-                                   'longitude': 0.0
-                }
+                if response is not None:
+                    logger.debug('There was no found parsed response. Adding a blank one into record.')
+                    parsed_response = {'response': etree.fromstring(response.encode()),
+                                       'latitude': 0.0,
+                                       'longitude': 0.0
+                    }
             if self.audit_logging_enabled:
                 logger.debug('Audit Logging: Begin')
                 self.loop.call_soon_threadsafe(functools.partial(self._audit_transaction,
@@ -327,7 +328,7 @@ class LostApplication(object):
                     functools.partial(nenalog.create_NENA_log_events, data, query_name, starttime, response, endtime,
                                       conf))
 
-                logger.debug('Audit Logging: Complete')
+            logger.debug('Audit Logging: Complete')
         return response
 
     def _audit_transaction(self, activity_id, parsed_request, start_time, parsed_response, end_time, context,
