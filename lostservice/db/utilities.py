@@ -63,6 +63,8 @@ def _get_serviceurn(tablename, engine):
     except MappingDiscoveryException as mpe:
         logger.error(mpe)
         raise
+    except Exception as ex:
+        logger.error(ex)
 
     return urn
 

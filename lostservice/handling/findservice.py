@@ -1164,13 +1164,20 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return_value = {'latitude': request.location.location.build_shapely_geometry().representative_point().y,
-                        'longitude': request.location.location.build_shapely_geometry().representative_point().x,
-                        'response': self._build_response(request.path,
-                                                         request.location.id,
-                                                         mappings,
-                                                         request.nonlostdata,
-                                                         include_boundary_value)}
+        return_value = {}
+        try:
+            lat = request.location.location.build_shapely_geometry().representative_point().y
+            long = request.location.location.build_shapely_geometry().representative_point().x
+            resp = self._build_response(request.path, request.location.id,
+                                        mappings, request.nonlostdata, include_boundary_value)
+
+            return_value = {'latitude': lat,
+                            'longitude': long,
+                            'response': resp}
+
+        except Exception as e:
+            logger.error(e)
+
         return return_value
 
     def find_service_for_polygon(self, request):
@@ -1189,13 +1196,18 @@ class FindServiceOuter(object):
             request.location.location,
             include_boundary_value
         )
-        return_value = {'latitude': request.location.location.build_shapely_geometry().representative_point().y,
-                        'longitude': request.location.location.build_shapely_geometry().representative_point().x,
-                        'response': self._build_response(request.path,
-                                                         request.location.id,
-                                                         mappings,
-                                                         request.nonlostdata,
-                                                         include_boundary_value)}
+        return_value = {}
+        try:
+            lat = request.location.location.build_shapely_geometry().centroid.y
+            long = request.location.location.build_shapely_geometry().centroid.x
+            resp = self._build_response(request.path, request.location.id,
+                                        mappings, request.nonlostdata, include_boundary_value)
+            return_value = {'latitude': lat,
+                            'longitude': long,
+                            'response': resp}
+        except Exception as e:
+            logger.error(e)
+
         return return_value
 
     def _build_response(self, path, location_used, mappings, nonlostdata, include_boundary_value=False):
@@ -1208,7 +1220,7 @@ class FindServiceOuter(object):
         :type location_used: ``str``
         :param mappings: A list of all mappings returned by the query.
         :type mappings: ``list`` of ``dict``
-        :param nonlostdata: Passthrough elements from the request.
+        :param nonlostdata: Pass-through elements from the request.
         :type nonlostdata: ``list``
         :return:  A FindServiceResponse
         :rtype: :py:class:`lostservice.model.responses.FindServiceResponse`

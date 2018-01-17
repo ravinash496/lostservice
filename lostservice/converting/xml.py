@@ -461,7 +461,7 @@ class ArcbandXmlConverter(XmlConverter):
         :return: The formatted output.
         :rtype: :py:class:`_ElementTree`
         """
-        raise NotImplementedError('TODO: Implement formatting of arcbandss.')
+        raise NotImplementedError('TODO: Implement formatting of arcbands.')
 
 
 class LocationXmlConverter(XmlConverter):
