@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import select, or_
 from lostservice.configuration import general_logger
 logger = general_logger()
-mapping1 = {}
+cached_urn_mappings = {}
 
 
 class MappingDiscoveryException(Exception):
@@ -81,7 +81,8 @@ def get_urn_table_mappings(engine):
     """
     mappings = {}
     try:
-        if mapping1 == {}:
+        # check in to see if already have service_urn values
+        if cached_urn_mappings == {}:
             result = None
             metadata = MetaData(bind=engine, schema='information_schema')
             info_table = Table('tables', metadata, autoload=True)
@@ -97,7 +98,7 @@ def get_urn_table_mappings(engine):
                     tablename = row['table_name']
                     urn = _get_serviceurn(tablename, engine)
                     mappings[urn] = tablename
-                    mapping1[urn] = tablename
+                    cached_urn_mappings[urn] = tablename
 
                 result.close()
                 conn.close()
@@ -114,4 +115,4 @@ def get_urn_table_mappings(engine):
         logger.error(ex)
         raise
 
-    return mapping1
+    return cached_urn_mappings
