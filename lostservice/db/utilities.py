@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import select, or_
 from lostservice.configuration import general_logger
 logger = general_logger()
+mapping1 = {}
 
 
 class MappingDiscoveryException(Exception):
@@ -80,28 +81,30 @@ def get_urn_table_mappings(engine):
     """
     mappings = {}
     try:
-        result = None
-        metadata = MetaData(bind=engine, schema='information_schema')
-        info_table = Table('tables', metadata, autoload=True)
-        s = select([info_table.c.table_name]).where(
-            or_(
-                info_table.c.table_name.like('esb%'),
-                info_table.c.table_name.like('aloc%')))
+        if mapping1 == {}:
+            result = None
+            metadata = MetaData(bind=engine, schema='information_schema')
+            info_table = Table('tables', metadata, autoload=True)
+            s = select([info_table.c.table_name]).where(
+                or_(
+                    info_table.c.table_name.like('esb%'),
+                    info_table.c.table_name.like('aloc%')))
 
-        with engine.connect() as conn:
-            result = conn.execute(s)
+            with engine.connect() as conn:
+                result = conn.execute(s)
 
-            for row in result:
-                tablename = row['table_name']
-                urn = _get_serviceurn(tablename, engine)
-                mappings[urn] = tablename
+                for row in result:
+                    tablename = row['table_name']
+                    urn = _get_serviceurn(tablename, engine)
+                    mappings[urn] = tablename
+                    mapping1[urn] = tablename
 
-            result.close()
-            conn.close()
+                result.close()
+                conn.close()
 
-            if not mappings:
-                logger.warning('No service boundary tables were found in the database.')
-                raise MappingDiscoveryException('No service boundary tables were found in the database.')
+                if not mappings:
+                    logger.warning('No service boundary tables were found in the database.')
+                    raise MappingDiscoveryException('No service boundary tables were found in the database.')
 
     except SQLAlchemyError as ex:
         logger.error('Encountered an error when attempting to discover the service boundary tables.', ex)
@@ -111,4 +114,4 @@ def get_urn_table_mappings(engine):
         logger.error(ex)
         raise
 
-    return mappings
+    return mapping1
