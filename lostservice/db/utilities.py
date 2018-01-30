@@ -81,6 +81,7 @@ def get_urn_table_mappings(engine):
     """
     mappings = {}
     try:
+        logger.debug(f'cached_urn_mappings: {cached_urn_mappings}')
         # check in to see if already have service_urn values
         if cached_urn_mappings == {}:
             result = None
@@ -114,5 +115,5 @@ def get_urn_table_mappings(engine):
     except MappingDiscoveryException as ex:
         logger.error(ex)
         raise
-
+    logger.debug(f'mappings:  {cached_urn_mappings}')
     return cached_urn_mappings
