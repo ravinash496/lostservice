@@ -166,6 +166,9 @@ class CivicXmlConverter(XmlConverter):
         civic.addcode = self._run_xpath(data, xpath_template.format(CIVIC_ADDRESS_PREFIX, 'ADDCODE'))
         civic.stp = self._run_xpath(data, xpath_template.format(CAE_PREFIX, 'STP'))
         civic.stps = self._run_xpath(data, xpath_template.format(CAN_PREFIX, 'STPS'))
+        civic.hnp = civic.stps = self._run_xpath(data, xpath_template.format(CAN_PREFIX, 'HNP'))
+        civic.lmpk = civic.stps = self._run_xpath(data, xpath_template.format(CAN_PREFIX, 'LMPK'))
+        civic.mp = self._run_xpath(data, xpath_template.format(CAN_PREFIX, 'MP'))
         return civic
 
     def format(self, data):

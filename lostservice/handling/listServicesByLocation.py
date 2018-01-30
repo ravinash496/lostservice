@@ -188,6 +188,14 @@ class ListServiceByLocationInner(object):
                 civic_dict['nam'] = civvy_obj.nam
             if civvy_obj.pc:
                 civic_dict['pc'] = civvy_obj.pc
+            if civvy_obj.pom:
+                civic_dict['pom'] = civvy_obj.pom
+            if civvy_obj.hnp:
+                civic_dict['hnp'] = civvy_obj.hnp
+            if civvy_obj.lmpk:
+                civic_dict['lmpk'] = civvy_obj.lmpk
+            if civvy_obj.mp:
+                civic_dict['mp'] = civvy_obj.mp
 
             # We can create several civic addresses and pass them to the locator.
             civic_address = CivicAddress(**civic_dict)
