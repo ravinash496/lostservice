@@ -24,8 +24,8 @@ class CivicAddress(object):
                  pod=None, pom=None, rdsec=None, rdbr=None, rdsubr=None,
                  hno=None, hns=None, lmk=None, loc=None, flr=None, nam=None,
                  pc=None, bld=None, unit=None, room=None, seat=None, plc=None,
-                 pcn=None, pobox=None, addcode=None, stp=None, stps=None
-                 ):
+                 pcn=None, pobox=None, addcode=None, stp=None, stps=None,
+                 hnp=None, lmpk=None, mp=None):
         super(CivicAddress, self).__init__()
         self._country = country
         self._a1 = a1
@@ -60,6 +60,9 @@ class CivicAddress(object):
         self._addcode = addcode
         self._stp = stp
         self._stps = stps
+        self._hnp = hnp
+        self._lmpk = lmpk
+        self._mp = mp
 
     @property
     def country(self):
@@ -489,6 +492,45 @@ class CivicAddress(object):
     @stps.setter
     def stps(self, value):
         self._stps = value
+
+    @property
+    def hnp(self):
+        """
+        The address number prefix.
+
+        :rtype: ``str``
+        """
+        return self._hnp
+
+    @hnp.setter
+    def hnp(self, value):
+        self._hnp = value
+
+    @property
+    def lmpk(self):
+        """
+        The landmark name part.
+
+        :rtype: ``str``
+        """
+        return self._lmpk
+
+    @lmpk.setter
+    def lmpk(self, value):
+        self._lmpk = value
+
+    @property
+    def mp(self):
+        """
+        The milepost.
+
+        :rtype: ``str``
+        """
+        return self._mp
+
+    @mp.setter
+    def mp(self, value):
+        self._mp = value
 
     def __setitem__(self, key, item):
         self.__dict__[key] = item
