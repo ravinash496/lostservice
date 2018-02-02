@@ -91,19 +91,19 @@ class DiagnosticAuditListener(AuditListener):
             session.configure(bind=engine)
 
             diag = Diagnostic()
-            diag.qpslogid = event.qpslogid
-            diag.eventid = event.eventid
+            diag.qpslogid = event.qps_log_id
+            diag.eventid = event.event_id
             diag.priority = event.priority
             diag.severity = event.severity
-            diag.activityid = event.activityid
-            diag.categoryname = event.categoryname
+            diag.activityid = event.activity_id
+            diag.categoryname = event.category_name
             diag.title = event.title
-            diag.timestamputc = event.timestamputc
-            diag.machinename = event.machinename
-            diag.serverid = event.serverid
-            diag.machineid = event.machineid
+            diag.timestamputc = event.timestamp_utc
+            diag.machinename = event.machine_name
+            diag.serverid = event.server_id
+            diag.machineid = event.machine_id
             diag.message = event.message
-            diag.formattedmessage = event.formattedmessage
+            diag.formattedmessage = event.formatted_message
 
             s = session()
             s.add(diag)

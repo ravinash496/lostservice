@@ -295,7 +295,6 @@ class LostApplication(object):
         except Exception as e:
             logger.error(e)
             endtime = datetime.datetime.now(tz=pytz.utc)
-            self._audit_diagnostics(activity_id, e)
             source_uri = conf.get('Service', 'source_uri', as_object=False, required=False)
             if isinstance(e, exp.RedirectException):
                 logger.error(f'Redirect Exception: {e}')
@@ -303,8 +302,11 @@ class LostApplication(object):
             elif isinstance(e, etree.LxmlError):
                 logger.error(f'Malformed XML request: {e} Source URI: {source_uri}')
                 response = exp.build_error_response(exp.BadRequestException('Malformed request xml.', None), source_uri)
+            elif isinstance(e, exp.NotFoundException):
+                response = exp.build_error_response(e, source_uri)
             else:
                 response = exp.build_error_response(e, source_uri)
+            self._audit_diagnostics(activity_id, e)
         finally:
             if parsed_response is None:
                 if response is not None:
