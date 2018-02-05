@@ -25,7 +25,7 @@ class CivicAddress(object):
                  hno=None, hns=None, lmk=None, loc=None, flr=None, nam=None,
                  pc=None, bld=None, unit=None, room=None, seat=None, plc=None,
                  pcn=None, pobox=None, addcode=None, stp=None, stps=None,
-                 hnp=None, lmpk=None, mp=None):
+                 hnp=None, lmkp=None, mp=None):
         super(CivicAddress, self).__init__()
         self._country = country
         self._a1 = a1
@@ -61,7 +61,7 @@ class CivicAddress(object):
         self._stp = stp
         self._stps = stps
         self._hnp = hnp
-        self._lmpk = lmpk
+        self._lmkp = lmkp
         self._mp = mp
 
     @property
@@ -507,17 +507,17 @@ class CivicAddress(object):
         self._hnp = value
 
     @property
-    def lmpk(self):
+    def lmkp(self):
         """
         The landmark name part.
 
         :rtype: ``str``
         """
-        return self._lmpk
+        return self._lmkp
 
-    @lmpk.setter
-    def lmpk(self, value):
-        self._lmpk = value
+    @lmkp.setter
+    def lmkp(self, value):
+        self._lmkp = value
 
     @property
     def mp(self):

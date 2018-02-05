@@ -192,8 +192,8 @@ class ListServiceByLocationInner(object):
                 civic_dict['pom'] = civvy_obj.pom
             if civvy_obj.hnp:
                 civic_dict['hnp'] = civvy_obj.hnp
-            if civvy_obj.lmpk:
-                civic_dict['lmpk'] = civvy_obj.lmpk
+            if civvy_obj.lmkp:
+                civic_dict['lmkp'] = civvy_obj.lmkp
             if civvy_obj.mp:
                 civic_dict['mp'] = civvy_obj.mp
 
