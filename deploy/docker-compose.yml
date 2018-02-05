@@ -21,10 +21,10 @@ services:
           - type: bind
             source: ./nginx.conf
             target: /etc/nginx/nginx.conf
-          - type: bind
+          #- type: bind
             # change this to point to the directory on the host where all certificates are placed
-            source: ./ssl
-            target: /etc/nginx/ssl
+            #source: ./ssl
+            #target: /etc/nginx/ssl
         deploy:
           placement:
             constraints: [node.role == manager]
